@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#ffcb05">
+  
+  <title>Pokémon Real-Life RPG</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Leaflet Karte -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Verknüpfung zu deiner CSS-Datei -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SCREEN 1: SLOT-AUSWAHL -->
+  <div id="screen-slots">
+    <h1>Pokémon RPG</h1>
+    <p style="color: var(--text-sub);">Wähle einen Spielstand:</p>
+    
+    <div id="slot-1" class="card slot-card" onclick="selectSlot(1)">
+      <h3>Slot 1</h3>
+      <div id="slot-1-info" style="color: var(--text-sub); font-size: 14px;">Leer</div>
+    </div>
+
+    <div id="slot-2" class="card slot-card" onclick="selectSlot(2)">
+      <h3>Slot 2</h3>
+      <div id="slot-2-info" style="color: var(--text-sub); font-size: 14px;">Leer</div>
+    </div>
+
+    <div id="slot-3" class="card slot-card" onclick="selectSlot(3)">
+      <h3>Slot 3</h3>
+      <div id="slot-3-info" style="color: var(--text-sub); font-size: 14px;">Leer</div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: HEIMATORT FESTLEGEN -->
+  <div id="screen-home" class="card hidden">
+    <h2>Heimatort festlegen</h2>
+    <p style="color: var(--text-sub); font-size: 13px;">
+      Suche nach deinem Ort oder tippe direkt auf die Karte.
+    </p>
+
+    <div style="display: flex; gap: 5px;">
+      <input type="text" id="search-input" placeholder="PLZ oder Ort..." style="flex:1; padding: 10px; border-radius: 8px; border:1px solid #444; background:#222; color:#fff;">
+      <button onclick="searchLocation()" style="width: auto; margin:0; padding: 10px 15px;">Suchen</button>
+    </div>
+
+    <div id="map"></div>
+
+    <button onclick="useCurrentGPSLocation()" class="btn-secondary">📍 Aktuellen GPS-Standort nutzen</button>
+    <button id="confirm-home-btn" onclick="confirmHomeLocation()" disabled>Heimatort Bestätigen</button>
+  </div>
+
+  <!-- SCREEN 3: STARTER WÄHLEN -->
+  <div id="screen-starter" class="card hidden">
+    <h2>Willkommen!</h2>
+    <p style="color: var(--text-sub); font-size: 14px;">
+      Ich bin Professor Eich. Wähle dein erstes Pokémon:
+    </p>
+
+    <div class="starter-container">
+      <div class="starter-card" onclick="chooseStarter('bisasam', this)">
+        <img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam">
+        <div style="font-weight:bold; font-size:12px; margin-top:5px;">Bisasam</div>
+      </div>
+      <div class="starter-card" onclick="chooseStarter('glumanda', this)">
+        <img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda">
+        <div style="font-weight:bold; font-size:12px; margin-top:5px;">Glumanda</div>
+      </div>
+      <div class="starter-card" onclick="chooseStarter('schiggy', this)">
+        <img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy">
+        <div style="font-weight:bold; font-size:12px; margin-top:5px;">Schiggy</div>
+      </div>
+    </div>
+
+    <button id="confirm-starter-btn" onclick="confirmStarter()" disabled style="margin-top:20px;">
+      Pokémon Wählen & 10 Pokébälle erhalten
+    </button>
+  </div>
+
+  <!-- SCREEN 4: HAUPT-DASHBOARD -->
+  <div id="screen-dashboard" class="hidden">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span id="dash-slot-title" style="font-weight:bold; color:var(--text-sub);">Slot 1</span>
+      <button onclick="exitToSlots()" class="btn-secondary" style="width:auto; margin:0; padding:6px 12px; font-size:12px;">Speichern & Menü</button>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-btn-walk" onclick="switchTab('walk')">🚶 Spaziergang</button>
+      <button class="nav-tab" id="tab-btn-pokemon" onclick="switchTab('pokemon')">🐾 Pokémon</button>
+      <button class="nav-tab" id="tab-btn-items" onclick="switchTab('items')">🎒 Beutel</button>
+      <button class="nav-tab" id="tab-btn-trainer" onclick="switchTab('trainer')">🧢 Trainer</button>
+    </div>
+
+    <!-- TAB 1: SPAZIERGANG -->
+    <div id="tab-content-walk">
+      <div class="card">
+        <h3>Unterwegs-Modus</h3>
+        <div style="text-align:left; font-size:13px; color:var(--text-sub); margin-bottom:15px;">
+          <div><strong>Aktiv:</strong> <span id="dash-active-pokemon">--</span></div>
+          <div><strong>Zone:</strong> <span id="dash-zone-tag" class="tag tag-gen1">Gen 1 Zone</span></div>
+          <div><strong>Entfernung zuhause:</strong> <span id="dash-dist">0.0 km</span></div>
+        </div>
+
+        <div id="walk-idle-state">
+          <p style="color: var(--text-sub); font-size: 13px;">
+            Starte den Spaziergang. Das Smartphone signalisiert akustisch, wenn ein Pokémon in der Nähe ist.
+          </p>
+
+          <!-- COUCH GPS SIMULATOR -->
+          <div style="background: #222; border: 1px dashed #ffcb05; border-radius: 8px; padding: 10px; margin: 15px 0;">
+            <div style="font-weight: bold; color: #ffcb05; margin-bottom: 8px; font-size: 13px;">🕹️ Couch-GPS-Simulator</div>
+            
+            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+              <button onclick="simulateMove(0.001, 0)" style="font-size: 11px; padding: 6px;">⬆️ +100m Nord</button>
+              <button onclick="simulateMove(-0.001, 0)" style="font-size: 11px; padding: 6px;">⬇️ +100m Süd</button>
+            </div>
+            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+              <button onclick="simulateMove(0, 0.001)" style="font-size: 11px; padding: 6px;">➡️ +100m Ost</button>
+              <button onclick="simulateMove(0, -0.001)" style="font-size: 11px; padding: 6px;">⬅️ +100m West</button>
+            </div>
+            <button onclick="forceSpawnEncounter()" style="background: #e74c3c; font-size: 11px; padding: 8px;">⚡ Pokémon-Encounter erzwingen</button>
+          </div>
+
+          <button onclick="startWalk()">🚶 Spaziergang Starten</button>
+        </div>
+
+        <div id="walk-active-state" class="hidden">
+          <div style="color: #4cd137; font-weight: bold; margin-bottom: 5px;">📡 GPS-Tracking Aktiv</div>
+          <p style="font-size: 12px; color: var(--text-sub); margin:0;">Scanne Umgebung nach Signalen...</p>
+          <button onclick="stopWalk()" class="btn-secondary" style="margin-top:15px;">Spaziergang Beenden</button>
+        </div>
+      </div>
+
+      <!-- RADAR OVERLAY -->
+      <div id="radar-card" class="card hidden" style="border-color: #ffcb05; background: #222;">
+        <h3 style="color: #ffcb05; margin:0;">⚠️ SIGNAL ENTDECKT!</h3>
+        <div class="distance-display" id="radar-distance">-- m</div>
+        <p id="radar-instruction" style="font-size: 13px; color: #aaa;">Folge dem Signal, um das Pokémon zu finden!</p>
+        <button id="btn-start-battle" class="hidden" onclick="startBattle()">⚔️ Kampf Starten!</button>
+        <button onclick="reshuffleEncounter()">💨 Aufscheuchen</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: POKÉMON -->
+    <div id="tab-content-pokemon" class="hidden">
+      <div class="card">
+        <h3>Dein Pokémon-Team</h3>
+        <div id="pokemon-team-list"></div>
+      </div>
+
+      <!-- MODALS FÜR POKÉMON-AKTIONEN & TRAINING -->
+      <div id="pokemon-action-modal" class="card hidden" style="border-color: var(--accent-yellow); margin-top: 15px;">
+        <h4 id="selected-pokemon-name">Pokémon Name</h4>
+        <p style="font-size: 12px; color: var(--text-sub);">Wähle eine Aktion für dieses Pokémon:</p>
+        <button onclick="openTrainingOpponentSelect()">⚔️ Trainingskampf starten</button>
+        <button class="btn-secondary" onclick="closePokemonModal()">Abbrechen</button>
+      </div>
+
+      <div id="training-select-modal" class="card hidden" style="border-color: #3498db; margin-top: 15px;">
+        <h4>Wähle deinen Sparringspartner:</h4>
+        <div id="training-opponents-list"></div>
+        <button class="btn-secondary" onclick="closeTrainingSelect()">Abbrechen</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: BEUTEL -->
+    <div id="tab-content-items" class="hidden">
+      <div class="card">
+        <h3>Dein Beutel</h3>
+        <div class="item-row">
+          <div>
+            <strong>🔴 Pokéball</strong>
+            <div style="font-size:11px; color:#aaa;">Zum Fangen wilder Pokémon</div>
+          </div>
+          <strong id="item-pokeballs-count" style="font-size:18px;">10</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: TRAINER -->
+    <div id="tab-content-trainer" class="hidden">
+      <div class="card" style="text-align:left;">
+        <h3>Trainer-Profil</h3>
+        <h2 id="trainer-level-text" style="color:var(--accent-yellow); margin-bottom:5px;">Level 1</h2>
+        <div style="font-size:12px; color:#aaa;">Erfahrungspunkte (EXP)</div>
+        <div class="exp-bar-bg">
+          <div id="trainer-exp-bar" class="exp-bar-fill"></div>
+        </div>
+        <div id="trainer-exp-text" style="font-size:11px; color:#888; margin-top:4px; text-align:right;">0 / 100 EXP</div>
+
+        <div style="margin-top:20px; font-size:13px; color:#ccc;">
+          <div><strong>Heimat-Koordinaten:</strong> <span id="trainer-home-coords">--</span></div>
+          <div style="margin-top:5px;"><strong>Gefangene Pokémon:</strong> <span id="trainer-caught-count">1</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCREEN 5: KAMPFSYSTEM -->
+  <div id="screen-battle" class="card hidden">
+    <div>
+      <div id="enemy-title" style="font-weight:bold; font-size:14px; margin-bottom:4px;">Wildes Pokémon</div>
+      <div class="hp-bar-bg" style="width:80%; margin:0 auto 6px auto;">
+        <div id="enemy-hp-bar" class="hp-bar-fill"></div>
+      </div>
+      <div id="enemy-hp-text" style="font-size:11px; color:#aaa; margin-bottom:6px;">40 / 40 KP</div>
+      <img id="enemy-card-img" class="battle-card" src="" alt="Gegner Karte">
+    </div>
+
+    <div id="battle-warning-box" class="warning-box">Kampf beginnt!</div>
+
+    <div>
+      <img id="player-card-img" class="battle-card" src="" alt="Spieler Karte">
+      <div id="player-title" style="font-weight:bold; font-size:14px; margin-top:6px;">Dein Pokémon</div>
+      <div class="hp-bar-bg" style="width:80%; margin:0 auto 6px auto;">
+        <div id="player-hp-bar" class="hp-bar-fill"></div>
+      </div>
+      <div id="player-hp-text" style="font-size:11px; color:#aaa; margin-bottom:4px;">50 / 50 KP</div>
+      <div style="font-size:13px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
+    </div>
+
+    <div class="battle-controls">
+      <button onclick="executePlayerAttack()" class="btn-secondary">⚔️ Angriff</button>
+      <button id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-secondary" disabled style="opacity:0.4;">🔥 Spezial (3/3)</button>
+      <button id="btn-dodge" class="btn-dodge" onclick="triggerDodge()">🛡️ AUSWEICHEN!</button>
+      <button id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
+    </div>
+  </div>
+
+  <!-- EVOLUTION OVERLAY SCREEN -->
+  <div id="evo-screen" class="evo-overlay hidden">
+    <h2 id="evo-title" style="color: var(--accent-yellow); margin-bottom: 5px;">Was? ...</h2>
+    <p id="evo-subtitle" style="color: #aaa; font-size: 14px;">Dein Pokémon entwickelt sich!</p>
+    
+    <div class="evo-card-container">
+      <img id="evo-card-img" class="battle-card evo-flash" src="" alt="Evolution Card" style="width: 140px;">
+    </div>
+
+    <div id="evo-chance-info" style="font-size: 18px; font-weight: bold; color: #3498db; margin-bottom: 15px;">
+      Chance: 35%
+    </div>
+
+    <button id="evo-roll-btn" onclick="rollEvolution()" style="width: 80%; max-width: 250px;">🎲 JETZT WÜRFELN!</button>
+  </div>
+
+  <!-- VICTORY OVERLAY SCREEN -->
+  <div id="victory-screen" class="victory-overlay hidden">
+    <div class="victory-title">🏆 SIEG! 🏆</div>
+    <p id="victory-subtitle" style="color: #aaa; margin: 0 0 10px 0;">Kampf gewonnen!</p>
+    
+    <div class="victory-rewards">
+      <div style="font-size: 14px; color: #aaa;">BELOHNUNG</div>
+      <div id="victory-exp-text" style="font-size: 20px; font-weight: bold; color: #4cd137; margin-top: 5px;">+20 EXP</div>
+      <div id="victory-item-text" style="font-size: 16px; font-weight: bold; color: #ffcb05; margin-top: 5px;"></div>
+    </div>
+
+    <button onclick="closeVictoryOverlay()" style="width: 80%; max-width: 250px; margin-top: 25px;">Weiter</button>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
