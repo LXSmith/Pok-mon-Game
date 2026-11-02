@@ -40,10 +40,8 @@ const IntroManager = {
 
   init() {
     const introScreen = document.getElementById('intro-screen');
-    // Flexible Suche: Prüft sowohl ID ("introContainer") als auch CSS-Klasse (".intro-container")
     const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
-    // Falls kein Intro im HTML existiert, direkt ins Spiel
     if (!introScreen || !container) {
       console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden -> Überspringe Intro.');
       this.finishIntro();
@@ -63,7 +61,6 @@ const IntroManager = {
     this.startCardRush();
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // Freigabe des Start-Klicks erst nach Ablauf der Animation (~6.4s)
     setTimeout(() => {
       this.canStart = true;
     }, 6400);
@@ -280,7 +277,6 @@ const FULL_GEN2_CATALOG = [
 let activeDailyGen1Pool = [];
 let activeDailyGen2Pool = [];
 
-// DAILY ROTATION ENGINE
 function refreshDailyPoolsIfNeeded() {
   let today = new Date().toISOString().split('T')[0];
   let savedDate = localStorage.getItem('pokemon_rl_last_pool_date');
@@ -401,7 +397,7 @@ let currentSaveData = {
 };
 
 /* =========================================================
-   3. HAUPTSPIEL INITIALISIERUNG
+   3. HAUPTSPIEL INITIALISIERUNG & KARTE
    ========================================================= */
 function initApp() {
   refreshDailyPoolsIfNeeded();
@@ -472,6 +468,27 @@ function initMap() {
 
   map.on('click', e => setHomePin(e.latlng.lat, e.latlng.lng));
   setTimeout(() => map.invalidateSize(), 300);
+}
+
+// SUCHE NACH ORTEN BEI HEIMATORT-EINSTELLUNG
+async function searchLocation() {
+  let query = document.getElementById('search-input').value;
+  if (!query) return;
+
+  try {
+    let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+    let data = await res.json();
+    if (data && data.length > 0) {
+      let lat = parseFloat(data[0].lat);
+      let lon = parseFloat(data[0].lon);
+      map.setView([lat, lon], 14);
+      setHomePin(lat, lon);
+    } else {
+      alert("Ort nicht gefunden!");
+    }
+  } catch (e) {
+    alert("Suchfehler. Bitte versuche es erneut.");
+  }
 }
 
 function setHomePin(lat, lng) {
