@@ -618,11 +618,12 @@ function updateBattleUI() {
   }
 }
 
-// 4. SPIELER-ANGRIFF (Sicherer Runden-Ablauf)
+// 4. SPIELER-ANGRIFF (Sicherer Runden-Ablauf mit Entprellung)
 function executePlayerAttack() {
-  if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
+  if (!isPlayerTurn || isEnemyAttacking || !currentEnemy || currentEnemy.hp <= 0) return;
 
   isPlayerTurn = false;
+  isEnemyAttacking = true;
   updateBattleUI();
 
   let card = document.getElementById('player-card-img');
@@ -646,7 +647,7 @@ function executePlayerAttack() {
 
     addEnergy(1);
     updateBattleUI();
-    setTimeout(scheduleEnemyAttack, 1200);
+    setTimeout(scheduleEnemyAttack, 1000);
     return;
   }
 
@@ -678,17 +679,19 @@ function executePlayerAttack() {
   updateBattleUI();
 
   if (currentEnemy.hp <= 0) { 
+    isEnemyAttacking = false;
     winBattle(); 
     return; 
   }
 
-  setTimeout(scheduleEnemyAttack, 1200);
+  setTimeout(scheduleEnemyAttack, 1000);
 }
 
 function executePlayerSpecial() {
   if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
   isPlayerTurn = false;
+  isEnemyAttacking = true;
   playerEnergy = 0;
   updateBattleUI();
 
@@ -727,10 +730,11 @@ function executePlayerSpecial() {
     updateBattleUI();
 
     if (currentEnemy.hp <= 0) { 
+      isEnemyAttacking = false;
       winBattle(); 
       return; 
     }
-    setTimeout(scheduleEnemyAttack, 1200);
+    setTimeout(scheduleEnemyAttack, 1000);
   }, 200);
 }
 
@@ -738,7 +742,12 @@ function addEnergy(amount) { playerEnergy = Math.min(3, playerEnergy + amount); 
 
 // 6. GEGNER-ANGRIFF
 function scheduleEnemyAttack() {
-  if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
+  if (!currentEnemy || currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) {
+    isEnemyAttacking = false;
+    isPlayerTurn = true;
+    updateBattleUI();
+    return;
+  }
   
   isEnemyAttacking = true;
   isPlayerTurn = false;
@@ -770,7 +779,6 @@ function scheduleEnemyAttack() {
       }, 300);
 
       isEnemyAttacking = false;
-      updateBattleUI();
       
       if (!checkPlayerDefeat()) {
         isPlayerTurn = true;
@@ -797,7 +805,7 @@ function scheduleEnemyAttack() {
 
       playBeep(900, 0.1);
 
-      let timingTimer = setTimeout(() => { isPerfectTiming = true; }, 250);
+      let timingTimer = setTimeout(() => { isPerfectTiming = true; }, 200);
 
       setTimeout(() => {
         clearTimeout(timingTimer);
@@ -805,13 +813,13 @@ function scheduleEnemyAttack() {
         canDodge = false;
         resolveEnemyAttack(true);
       }, 500);
-    }, 800);
+    }, 600);
 
   } else {
     if (box) box.innerText = `⚡ ${currentEnemy.name} greift blitzschnell an!`;
     playBeep(400, 0.15);
 
-    setTimeout(() => { resolveEnemyAttack(false); }, 700);
+    setTimeout(() => { resolveEnemyAttack(false); }, 600);
   }
 }
 
