@@ -288,6 +288,28 @@ function setHomePin(lat, lng) {
   if (confirmBtn) confirmBtn.disabled = false;
 }
 
+function useCurrentGPSLocation() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      let lat = pos.coords.latitude;
+      let lng = pos.coords.longitude;
+      
+      userLat = lat;
+      userLon = lng;
+      
+      if (map) {
+        map.setView([lat, lng], 15);
+      }
+      setHomePin(lat, lng);
+    }, err => {
+      alert("GPS-Zugriff fehlgeschlagen: " + err.message);
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+  } else {
+    alert("Geolocation wird von deinem Browser nicht unterstützt.");
+  }
+}
+
+
 function confirmHomeLocation() {
   if (!tempHomeCoords) return;
   currentSaveData.homeLat = tempHomeCoords.lat;
