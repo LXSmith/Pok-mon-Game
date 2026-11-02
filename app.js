@@ -40,10 +40,12 @@ const IntroManager = {
 
   init() {
     const introScreen = document.getElementById('intro-screen');
-    const container = document.getElementById('introContainer');
+    // Flexible Suche: Prüft sowohl ID ("introContainer") als auch CSS-Klasse (".intro-container")
+    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
     // Falls kein Intro im HTML existiert, direkt ins Spiel
     if (!introScreen || !container) {
+      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden -> Überspringe Intro.');
       this.finishIntro();
       return;
     }
@@ -128,7 +130,7 @@ const IntroManager = {
   },
 
   startCardRush() {
-    const cardStream = document.getElementById('cardStream');
+    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
     const tcgCards = [
@@ -1443,6 +1445,8 @@ function reshuffleEncounter() {
 /* =========================================================
    4. APPLIKATIONS-START VIA INTRO MANAGER
    ========================================================= */
-window.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => IntroManager.init());
+} else {
   IntroManager.init();
-});
+}
