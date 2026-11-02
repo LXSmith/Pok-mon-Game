@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
+/* =========================================================
+   1. GLOBAL VARIABLES & INTRO STYLES
+   ========================================================= */
 :root {
   --bg-gradient: radial-gradient(circle at 50% 20%, #1e3c72 0%, #2a5298 40%, #0f172a 100%);
   --card-bg: rgba(22, 27, 34, 0.75);
@@ -8,7 +11,9 @@
   --accent-yellow-dark: #cc9f00;
   --accent-blue: #2a75bb;
   --accent-green: #2ecc71;
-  --accent-red: #e74c3c;
+  --accent-red: #ff3b5c;
+  --accent-cyan: #00f0ff;
+  --mewtwo-purple: #9d4edd;
   --text-main: #ffffff;
   --text-sub: #cbd5e1;
   --shadow-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
@@ -18,7 +23,11 @@
   box-sizing: border-box;
 }
 
-body {
+body, html {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-gradient);
   background-attachment: fixed;
@@ -26,12 +35,11 @@ body {
   animation: bgPulse 16s ease infinite;
   color: var(--text-main);
   text-align: center;
-  margin: 0;
-  padding: 15px;
   min-height: 100vh;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  overflow-x: hidden;
 }
 
 @keyframes bgPulse {
@@ -40,10 +48,189 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+/* Hilfsklasse zum Ausblenden */
+.hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   INTRO SCREEN & STYLES
+   --------------------------------------------------------- */
+#intro-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: #030406;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#intro-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+/* KARTEN STREAM CONTAINER */
+.card-stream {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ECHTE POKÉMON TCG KARTE */
+.tcg-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160px;
+  height: 223px;
+  margin-top: -111px;
+  margin-left: -80px;
+  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.15);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  background: #111827;
+  overflow: hidden;
+}
+
+.tcg-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* SLASH & BACKGROUND GLOW EFFEKTE */
+.bg-glow {
+  position: absolute;
+  width: 850px;
+  height: 850px;
+  background: radial-gradient(circle, rgba(255, 59, 92, 0.22) 0%, rgba(157, 78, 221, 0.15) 45%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: fadeInGlow 1.2s ease 5.5s forwards;
+}
+
+.slash-effect {
+  position: absolute;
+  width: 170%;
+  height: 10px;
+  background: #ffffff;
+  box-shadow: 0 0 25px #fff, 0 0 50px var(--accent-red), 0 0 90px var(--accent-cyan);
+  transform: rotate(-22deg) scaleX(0);
+  transform-origin: left center;
+  z-index: 10;
+  animation: performSlash 0.42s cubic-bezier(0.11, 0, 0.5, 0) 5.3s forwards;
+}
+
+.flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9;
+  animation: screenFlash 0.35s ease 5.55s forwards;
+}
+
+/* TYPOGRAFIE & LOGO */
+.title-wrapper {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title-pokemon {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.55em;
+  color: var(--text-main);
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: revealTextUpper 0.5s cubic-bezier(0.16, 1, 0.3, 1) 5.65s forwards;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.title-move {
+  font-size: 5.5rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #ffffff 15%, var(--accent-red) 60%, var(--mewtwo-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 0.9;
+  margin-top: 6px;
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  animation: revealMoveTitle 0.65s cubic-bezier(0.16, 1, 0.3, 1) 5.6s forwards;
+  filter: drop-shadow(0 15px 35px rgba(255, 59, 92, 0.5));
+}
+
+.start-prompt {
+  margin-top: 80px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  opacity: 0;
+  animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards;
+  z-index: 5;
+}
+
+/* INTRO KEYFRAME ANIMATIONEN */
+@keyframes performSlash {
+  0% { transform: rotate(-22deg) scaleX(0); opacity: 1; }
+  50% { transform: rotate(-22deg) scaleX(1); opacity: 1; }
+  100% { transform: rotate(-22deg) scaleX(1) translateY(60px); opacity: 0; }
+}
+
+@keyframes screenFlash {
+  0% { opacity: 0; }
+  40% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+@keyframes revealMoveTitle {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); transform: scale(1.1); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: scale(1); }
+}
+
+@keyframes revealTextUpper { to { opacity: 0.9; transform: translateY(0); } }
+@keyframes fadeInGlow { to { opacity: 1; } }
+@keyframes fadeInPrompt { to { opacity: 0.7; } }
+@keyframes pulseText { from { opacity: 0.3; transform: scale(0.98); } to { opacity: 0.9; transform: scale(1.02); } }
+
+
+/* =========================================================
+   2. HAUPTSPIEL STYLES & LAYOUT
+   ========================================================= */
 .container {
   max-width: 440px;
   margin: 0 auto;
-  padding-bottom: 20px;
+  padding: 15px 0 20px 0;
 }
 
 .card {
@@ -341,8 +528,6 @@ button:disabled {
   color: #fff;
   border-bottom: 4px solid #c2410c;
 }
-
-.hidden { display: none !important; }
 
 .victory-overlay, .evo-overlay {
   position: fixed;
