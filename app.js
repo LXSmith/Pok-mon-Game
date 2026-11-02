@@ -7,17 +7,207 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Globales Audio-Unlocking für Koder / iOS WebViews
+// GLOBALE AUDIO-KONTEXT VERWALTUNG
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
 function unlockAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  getAudioContext();
   window.removeEventListener('click', unlockAudio);
   window.removeEventListener('touchstart', unlockAudio);
+  window.removeEventListener('pointerdown', unlockAudio);
 }
 window.addEventListener('click', unlockAudio);
 window.addEventListener('touchstart', unlockAudio);
+window.addEventListener('pointerdown', unlockAudio);
 
-// EVOLUTIONS-PFADE & DATENBANK
+/* =========================================================
+   1. CINEMATIC INTRO ENGINE (Projekt "Pokémon MOVE")
+   ========================================================= */
+const IntroManager = {
+  active: true,
+  canStart: false,
+
+  init() {
+    const introScreen = document.getElementById('intro-screen');
+    const container = document.getElementById('introContainer');
+
+    // Falls kein Intro im HTML existiert, direkt ins Spiel
+    if (!introScreen || !container) {
+      this.finishIntro();
+      return;
+    }
+
+    container.addEventListener('pointerdown', () => {
+      getAudioContext();
+    });
+
+    container.addEventListener('click', () => {
+      if (this.canStart) {
+        this.finishIntro();
+      }
+    });
+
+    this.startCardRush();
+    setTimeout(() => this.playSlashSound(), 5300);
+
+    // Freigabe des Start-Klicks erst nach Ablauf der Animation (~6.4s)
+    setTimeout(() => {
+      this.canStart = true;
+    }, 6400);
+  },
+
+  playWhooshSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const bufferSize = ctx.sampleRate * 0.10;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const randomStartFreq = 500 + Math.random() * 350;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(randomStartFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(120, now + 0.10);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e){}
+  },
+
+  playSlashSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const bufferSize = ctx.sampleRate * 0.28;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(4500, now);
+      filter.frequency.exponentialRampToValueAtTime(250, now + 0.25);
+      filter.Q.value = 4;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.95, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e){}
+  },
+
+  startCardRush() {
+    const cardStream = document.getElementById('cardStream');
+    if (!cardStream) return;
+
+    const tcgCards = [
+      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
+      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
+      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
+    ];
+
+    const cardCount = 14;
+    const totalDuration = 5000;
+
+    for (let i = 0; i < cardCount; i++) {
+      setTimeout(() => {
+        if (!this.active) return;
+        const cardData = tcgCards[i % tcgCards.length];
+        const card = document.createElement('div');
+        card.className = 'tcg-card';
+
+        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
+
+        const startX = (Math.random() - 0.5) * 80;
+        const startY = (Math.random() - 0.5) * 60;
+        const endX = (Math.random() - 0.5) * 380;
+        const endY = (Math.random() - 0.5) * 320;
+        const rotZ = (Math.random() - 0.5) * 22;
+        const rotY = (Math.random() - 0.5) * 18;
+
+        cardStream.appendChild(card);
+
+        const animation = card.animate([
+          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
+          { opacity: 1, offset: 0.15 },
+          { opacity: 1, offset: 0.70 },
+          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          fill: 'forwards'
+        });
+
+        this.playWhooshSound();
+        animation.onfinish = () => card.remove();
+
+      }, i * (totalDuration / cardCount));
+    }
+  },
+
+  finishIntro() {
+    if (!this.active) return;
+    this.active = false;
+
+    getAudioContext();
+
+    const introEl = document.getElementById('intro-screen');
+    const gameScreen = document.getElementById('game-screen');
+
+    if (introEl) {
+      introEl.classList.add('fade-out');
+      setTimeout(() => {
+        introEl.remove();
+        if (gameScreen) gameScreen.classList.remove('hidden');
+        initApp();
+      }, 500);
+    } else {
+      if (gameScreen) gameScreen.classList.remove('hidden');
+      initApp();
+    }
+  }
+};
+
+
+/* =========================================================
+   2. EVOLUTIONS-PFADE & DATENBANK
+   ========================================================= */
 const EVOLUTION_CHAINS = {
   "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20 },
   "Glutexo":  { next: "Glurak",  cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  hpBonus: 35 },
@@ -182,7 +372,6 @@ let userLat = 0, userLon = 0;
 let lastLat = 0, lastLon = 0;
 let targetLat = null, targetLon = null;
 let timerMinutes = 0;
-let audioCtx = null;
 let beepInterval = null;
 let encounterActive = false;
 let checkInterval = null;
@@ -209,6 +398,9 @@ let currentSaveData = {
   pokemonTeam: []
 };
 
+/* =========================================================
+   3. HAUPTSPIEL INITIALISIERUNG
+   ========================================================= */
 function initApp() {
   refreshDailyPoolsIfNeeded();
   updateSlotUI();
@@ -289,26 +481,30 @@ function setHomePin(lat, lng) {
 }
 
 function useCurrentGPSLocation() {
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(pos => {
+  if (!("geolocation" in navigator)) {
+    alert("GPS wird von diesem Browser nicht unterstützt.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
       let lat = pos.coords.latitude;
       let lng = pos.coords.longitude;
-      
+
       userLat = lat;
       userLon = lng;
-      
+
       if (map) {
-        map.setView([lat, lng], 15);
+        map.setView([lat, lng], 16);
       }
       setHomePin(lat, lng);
-    }, err => {
-      alert("GPS-Zugriff fehlgeschlagen: " + err.message);
-    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-  } else {
-    alert("Geolocation wird von deinem Browser nicht unterstützt.");
-  }
+    },
+    (err) => {
+      alert("GPS-Fehler: Bitte erlaube den Standortzugriff in deinen Browser-Einstellungen.");
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
 }
-
 
 function confirmHomeLocation() {
   if (!tempHomeCoords) return;
@@ -508,18 +704,18 @@ function spawnPokemonNearUser() {
 
 function playBeep(pitch = 440, duration = 0.1) {
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let ctx = getAudioContext();
+    if (!ctx) return;
 
-    let osc = audioCtx.createOscillator();
-    let gain = audioCtx.createGain();
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.value = pitch;
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(ctx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
   } catch(e) {}
 }
 
@@ -640,7 +836,6 @@ function updateBattleUI() {
   }
 }
 
-// 4. SPIELER-ANGRIFF (Sicherer Runden-Ablauf mit Entprellung)
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || !currentEnemy || currentEnemy.hp <= 0) return;
 
@@ -762,7 +957,6 @@ function executePlayerSpecial() {
 
 function addEnergy(amount) { playerEnergy = Math.min(3, playerEnergy + amount); }
 
-// 6. GEGNER-ANGRIFF
 function scheduleEnemyAttack() {
   if (!currentEnemy || currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) {
     isEnemyAttacking = false;
@@ -1033,8 +1227,8 @@ function closeVictoryOverlay() {
 
 function playVictoryJingle() {
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    let ctx = getAudioContext();
+    if (!ctx) return;
     playBeep(523.25, 0.15);
     setTimeout(() => playBeep(659.25, 0.15), 150);
     setTimeout(() => playBeep(783.99, 0.4), 300);
@@ -1246,31 +1440,9 @@ function reshuffleEncounter() {
   if (instr) instr.innerText = "Das Pokémon ist geflüchtet! Neues Signal gesucht...";
 }
 
-initApp();
-
-function useCurrentGPSLocation() {
-  if (!("geolocation" in navigator)) {
-    alert("GPS wird von diesem Browser nicht unterstützt.");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      let lat = pos.coords.latitude;
-      let lng = pos.coords.longitude;
-
-      userLat = lat;
-      userLon = lng;
-
-      if (map) {
-        map.setView([lat, lng], 16);
-      }
-      setHomePin(lat, lng);
-    },
-    (err) => {
-      alert("GPS-Fehler: Bitte erlaube den Standortzugriff in den Safari-Einstellungen.");
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-
+/* =========================================================
+   4. APPLIKATIONS-START VIA INTRO MANAGER
+   ========================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  IntroManager.init();
+});
