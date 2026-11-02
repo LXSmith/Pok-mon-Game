@@ -1247,3 +1247,30 @@ function reshuffleEncounter() {
 }
 
 initApp();
+
+function useCurrentGPSLocation() {
+  if (!("geolocation" in navigator)) {
+    alert("GPS wird von diesem Browser nicht unterstützt.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      let lat = pos.coords.latitude;
+      let lng = pos.coords.longitude;
+
+      userLat = lat;
+      userLon = lng;
+
+      if (map) {
+        map.setView([lat, lng], 16);
+      }
+      setHomePin(lat, lng);
+    },
+    (err) => {
+      alert("GPS-Fehler: Bitte erlaube den Standortzugriff in den Safari-Einstellungen.");
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
