@@ -1,7 +1,7 @@
 // SERVICE WORKER REGISTRIERUNG
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[PWA] SW:', err));
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 
@@ -10,8 +10,8 @@ let audioCtx = null;
 
 function getAudioContext() {
   if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) audioCtx = new AudioCtx();
   }
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -19,39 +19,58 @@ function getAudioContext() {
   return audioCtx;
 }
 
+// AUDIO ENTSPERREN BEI ERSTEM TOUCH
+function unlockAudio() {
+  const ctx = getAudioContext();
+  if (ctx) {
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch(e){}
+  }
+}
+
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Original "Pokémon MOVE" Engine)
+   1. CINEMATIC INTRO ENGINE
    ========================================================= */
 const IntroManager = {
   active: true,
-  canStart: true,
 
   init() {
     const introScreen = document.getElementById('intro-screen');
     const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
     if (!introScreen || !container) {
-      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden -> Überspringe Intro.');
       this.finishIntro();
       return;
     }
 
-    container.addEventListener('pointerdown', () => {
-      getAudioContext();
-    });
+    // Audio sofort beim allerersten Touch/Klick entsperren
+    const startAppFlow = () => {
+      unlockAudio();
+      window.removeEventListener('touchstart', startAppFlow);
+      window.removeEventListener('pointerdown', startAppFlow);
+      window.removeEventListener('click', startAppFlow);
+    };
 
-    container.addEventListener('click', () => {
-      this.finishIntro();
-    });
+    window.addEventListener('touchstart', startAppFlow, { once: true });
+    window.addEventListener('pointerdown', startAppFlow, { once: true });
+    window.addEventListener('click', startAppFlow, { once: true });
 
+    // Klick auf Intro überspringt es
+    container.addEventListener('click', () => this.finishIntro(), { once: true });
+
+    // Start der Animationen & Sounds
     this.startCardRush();
     setTimeout(() => this.playSlashSound(), 5300);
 
+    // Erst nach 8 Sekunden oder Klick ins Hauptspiel
     setTimeout(() => {
-      if (this.active) {
-        this.finishIntro();
-      }
-    }, 7500);
+      if (this.active) this.finishIntro();
+    }, 8000);
   },
 
   playWhooshSound() {
@@ -67,14 +86,13 @@ const IntroManager = {
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;
 
-      const randomStartFreq = 500 + Math.random() * 350;
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(randomStartFreq, now);
+      filter.frequency.setValueAtTime(500 + Math.random() * 350, now);
       filter.frequency.exponentialRampToValueAtTime(120, now + 0.10);
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.setValueAtTime(0.15, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
 
       noise.connect(filter);
@@ -124,9 +142,7 @@ const IntroManager = {
       { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
       { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
       { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
-      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
-      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
+      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' }
     ];
 
     const cardCount = 14;
@@ -172,15 +188,15 @@ const IntroManager = {
     if (!this.active) return;
     this.active = false;
 
-    getAudioContext();
+    unlockAudio();
 
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
 
     if (introEl) {
-      introEl.classList.add('fade-out');
+      introEl.classList.add('fade-out'); // Smooth 0.5s Ausblenden
       setTimeout(() => {
-        if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
+        introEl.style.display = 'none';
         if (gameScreen) gameScreen.classList.remove('hidden');
         initApp();
       }, 500);
