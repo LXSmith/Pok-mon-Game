@@ -633,3 +633,16 @@ button:disabled {
   50% { opacity: 1; }
   100% { opacity: 0.3; }
 }
+
+/* SPLASH SCREEN & EVENT-FIX */
+#splash-screen {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#splash-screen.fade-out {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
