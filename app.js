@@ -7,7 +7,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT VERWALTUNG (iOS-Hardware-Fix)
+// GLOBALE AUDIO-KONTEXT VERWALTUNG
 let audioCtx = null;
 
 function getAudioContext() {
@@ -21,92 +21,75 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// Zwingt iOS Safari mit einer echten (fast stummen) MP3-Audioquelle zur Freigabe
 function unlockAudio() {
   const ctx = getAudioContext();
   if (ctx) {
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    // Erzeugt einen kurzen HTML5-Audio-Buffer
-    const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
-    audio.play().then(() => {
-      console.log('[Audio] Hardware erfolgreich freigeschaltet!');
-    }).catch(err => {
-      console.warn('[Audio] Freischaltung fehlgeschlagen:', err);
-    });
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch(e){}
   }
 }
-
-window.addEventListener('click', unlockAudio);
-window.addEventListener('touchstart', unlockAudio);
-window.addEventListener('pointerdown', unlockAudio);
 
 /* =========================================================
    1. CINEMATIC INTRO ENGINE (Projekt "Pokémon MOVE")
    ========================================================= */
 const IntroManager = {
   active: true,
-  canStart: false,
-  audioUnlocked: false,
 
   init() {
+    const splashScreen = document.getElementById('splash-screen');
     const introScreen = document.getElementById('intro-screen');
-    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
-    if (!introScreen || !container) {
-      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden.');
+    if (!splashScreen) {
+      // Fallback falls Splash-Screen im HTML fehlt
+      this.startMainIntro();
+      return;
+    }
+
+    // Erst bei Klick/Touch auf das Splash-Logo starten wir das Haupt-Intro
+    const handleSplashClick = () => {
+      splashScreen.removeEventListener('pointerdown', handleSplashClick);
+      
+      // 1. Audio nativ entsperren durch die Benutzer-Interaktion
+      unlockAudio();
+
+      // 2. Splash Screen ausblenden
+      splashScreen.style.opacity = '0';
+      setTimeout(() => {
+        splashScreen.remove();
+        // 3. Karten-Intro mit funktionierendem Sound starten
+        this.startMainIntro();
+      }, 600);
+    };
+
+    splashScreen.addEventListener('pointerdown', handleSplashClick);
+  },
+
+  startMainIntro() {
+    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
+    if (!container) {
       this.finishIntro();
       return;
     }
 
-    // Visuelle Animation startet sofort
+    // Animation & Sounds laufen jetzt perfekt synchron
     this.startCardRush();
+    setTimeout(() => this.playSlashSound(), 5300);
 
-    const promptElem = document.querySelector('.start-prompt');
-    if (promptElem) promptElem.innerText = "BERÜHREN FÜR SOUND";
+    // Klick auf das Intro überspringt es
+    container.addEventListener('pointerdown', () => this.finishIntro());
 
-    const handleTouch = (e) => {
-      // ERSTER TIPP: Sound freischalten & Slash-Sound testen
-      if (!this.audioUnlocked) {
-        this.audioUnlocked = true;
-        unlockAudio(); // Hardware-Aufwecker
-        
-        // Sofort ein spürbares akustisches Feedback abspielen
-        setTimeout(() => this.playSlashSound(), 50);
-        
-        if (promptElem) {
-          promptElem.innerText = this.canStart ? "BERÜHREN ZUM STARTEN" : "INTRO LÄUFT...";
-        }
-        return;
-      }
-
-      // ZWEITER TIPP: Spiel starten (sofern Animation fertig ist)
-      if (this.canStart) {
-        this.finishIntro();
-      }
-    };
-
-    container.addEventListener('pointerdown', handleTouch);
-
-    // Freigabe nach 6,4 Sekunden
+    // Auto-Start nach 7,5 Sekunden
     setTimeout(() => {
-      this.canStart = true;
-      if (promptElem && this.audioUnlocked) {
-        promptElem.innerText = "BERÜHREN ZUM STARTEN";
-      }
-    }, 6400);
-
-    // Auto-Start nach 8 Sekunden
-    setTimeout(() => {
-      if (this.active) {
-        this.finishIntro();
-      }
-    }, 8000);
+      if (this.active) this.finishIntro();
+    }, 7500);
   },
 
   playWhooshSound() {
-    if (!this.audioUnlocked) return;
     const ctx = getAudioContext();
     if (!ctx) return;
     try {
@@ -125,7 +108,7 @@ const IntroManager = {
       filter.frequency.exponentialRampToValueAtTime(150, now + 0.12);
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.5, now); // Lautstärke deutlich angehoben (0.13 -> 0.5)
+      gain.gain.setValueAtTime(0.5, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
 
       noise.connect(filter);
@@ -136,7 +119,6 @@ const IntroManager = {
   },
 
   playSlashSound() {
-    if (!this.audioUnlocked) return;
     const ctx = getAudioContext();
     if (!ctx) return;
     try {
@@ -156,7 +138,7 @@ const IntroManager = {
       filter.Q.value = 3;
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(1.0, now); // Volle Lautstärke (1.0)
+      gain.gain.setValueAtTime(1.0, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.30);
 
       noise.connect(filter);
@@ -224,8 +206,6 @@ const IntroManager = {
     if (!this.active) return;
     this.active = false;
 
-    unlockAudio();
-
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
 
@@ -243,8 +223,6 @@ const IntroManager = {
   }
 };
 
-
-/* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
    ========================================================= */
 const EVOLUTION_CHAINS = {
