@@ -21,21 +21,20 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// Zwingt das iPhone mit einem kurzen Piepser, den Lautsprecher Hardware-seitig zu aktivieren
+// Zwingt iOS Safari mit einer echten (fast stummen) MP3-Audioquelle zur Freigabe
 function unlockAudio() {
   const ctx = getAudioContext();
   if (ctx) {
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      gain.gain.setValueAtTime(0.01, ctx.currentTime); // Fast stumm, aber aktiv
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(0);
-      osc.stop(ctx.currentTime + 0.05);
-    } catch(e){}
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    // Erzeugt einen kurzen HTML5-Audio-Buffer
+    const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+    audio.play().then(() => {
+      console.log('[Audio] Hardware erfolgreich freigeschaltet!');
+    }).catch(err => {
+      console.warn('[Audio] Freischaltung fehlgeschlagen:', err);
+    });
   }
 }
 
