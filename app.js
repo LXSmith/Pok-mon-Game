@@ -7,8 +7,9 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT VERWALTUNG
+// GLOBALE AUDIO-KONTEXT & SOUND-POOL VERWALTUNG
 let audioCtx = null;
+const CARD_SOUND_URL = 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8c50c58.mp3?filename=card-flipping-75622.mp3';
 
 function getAudioContext() {
   if (!audioCtx) {
@@ -48,9 +49,12 @@ const IntroManager = {
       return;
     }
 
-    const startAppFlow = () => {
+    const startAppFlow = (e) => {
+      if (e) e.preventDefault();
       unlockAudio();
-      splashScreen.style.opacity = '0';
+
+      splashScreen.classList.add('fade-out');
+      
       setTimeout(() => {
         if (splashScreen && splashScreen.parentNode) {
           splashScreen.parentNode.removeChild(splashScreen);
@@ -59,7 +63,7 @@ const IntroManager = {
       }, 500);
     };
 
-    // Robuste Event-Bindings für iOS Safari & Chrome
+    splashScreen.addEventListener('touchstart', startAppFlow, { once: true });
     splashScreen.addEventListener('pointerdown', startAppFlow, { once: true });
     splashScreen.addEventListener('click', startAppFlow, { once: true });
   },
@@ -82,6 +86,19 @@ const IntroManager = {
     setTimeout(() => {
       if (this.active) this.finishIntro();
     }, 7500);
+  },
+
+  playCardFlipSound() {
+    try {
+      const audio = new Audio(CARD_SOUND_URL);
+      audio.volume = 0.6;
+      audio.play().catch(() => {
+        // Fallback-Synthesizer, falls MP3 im Browser geblockt wird
+        this.playWhooshSound();
+      });
+    } catch(e) {
+      this.playWhooshSound();
+    }
   },
 
   playWhooshSound() {
@@ -179,6 +196,9 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
+        // Sound wird exakt beim Erzeugen der Karte ausgelöst
+        this.playCardFlipSound();
+
         const animation = card.animate([
           { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
           { opacity: 1, offset: 0.15 },
@@ -190,7 +210,6 @@ const IntroManager = {
           fill: 'forwards'
         });
 
-        this.playWhooshSound();
         animation.onfinish = () => card.remove();
 
       }, i * (totalDuration / cardCount));
