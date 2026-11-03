@@ -7,13 +7,20 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT & EINZIGE SOUND-INSTANZ
+// GLOBALE AUDIO-KONTEXT & SOUND-POOL FÜR SCHNELLE MP3-WIEDERGABE
 let audioCtx = null;
 const CARD_SOUND_PATH = './freesound_community-flipcard-91468.mp3';
 
-// Die MP3-Datei einmalig global laden
-const globalCardAudio = new Audio(CARD_SOUND_PATH);
-globalCardAudio.preload = 'auto';
+// 5 Audio-Objekte im Pool laden, damit schnelle Karten nicht blockieren
+const audioPoolSize = 5;
+const cardAudioPool = [];
+let poolIndex = 0;
+
+for (let i = 0; i < audioPoolSize; i++) {
+  const a = new Audio(CARD_SOUND_PATH);
+  a.preload = 'auto';
+  cardAudioPool.push(a);
+}
 
 function getAudioContext() {
   if (!audioCtx) {
@@ -38,14 +45,16 @@ function unlockAudio() {
     } catch(e){}
   }
 
-  // Die MP3 beim Touch/Klick kurz stumm anspielen, damit Safari sie freigibt
-  try {
-    globalCardAudio.volume = 0.6;
-    globalCardAudio.play().then(() => {
-      globalCardAudio.pause();
-      globalCardAudio.currentTime = 0;
-    }).catch(e => console.log('Audio unlock wartet auf Interaktion', e));
-  } catch(e){}
+  // Alle Audio-Objekte aus dem Pool kurz stumm anspielen, damit Safari/Chrome sie freischalten
+  cardAudioPool.forEach(audioEl => {
+    try {
+      audioEl.volume = 0.6;
+      audioEl.play().then(() => {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+      }).catch(() => {});
+    } catch(e){}
+  });
 }
 
 /* =========================================================
@@ -103,9 +112,12 @@ const IntroManager = {
 
   playCardFlipSound() {
     try {
-      // Greift auf das freigeschaltete Audio-Element zu und setzt es zurueck
-      globalCardAudio.currentTime = 0;
-      globalCardAudio.play().catch(err => {
+      // Rotations-Prinzip aus dem Audio-Pool für unterbrechungsfreie Wiedergabe
+      const soundInstance = cardAudioPool[poolIndex];
+      poolIndex = (poolIndex + 1) % audioPoolSize;
+      
+      soundInstance.currentTime = 0;
+      soundInstance.play().catch(err => {
         console.log('MP3 Play Fehler:', err);
       });
     } catch(e){}
@@ -206,87 +218,14 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
-        // Vorbereitetes Audio abspielen
+        // Spielt die freigeschalteten MP3s aus dem Pool ab
         this.playCardFlipSound();
 
         const animation = card.animate([
           { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
           { opacity: 1, offset: 0.15 },
-          { opacity: 1, offset: 0.70 },
-          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
-        ], {
-          duration: 600,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          fill: 'forwards'
-        });
+          { opacity: 1, offset: 0
 
-        animation.onfinish = () => card.remove();
-
-      }, i * (totalDuration / cardCount));
-    }
-  },
-
-  finishIntro() {
-    if (!this.active) return;
-    this.active = false;
-
-    const introEl = document.getElementById('intro-screen');
-    const gameScreen = document.getElementById('game-screen');
-
-    if (introEl) {
-      introEl.classList.add('fade-out');
-      setTimeout(() => {
-        if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
-        if (gameScreen) gameScreen.classList.remove('hidden');
-        initApp();
-      }, 500);
-    } else {
-      if (gameScreen) gameScreen.classList.remove('hidden');
-      initApp();
-    }
-  }
-};
-
-/* =========================================================
-   2. EVOLUTIONS-PFADE & DATENBANK
-   ========================================================= */
-const EVOLUTION_CHAINS = {
-  "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20 },
-  "Glutexo":  { next: "Glurak",  cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  hpBonus: 35 },
-  "Bisasam":  { next: "Bisaknosp", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png", hpBonus: 20 },
-  "Bisaknosp":{ next: "Bisaflor",  cardUrl: "https://images.pokemontcg.io/base1/15_hires.png", hpBonus: 35 },
-  "Schiggy":   { next: "Schillok", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png", hpBonus: 20 },
-  "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35 }
-};
-
-// FULL KATALOG GENERATION 1 (Home Area)
-const FULL_GEN1_CATALOG = [
-  { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/57_hires.png", weakness: "elektro" },
-  { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf" },
-  { name: "Pikachu", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "boden" },
-  { name: "Myrapla", type: "pflanze", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "feuer" },
-  { name: "Raupy", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/45_hires.png", weakness: "feuer" },
-  { name: "Hornliu", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", weakness: "feuer" },
-  { name: "Kleinstein", type: "gestein", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/47_hires.png", weakness: "wasser" },
-  { name: "Zubat", type: "gift", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/70_hires.png", weakness: "elektro" },
-  { name: "Psyduck", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/53_hires.png", weakness: "elektro" },
-  { name: "Fukano", type: "feuer", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/28_hires.png", weakness: "wasser" },
-  { name: "Quapsel", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/59_hires.png", weakness: "elektro" },
-  { name: "Machollo", type: "kampf", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/52_hires.png", weakness: "psycho" },
-  { name: "Knofensa", type: "pflanze", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/49_hires.png", weakness: "feuer" },
-  { name: "Tentacha", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/66_hires.png", weakness: "elektro" },
-  { name: "Ponyta", type: "feuer", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/60_hires.png", weakness: "wasser" },
-  { name: "Flegmon", type: "wasser", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/55_hires.png", weakness: "elektro" },
-  { name: "Magnetilo", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/53_hires.png", weakness: "feuer" },
-  { name: "Drowzee", type: "psycho", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/49_hires.png", weakness: "käfer" },
-  { name: "Krabby", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/51_hires.png", weakness: "elektro" },
-  { name: "Voltobal", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/67_hires.png", weakness: "boden" },
-  { name: "Tragosso", type: "boden", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/50_hires.png", weakness: "wasser" },
-  { name: "Smogon", type: "gift", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/51_hires.png", weakness: "psycho" },
-  { name: "Seeper", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/48_hires.png", weakness: "elektro" },
-  { name: "Sterndu", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/65_hires.png", weakness: "elektro" },
-  { name: "Pinsir", type: "käfer", hp: 65, maxHp: 65, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
-];
 
 // FULL KATALOG GENERATION 2 (Out of Home Area)
 const FULL_GEN2_CATALOG = [
