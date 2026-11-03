@@ -621,3 +621,15 @@ button:disabled {
   50% { transform: translate(6px, -6px); }
   75% { transform: translate(-4px, -4px); }
 }
+
+/* SPLASH SCREEN & PULSE ANIMATION */
+#splash-screen {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
