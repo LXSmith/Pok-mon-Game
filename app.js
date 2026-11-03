@@ -7,20 +7,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT & SOUND-POOL FÜR SCHNELLE MP3-WIEDERGABE
+// GLOBALE AUDIO-KONTEXT & SOUND-BUFFER VERWALTUNG
 let audioCtx = null;
+let cardAudioBuffer = null;
 const CARD_SOUND_PATH = './freesound_community-flipcard-91468.mp3';
-
-// 5 Audio-Objekte im Pool laden, damit schnelle Karten nicht blockieren
-const audioPoolSize = 5;
-const cardAudioPool = [];
-let poolIndex = 0;
-
-for (let i = 0; i < audioPoolSize; i++) {
-  const a = new Audio(CARD_SOUND_PATH);
-  a.preload = 'auto';
-  cardAudioPool.push(a);
-}
 
 function getAudioContext() {
   if (!audioCtx) {
@@ -31,6 +21,21 @@ function getAudioContext() {
     audioCtx.resume();
   }
   return audioCtx;
+}
+
+// Lädt und dekodiert die MP3 erst, wenn der AudioContext durch Klick aktiv ist
+async function loadCardSoundBuffer() {
+  const ctx = getAudioContext();
+  if (!ctx || cardAudioBuffer) return;
+
+  try {
+    const response = await fetch(CARD_SOUND_PATH);
+    const arrayBuffer = await response.arrayBuffer();
+    cardAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    console.log('[Audio] MP3-Buffer erfolgreich geladen!');
+  } catch(e) {
+    console.log('[Audio] Fehler beim Laden des MP3 Buffers:', e);
+  }
 }
 
 function unlockAudio() {
@@ -44,17 +49,9 @@ function unlockAudio() {
       source.start(0);
     } catch(e){}
   }
-
-  // Alle Audio-Objekte aus dem Pool kurz stumm anspielen, damit Safari/Chrome sie freischalten
-  cardAudioPool.forEach(audioEl => {
-    try {
-      audioEl.volume = 0.6;
-      audioEl.play().then(() => {
-        audioEl.pause();
-        audioEl.currentTime = 0;
-      }).catch(() => {});
-    } catch(e){}
-  });
+  
+  // Lädt und aktiviert das Audio direkt beim Touch/Klick
+  loadCardSoundBuffer();
 }
 
 /* =========================================================
@@ -111,44 +108,19 @@ const IntroManager = {
   },
 
   playCardFlipSound() {
-    try {
-      // Rotations-Prinzip aus dem Audio-Pool für unterbrechungsfreie Wiedergabe
-      const soundInstance = cardAudioPool[poolIndex];
-      poolIndex = (poolIndex + 1) % audioPoolSize;
-      
-      soundInstance.currentTime = 0;
-      soundInstance.play().catch(err => {
-        console.log('MP3 Play Fehler:', err);
-      });
-    } catch(e){}
-  },
-
-  playWhooshSound() {
     const ctx = getAudioContext();
-    if (!ctx) return;
+    if (!ctx || !cardAudioBuffer) return;
+
     try {
-      const now = ctx.currentTime;
-      const bufferSize = ctx.sampleRate * 0.12;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+      const source = ctx.createBufferSource();
+      source.buffer = cardAudioBuffer;
+      
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0.7;
 
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, now);
-      filter.frequency.exponentialRampToValueAtTime(150, now + 0.12);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.5, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.start(0);
     } catch(e){}
   },
 
@@ -218,66 +190,6 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
-        // Spielt die freigeschalteten MP3s aus dem Pool ab
-        this.playCardFlipSound();
-
-        const animation = card.animate([
-          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
-          { opacity: 1, offset: 0.15 },
-          { opacity: 1, offset: 0
-
-
-// FULL KATALOG GENERATION 2 (Out of Home Area)
-const FULL_GEN2_CATALOG = [
-  { name: "Feurigel", type: "feuer", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/57_hires.png", weakness: "wasser" },
-  { name: "Karnimani", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/81_hires.png", weakness: "pflanze" },
-  { name: "Endivie", type: "pflanze", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/54_hires.png", weakness: "feuer" },
-  { name: "Wiesor", type: "normal", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/68_hires.png", weakness: "kampf" },
-  { name: "Hoothoot", type: "normal", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/60_hires.png", weakness: "elektro" },
-  { name: "Ledyba", type: "käfer", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/63_hires.png", weakness: "feuer" },
-  { name: "Weeber", type: "käfer", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/73_hires.png", weakness: "feuer" },
-  { name: "Lanturn", type: "elektro", hp: 65, maxHp: 65, cardUrl: "https://images.pokemontcg.io/neo1/38_hires.png", weakness: "boden" },
-  { name: "Togepi", type: "normal", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/51_hires.png", weakness: "kampf" },
-  { name: "Natu", type: "psycho", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/67_hires.png", weakness: "unlicht" },
-  { name: "Voltilamm", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/64_hires.png", weakness: "boden" },
-  { name: "Marill", type: "wasser", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/neo1/66_hires.png", weakness: "elektro" },
-  { name: "Mogelbaum", type: "gestein", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/neo1/27_hires.png", weakness: "wasser" },
-  { name: "Hoppspross", type: "pflanze", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/61_hires.png", weakness: "feuer" },
-  { name: "Griffel", type: "normal", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/53_hires.png", weakness: "kampf" },
-  { name: "Sonnefel", type: "pflanze", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/78_hires.png", weakness: "feuer" },
-  { name: "Felino", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/80_hires.png", weakness: "pflanze" },
-  { name: "Kramurx", type: "unlicht", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/44_hires.png", weakness: "elektro" },
-  { name: "Traunfugil", type: "geist", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/45_hires.png", weakness: "unlicht" },
-  { name: "Icognito", type: "psycho", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/50_hires.png", weakness: "unlicht" },
-  { name: "Tannza", type: "käfer", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/70_hires.png", weakness: "feuer" },
-  { name: "Dummisel", type: "normal", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/neo1/56_hires.png", weakness: "kampf" },
-  { name: "Skorgla", type: "boden", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/neo1/59_hires.png", weakness: "wasser" },
-  { name: "Snubbull", type: "fee", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/76_hires.png", weakness: "gift" },
-  { name: "Pottrott", type: "käfer", hp: 80, maxHp: 80, cardUrl: "https://images.pokemontcg.io/neo1/49_hires.png", weakness: "feuer" }
-];
-
-    const cardCount = 14;
-    const totalDuration = 5000;
-
-    for (let i = 0; i < cardCount; i++) {
-      setTimeout(() => {
-        if (!this.active) return;
-        const cardData = tcgCards[i % tcgCards.length];
-        const card = document.createElement('div');
-        card.className = 'tcg-card';
-
-        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
-
-        const startX = (Math.random() - 0.5) * 80;
-        const startY = (Math.random() - 0.5) * 60;
-        const endX = (Math.random() - 0.5) * 380;
-        const endY = (Math.random() - 0.5) * 320;
-        const rotZ = (Math.random() - 0.5) * 22;
-        const rotY = (Math.random() - 0.5) * 18;
-
-        cardStream.appendChild(card);
-
-        // Spielt direkt die echte MP3-Datei ab
         this.playCardFlipSound();
 
         const animation = card.animate([
