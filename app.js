@@ -7,9 +7,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT & SOUND-POOL VERWALTUNG
+// GLOBALE AUDIO-KONTEXT & LOKALER SOUND
 let audioCtx = null;
-const CARD_SOUND_URL = 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8c50c58.mp3?filename=card-flipping-75622.mp3';
+
+// Exakter Name deiner hochgeladenen Datei
+const cardAudio = new Audio('./freesound_community-flipcard-91468.mp3');
+cardAudio.preload = 'auto';
 
 function getAudioContext() {
   if (!audioCtx) {
