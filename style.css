@@ -50,14 +50,16 @@ body, html {
   inset: 0;
   z-index: 10000;
   background-color: #030406;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s ease-in-out, visibility 0.6s ease-in-out;
   overflow: hidden;
 }
 
 #intro-screen.fade-out {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .intro-container {
@@ -361,17 +363,24 @@ button:disabled {
 /* =========================================================
    4. RADAR HUD STYLES (HAUPTSPIEL)
    ========================================================= */
-#screen-radar-hud {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  justify-content: space-between;
-  padding: 20px 0;
+.radar-container {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  height: 100vh !important;
+  padding: 30px 20px !important;
+  box-sizing: border-box !important;
+}
+
+.top-bar, .bottom-bar {
+  width: 100%;
+  max-width: 360px;
+  z-index: 10;
 }
 
 .btn-scan-main {
-  width: 90%;
-  margin: 0 auto;
+  width: 100%;
   background: linear-gradient(180deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   font-size: 18px;
@@ -477,11 +486,12 @@ button:disabled {
 }
 
 .btn-menu-trigger {
-  width: 60%;
-  margin: 0 auto;
-  background: #334155;
-  color: #ffffff;
-  border-radius: 25px;
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-radius: 25px !important;
+  padding: 16px !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* =========================================================
