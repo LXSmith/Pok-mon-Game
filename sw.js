@@ -1,6 +1,5 @@
-const CACHE_NAME = 'pokemon-rpg-v1';
+const CACHE_NAME = 'pokemon-rpg-v2'; // Versionsnummer erhöht!
 
-// Statische Kern-Ressourcen, die sofort beim Installieren gespeichert werden
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -12,17 +11,18 @@ const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap'
 ];
 
-// Service Worker Installation
+// 1. Service Worker Installation
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       console.log('[Service Worker] Caching static core assets');
       return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Aktivierung & alte Caches aufräumen
+// 2. Aktivierung & alte Caches aufräumen
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -38,20 +38,42 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Abfangen von Anfragen (Cache-First Strategie für Medien & Dokumente)
+// 3. Network-First für eigene App-Dateien (holt immer frischen Code!)
 self.addEventListener('fetch', event => {
+  const url = event.request.url;
+
+  // Für eigene lokale Dateien (HTML, CSS, JS): Immer erst das Netzwerk fragen
+  if (url.includes(location.origin)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Nur wenn offline, aus dem Cache laden
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Für externe Bilder/APIs (PokéAPI, TCG, Leaflet): Cache-First für schnelle Performance
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       if (cachedResponse) {
         return cachedResponse;
       }
-
       return fetch(event.request).then(networkResponse => {
-        // Antworten im Cache ablegen (z.B. nachgeladene Pokémon-Grafiken von pokemontcg.io)
         if (
           networkResponse &&
           networkResponse.status === 200 &&
-          (event.request.url.includes('pokemontcg.io') || event.request.url.includes('pokeapi.co'))
+          (url.includes('pokemontcg.io') || url.includes('pokeapi.co') || url.includes('unpkg.com'))
         ) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
@@ -59,9 +81,6 @@ self.addEventListener('fetch', event => {
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // Falls komplett offline und nicht im Cache
-        console.log('[Service Worker] Fetch failed, offline mode active');
       });
     })
   );
