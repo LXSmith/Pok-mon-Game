@@ -66,6 +66,21 @@
       </div>
     </div>
 
+      <!-- ========================================== -->
+      <!-- BACKUP-CODE        -->
+      <!-- ========================================== -->
+      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
+
+      <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #444;">
+        <h4 style="color: #aaa; margin-bottom: 10px;">💾 Backup (Sicherheit)</h4>
+        <button onclick="exportSaveGame()" style="background: #27ae60; font-size: 12px; margin-bottom: 5px;">Spielstand sichern (Download)</button>
+        <button onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Spielstand laden (Upload)</button>
+      </div>
+      <!-- ========================================== -->
+
+    </div> <!-- Dieses div schließt den screen-slots Container -->
+
+    
     <!-- SCREEN 2: HEIMATORT FESTLEGEN -->
     <div id="screen-home" class="card hidden">
       <h2>Heimatort festlegen</h2>
