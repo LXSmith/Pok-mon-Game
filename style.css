@@ -43,11 +43,15 @@ body, html {
 }
 
 /* =========================================================
-   2. CINEMATIC INTRO STYLES & ANIMATIONEN
+/* =========================================================
+   CINEMATIC INTRO STYLES & VISUAL CARD FIX
    ========================================================= */
 #intro-screen {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 10000;
   background-color: #030406;
   opacity: 1;
@@ -71,30 +75,36 @@ body, html {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  perspective: 1200px; /* 3D-Flugperspektive */
+  perspective: 1000px; /* Erzeugt die echte 3D-Tiefe */
+  -webkit-perspective: 1000px;
 }
 
-/* KARTEN STREAM CONTAINER */
+/* KARTEN STREAM CONTAINER (Jetzt mit fester Dimension) */
 .card-stream {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   pointer-events: none;
   z-index: 2;
 }
 
-/* TCG KARTE */
+/* FLIEGENDE TCG KARTE */
 .tcg-card {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 160px;
-  height: 223px;
-  margin-top: -111px;
-  margin-left: -80px;
-  border-radius: 8px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.15);
+  width: 150px;
+  height: 210px;
+  margin-top: -105px;
+  margin-left: -75px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(255, 255, 255, 0.2);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   will-change: transform, opacity;
   background: #111827;
   overflow: hidden;
@@ -103,27 +113,29 @@ body, html {
 .tcg-card img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
 }
 
 /* SLASH & BACKGROUND GLOW EFFEKTE */
 .bg-glow {
   position: absolute;
-  width: 850px;
-  height: 850px;
-  background: radial-gradient(circle, rgba(255, 59, 92, 0.22) 0%, rgba(157, 78, 221, 0.15) 45%, rgba(0, 0, 0, 0) 70%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 59, 92, 0.3) 0%, rgba(157, 78, 221, 0.15) 50%, rgba(0, 0, 0, 0) 70%);
   border-radius: 50%;
   opacity: 0;
-  animation: fadeInGlow 1.2s ease 5.5s forwards;
+  animation: fadeInGlow 1.2s ease 5.3s forwards;
+  pointer-events: none;
 }
 
 .slash-effect {
   position: absolute;
-  width: 170%;
-  height: 10px;
+  width: 180%;
+  height: 8px;
   background: #ffffff;
-  box-shadow: 0 0 25px #fff, 0 0 50px var(--accent-red), 0 0 90px var(--accent-cyan);
+  box-shadow: 0 0 20px #fff, 0 0 40px #ff3b5c, 0 0 80px #00f0ff;
   transform: rotate(-22deg) scaleX(0);
   transform-origin: left center;
   z-index: 10;
@@ -151,23 +163,23 @@ body, html {
 }
 
 .title-pokemon {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
-  letter-spacing: 0.55em;
+  letter-spacing: 0.5em;
   color: #ffffff;
   text-transform: uppercase;
   opacity: 0;
   transform: translateY(-20px);
   animation: revealTextUpper 0.5s cubic-bezier(0.16, 1, 0.3, 1) 5.65s forwards;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
 }
 
 .title-move {
-  font-size: 5.5rem;
+  font-size: 5rem;
   font-weight: 900;
   font-style: italic;
-  letter-spacing: 0.12em;
-  background: linear-gradient(135deg, #ffffff 15%, var(--accent-red) 60%, var(--accent-purple) 100%);
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #ffffff 15%, #ff3b5c 60%, #9d4edd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 0.9;
@@ -175,22 +187,22 @@ body, html {
   position: relative;
   clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
   animation: revealMoveTitle 0.65s cubic-bezier(0.16, 1, 0.3, 1) 5.6s forwards;
-  filter: drop-shadow(0 15px 35px rgba(255, 59, 92, 0.5));
+  filter: drop-shadow(0 15px 30px rgba(255, 59, 92, 0.6));
 }
 
 .start-prompt {
-  margin-top: 80px;
-  font-size: 0.9rem;
+  margin-top: 70px;
+  font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   opacity: 0;
   animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards;
   z-index: 5;
 }
 
-/* KEYFRAMES */
+/* KEYFRAME ANIMATIONEN */
 @keyframes performSlash {
   0% { transform: rotate(-22deg) scaleX(0); opacity: 1; }
   50% { transform: rotate(-22deg) scaleX(1); opacity: 1; }
@@ -212,6 +224,7 @@ body, html {
 @keyframes fadeInGlow { to { opacity: 1; } }
 @keyframes fadeInPrompt { to { opacity: 0.7; } }
 @keyframes pulseText { from { opacity: 0.3; transform: scale(0.98); } to { opacity: 0.9; transform: scale(1.02); } }
+
 
 /* =========================================================
    3. HAUPT-GAME CONTAINER & BUTTONS
