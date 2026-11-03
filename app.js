@@ -7,7 +7,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT VERWALTUNG
+// GLOBALE AUDIO-KONTEXT VERWALTUNG (iOS-optimiert)
 let audioCtx = null;
 
 function getAudioContext() {
@@ -21,12 +21,20 @@ function getAudioContext() {
   return audioCtx;
 }
 
+// Spielt einen unhörbaren 1ms-Ton ab, um iOS Safari garantiert aufzuwecken
 function unlockAudio() {
-  getAudioContext();
-  window.removeEventListener('click', unlockAudio);
-  window.removeEventListener('touchstart', unlockAudio);
-  window.removeEventListener('pointerdown', unlockAudio);
+  const ctx = getAudioContext();
+  if (ctx) {
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch(e){}
+  }
 }
+
 window.addEventListener('click', unlockAudio);
 window.addEventListener('touchstart', unlockAudio);
 window.addEventListener('pointerdown', unlockAudio);
@@ -36,7 +44,7 @@ window.addEventListener('pointerdown', unlockAudio);
    ========================================================= */
 const IntroManager = {
   active: true,
-  canStart: false, // Erst nach Ablauf der Animation true!
+  canStart: false,
   audioUnlocked: false,
 
   init() {
@@ -49,37 +57,43 @@ const IntroManager = {
       return;
     }
 
-    // Visuelle Animation startet sofort (Karten fliegen)
+    // Visuelle Animation startet sofort
     this.startCardRush();
 
     const promptElem = document.querySelector('.start-prompt');
     if (promptElem) promptElem.innerText = "BERÜHREN FÜR SOUND";
 
-    // 1. Klick schaltet NUR den Ton frei
-    const handleTouch = () => {
+    const handleTouch = (e) => {
+      // ERSTER TIPP: Sound freischalten & Bestätigungssound spielen
       if (!this.audioUnlocked) {
         this.audioUnlocked = true;
-        getAudioContext(); // Entsperrt Web Audio im Safari/Chrome
-        this.playSlashSound();
-        if (promptElem) promptElem.innerText = "INTRO LÄUFT...";
-      } else if (this.canStart) {
-        // Erst nach Ablauf der Zeit lässt sich das Intro manuell wegklicken
+        unlockAudio(); // Audio-Hardware des Handys entsperren
+        
+        this.playSlashSound(); // Sofort als Feedback abspielen!
+        
+        if (promptElem) {
+          promptElem.innerText = this.canStart ? "BERÜHREN ZUM STARTEN" : "INTRO LÄUFT...";
+        }
+        return;
+      }
+
+      // ZWEITER TIPP: Spiel starten (nur wenn Animation fertig ist)
+      if (this.canStart) {
         this.finishIntro();
       }
     };
 
     container.addEventListener('pointerdown', handleTouch);
 
-    // Nach 5.3s ertönt automatisch der Slash-Sound (falls Audio bereits entsperrt wurde)
-    setTimeout(() => this.playSlashSound(), 5300);
-
-    // Freigabe des Starts/Überspringens erst nach Ablauf der gesamten Animation (~6.4s)
+    // Freigabe des Starts nach 6,4 Sekunden
     setTimeout(() => {
       this.canStart = true;
-      if (promptElem) promptElem.innerText = "BERÜHREN ZUM STARTEN";
+      if (promptElem && this.audioUnlocked) {
+        promptElem.innerText = "BERÜHREN ZUM STARTEN";
+      }
     }, 6400);
 
-    // Automatischer Übergang ins Spiel nach 8 Sekunden (falls der Nutzer gar nicht klickt)
+    // Auto-Start nach 8 Sekunden
     setTimeout(() => {
       if (this.active) {
         this.finishIntro();
@@ -88,8 +102,9 @@ const IntroManager = {
   },
 
   playWhooshSound() {
+    if (!this.audioUnlocked) return;
     const ctx = getAudioContext();
-    if (!ctx || !this.audioUnlocked) return;
+    if (!ctx) return;
     try {
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.10;
@@ -118,8 +133,9 @@ const IntroManager = {
   },
 
   playSlashSound() {
+    if (!this.audioUnlocked) return;
     const ctx = getAudioContext();
-    if (!ctx || !this.audioUnlocked) return;
+    if (!ctx) return;
     try {
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.28;
@@ -138,91 +154,7 @@ const IntroManager = {
 
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.95, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-    } catch(e){}
-  },
-
-  startCardRush() {
-    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
-    if (!cardStream) return;
-
-    const tcgCards = [
-      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
-      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
-      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
-    ];
-
-    const cardCount = 14;
-    const totalDuration = 5000;
-
-    for (let i = 0; i < cardCount; i++) {
-      setTimeout(() => {
-        if (!this.active) return;
-        const cardData = tcgCards[i % tcgCards.length];
-        const card = document.createElement('div');
-        card.className = 'tcg-card';
-
-        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
-
-        const startX = (Math.random() - 0.5) * 80;
-        const startY = (Math.random() - 0.5) * 60;
-        const endX = (Math.random() - 0.5) * 380;
-        const endY = (Math.random() - 0.5) * 320;
-        const rotZ = (Math.random() - 0.5) * 22;
-        const rotY = (Math.random() - 0.5) * 18;
-
-        cardStream.appendChild(card);
-
-        const animation = card.animate([
-          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
-          { opacity: 1, offset: 0.15 },
-          { opacity: 1, offset: 0.70 },
-          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
-        ], {
-          duration: 600,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          fill: 'forwards'
-        });
-
-        this.playWhooshSound();
-        animation.onfinish = () => card.remove();
-
-      }, i * (totalDuration / cardCount));
-    }
-  },
-
-  finishIntro() {
-    if (!this.active) return;
-    this.active = false;
-
-    getAudioContext();
-
-    const introEl = document.getElementById('intro-screen');
-    const gameScreen = document.getElementById('game-screen');
-
-    if (introEl) {
-      introEl.classList.add('fade-out');
-      setTimeout(() => {
-        introEl.remove();
-        if (gameScreen) gameScreen.classList.remove('hidden');
-        initApp();
-      }, 500);
-    } else {
-      if (gameScreen) gameScreen.classList.remove('hidden');
-      initApp();
-    }
-  }
-};
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26
 
 /* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
