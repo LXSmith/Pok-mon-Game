@@ -9,10 +9,7 @@ if ('serviceWorker' in navigator) {
 
 // GLOBALE AUDIO-KONTEXT & LOKALER SOUND
 let audioCtx = null;
-
-// Exakter Name deiner hochgeladenen Datei
-const cardAudio = new Audio('./freesound_community-flipcard-91468.mp3');
-cardAudio.preload = 'auto';
+const CARD_SOUND_PATH = './freesound_community-flipcard-91468.mp3';
 
 function getAudioContext() {
   if (!audioCtx) {
@@ -36,6 +33,15 @@ function unlockAudio() {
       source.start(0);
     } catch(e){}
   }
+
+  // Wichtig für Mobilgeräte: MP3-Wiedergabe beim ersten Klick freischalten
+  try {
+    const unlockAudioEl = new Audio(CARD_SOUND_PATH);
+    unlockAudioEl.volume = 0.01;
+    unlockAudioEl.play().then(() => {
+      unlockAudioEl.pause();
+    }).catch(e => console.log('Audio unlock warte auf Interaktion', e));
+  } catch(e){}
 }
 
 /* =========================================================
@@ -93,15 +99,13 @@ const IntroManager = {
 
   playCardFlipSound() {
     try {
-      const audio = new Audio(CARD_SOUND_URL);
-      audio.volume = 0.6;
-      audio.play().catch(() => {
-        // Fallback-Synthesizer, falls MP3 im Browser geblockt wird
-        this.playWhooshSound();
+      // Neues Audio-Objekt pro Karte verhindert Stummschaltung bei Überlappung
+      const soundInstance = new Audio(CARD_SOUND_PATH);
+      soundInstance.volume = 0.6;
+      soundInstance.play().catch(err => {
+        console.log('MP3 Play Fehler:', err);
       });
-    } catch(e) {
-      this.playWhooshSound();
-    }
+    } catch(e){}
   },
 
   playWhooshSound() {
@@ -199,7 +203,7 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
-        // Sound wird exakt beim Erzeugen der Karte ausgelöst
+        // Spielt direkt die echte MP3-Datei ab
         this.playCardFlipSound();
 
         const animation = card.animate([
