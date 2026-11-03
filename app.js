@@ -5,191 +5,182 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* =========================================================
-   1. AUDIO ENGINE (Synthetische Sounds via Web Audio API)
-   ========================================================= */
-const AudioManager = {
-  ctx: null,
+// GLOBALE AUDIO-KONTEXT VERWALTUNG
+let audioCtx = null;
 
-  getCtx() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
-    }
-    return this.ctx;
-  },
-
-  unlock() {
-    const ctx = this.getCtx();
-    if (ctx) {
-      try {
-        const buf = ctx.createBuffer(1, 1, 22050);
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(ctx.destination);
-        src.start(0);
-      } catch (e) {}
-    }
-  },
-
-  playBeep(pitch = 440, duration = 0.1) {
-    try {
-      const ctx = this.getCtx();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = pitch;
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-    } catch (e) {}
-  },
-
-  playWoosh() {
-    try {
-      const ctx = this.getCtx();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      const bufSize = ctx.sampleRate * 0.08;
-      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      const out = buf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
-
-      const noise = ctx.createBufferSource();
-      noise.buffer = buf;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1200, now);
-      filter.frequency.exponentialRampToValueAtTime(300, now + 0.08);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-    } catch(e) {}
-  },
-
-  playSlash() {
-    try {
-      const ctx = this.getCtx();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      const bufSize = ctx.sampleRate * 0.25;
-      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      const out = buf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
-
-      const noise = ctx.createBufferSource();
-      noise.buffer = buf;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(3200, now);
-      filter.frequency.exponentialRampToValueAtTime(200, now + 0.25);
-      filter.Q.value = 3;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.8, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-    } catch(e) {}
-  },
-
-  playVictory() {
-    this.playBeep(523.25, 0.15);
-    setTimeout(() => this.playBeep(659.25, 0.15), 150);
-    setTimeout(() => this.playBeep(783.99, 0.4), 300);
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
   }
-};
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
 
 /* =========================================================
-   2. INTRO MANAGER
+   1. CINEMATIC INTRO ENGINE (Original "Pokémon MOVE" Engine)
    ========================================================= */
 const IntroManager = {
   active: true,
+  canStart: true,
 
   init() {
-    const startAppFlow = () => {
-      AudioManager.unlock();
-      window.removeEventListener('touchstart', startAppFlow);
-      window.removeEventListener('pointerdown', startAppFlow);
-      window.removeEventListener('click', startAppFlow);
-      this.startMainIntro();
-    };
+    const introScreen = document.getElementById('intro-screen');
+    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
-    window.addEventListener('touchstart', startAppFlow, { once: true });
-    window.addEventListener('pointerdown', startAppFlow, { once: true });
-    window.addEventListener('click', startAppFlow, { once: true });
-  },
+    if (!introScreen || !container) {
+      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden -> Überspringe Intro.');
+      this.finishIntro();
+      return;
+    }
 
-  startMainIntro() {
-    const container = document.getElementById('introContainer');
-    if (!container) { this.finishIntro(); return; }
+    container.addEventListener('pointerdown', () => {
+      getAudioContext();
+    });
+
+    container.addEventListener('click', () => {
+      this.finishIntro();
+    });
 
     this.startCardRush();
-    setTimeout(() => AudioManager.playSlash(), 5300);
+    setTimeout(() => this.playSlashSound(), 5300);
 
-    container.addEventListener('pointerdown', () => this.finishIntro(), { once: true });
-    setTimeout(() => { if (this.active) this.finishIntro(); }, 7500);
+    setTimeout(() => {
+      if (this.active) {
+        this.finishIntro();
+      }
+    }, 7500);
+  },
+
+  playWhooshSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const bufferSize = ctx.sampleRate * 0.10;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const randomStartFreq = 500 + Math.random() * 350;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(randomStartFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(120, now + 0.10);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e){}
+  },
+
+  playSlashSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const bufferSize = ctx.sampleRate * 0.28;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(4500, now);
+      filter.frequency.exponentialRampToValueAtTime(250, now + 0.25);
+      filter.Q.value = 4;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.95, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e){}
   },
 
   startCardRush() {
-    const cardStream = document.getElementById('cardStream');
+    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
     const tcgCards = [
-      'https://images.pokemontcg.io/base1/4_hires.png',
-      'https://images.pokemontcg.io/base1/58_hires.png',
-      'https://images.pokemontcg.io/base1/10_hires.png',
-      'https://images.pokemontcg.io/base1/2_hires.png'
+      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
+      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
+      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
     ];
 
-    for (let i = 0; i < 12; i++) {
+    const cardCount = 14;
+    const totalDuration = 5000;
+
+    for (let i = 0; i < cardCount; i++) {
       setTimeout(() => {
         if (!this.active) return;
+        const cardData = tcgCards[i % tcgCards.length];
         const card = document.createElement('div');
         card.className = 'tcg-card';
-        card.innerHTML = `<img src="${tcgCards[i % tcgCards.length]}" alt="Card">`;
+
+        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
+
+        const startX = (Math.random() - 0.5) * 80;
+        const startY = (Math.random() - 0.5) * 60;
+        const endX = (Math.random() - 0.5) * 380;
+        const endY = (Math.random() - 0.5) * 320;
+        const rotZ = (Math.random() - 0.5) * 22;
+        const rotY = (Math.random() - 0.5) * 18;
+
         cardStream.appendChild(card);
-        
-        AudioManager.playWoosh();
 
-        const anim = card.animate([
-          { transform: 'translate3d(0,0,-600px) scale(0.3)', opacity: 0 },
-          { opacity: 1, offset: 0.2 },
-          { transform: 'translate3d(0,0,400px) scale(1.5)', opacity: 0 }
-        ], { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' });
+        const animation = card.animate([
+          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
+          { opacity: 1, offset: 0.15 },
+          { opacity: 1, offset: 0.70 },
+          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          fill: 'forwards'
+        });
 
-        anim.onfinish = () => card.remove();
-      }, i * 400);
+        this.playWhooshSound();
+        animation.onfinish = () => card.remove();
+
+      }, i * (totalDuration / cardCount));
     }
   },
 
   finishIntro() {
     if (!this.active) return;
     this.active = false;
+
+    getAudioContext();
+
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
 
     if (introEl) {
       introEl.classList.add('fade-out');
       setTimeout(() => {
-        introEl.remove();
+        if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
         if (gameScreen) gameScreen.classList.remove('hidden');
         initApp();
       }, 500);
@@ -201,7 +192,7 @@ const IntroManager = {
 };
 
 /* =========================================================
-   3. SPEICHER & DATENBANKEN
+   2. SPEICHER & DATENBANKEN
    ========================================================= */
 const EVOLUTION_CHAINS = {
   "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20 },
@@ -226,7 +217,7 @@ const RARE_POKEMON = [
   { name: "Pinsir", type: "käfer", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
 ];
 
-let selectedFlowMode = 'continue'; // 'continue' oder 'new'
+let selectedFlowMode = 'continue';
 let activeSlot = null;
 let selectedStarter = null;
 
@@ -251,7 +242,7 @@ let currentSaveData = {
 };
 
 /* =========================================================
-   4. NAVIGATION & SPIELSTAND LOGIK
+   3. NAVIGATION & SPIELSTAND LOGIK
    ========================================================= */
 function initApp() {
   updateSlotUI();
@@ -292,7 +283,7 @@ function onSlotSelected(slotNum) {
     } else {
       alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
     }
-  } else { // 'new'
+  } else {
     currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [] };
     showScreen('screen-starter');
   }
@@ -370,7 +361,7 @@ function renderPokemonTeam() {
 }
 
 /* =========================================================
-   5. RADAR- & SCAN-MECHANIK (Gekapselt)
+   4. RADAR- & SCAN-MECHANIK
    ========================================================= */
 function openScanModal() {
   if (isScanning) {
@@ -397,7 +388,6 @@ function startScanProcess(type) {
   ringContainer.className = "radar-rings state-scanning";
   statusText.innerText = "Scanne Umgebung...";
 
-  // Zufällige Suchdauer (3 bis 7 Sekunden) bis Signal gefunden wird
   const searchDelay = Math.floor(Math.random() * 4000) + 3000;
 
   scanTimer = setTimeout(() => {
@@ -417,31 +407,43 @@ function triggerSignalDetected() {
   scanCountdown = 20;
   timerDisplay.innerText = scanCountdown + "s";
 
-  // Sanfte VIBRIERUNG bei Signal
   if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-  AudioManager.playBeep(880, 0.3);
+  playBeep(880, 0.3);
 
-  // 20-Sekunden Ortungs-Phase
   clearInterval(scanTimer);
   scanTimer = setInterval(() => {
     scanCountdown--;
     timerDisplay.innerText = scanCountdown + "s";
 
     if (scanCountdown <= 10 && scanCountdown > 3) {
-      // Annäherung: Schnelleres Pulsieren & Vibration
       ringContainer.className = "radar-rings state-warning";
       if (navigator.vibrate) navigator.vibrate(100);
-      AudioManager.playBeep(600, 0.05);
+      playBeep(600, 0.05);
     } else if (scanCountdown <= 3 && scanCountdown > 0) {
-      // Ziel-Lock: Rot & intensive Vibration
       ringContainer.className = "radar-rings state-target";
       if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
-      AudioManager.playBeep(1200, 0.1);
+      playBeep(1200, 0.1);
     } else if (scanCountdown <= 0) {
       clearInterval(scanTimer);
       startBattleFromScan();
     }
   }, 1000);
+}
+
+function playBeep(pitch = 440, duration = 0.1) {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = pitch;
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {}
 }
 
 function startBattleFromScan() {
@@ -476,7 +478,7 @@ function resetRadarUI() {
 }
 
 /* =========================================================
-   6. KAMPFSYSTEM & FANGSYSTEM
+   5. KAMPFSYSTEM & FANGSYSTEM
    ========================================================= */
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
@@ -516,7 +518,7 @@ function executePlayerAttack() {
   updateBattleUI();
 
   document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
-  AudioManager.playBeep(600, 0.1);
+  playBeep(600, 0.1);
 
   if (currentEnemy.hp <= 0) return winBattle();
   setTimeout(scheduleEnemyAttack, 1000);
@@ -536,7 +538,7 @@ function executePlayerSpecial() {
   updateBattleUI();
 
   document.getElementById('battle-warning-box').innerText = `SPEZIALANGRIFF! (-${dmg} KP)`;
-  AudioManager.playBeep(900, 0.35);
+  playBeep(900, 0.35);
 
   if (currentEnemy.hp <= 0) return winBattle();
   setTimeout(scheduleEnemyAttack, 1000);
@@ -552,7 +554,7 @@ function scheduleEnemyAttack() {
   playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
 
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
-  AudioManager.playBeep(300, 0.25);
+  playBeep(300, 0.25);
 
   isEnemyAttacking = false;
 
@@ -578,7 +580,7 @@ function attemptCatch() {
   const catchChance = 1.0 - ((currentEnemy.hp / currentEnemy.maxHp) * 0.7);
 
   if (Math.random() <= catchChance) {
-    AudioManager.playBeep(1200, 0.4);
+    playBeep(1200, 0.4);
     alert(`Du hast ${currentEnemy.name} gefangen!`);
 
     currentSaveData.pokemonTeam.push({
@@ -595,7 +597,7 @@ function attemptCatch() {
     saveCurrentData();
     showScreen('screen-radar-hud');
   } else {
-    AudioManager.playBeep(400, 0.2);
+    playBeep(400, 0.2);
     document.getElementById('battle-warning-box').innerText = "Schade! Das Pokémon ist entkommen!";
     setTimeout(scheduleEnemyAttack, 1000);
   }
@@ -603,7 +605,11 @@ function attemptCatch() {
 
 function winBattle() {
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
-  AudioManager.playVictory();
+  try {
+    playBeep(523.25, 0.15);
+    setTimeout(() => playBeep(659.25, 0.15), 150);
+    setTimeout(() => playBeep(783.99, 0.4), 300);
+  } catch(e){}
 
   setTimeout(() => {
     const earnedExp = 20;
@@ -662,7 +668,6 @@ function rollEvolution() {
   const currentChance = pendingEvoPokemon.evoChance || 0;
 
   if (roll <= currentChance && evoData) {
-    AudioManager.playVictory();
     pendingEvoPokemon.name = evoData.next;
     pendingEvoPokemon.cardUrl = evoData.cardUrl;
     pendingEvoPokemon.maxHp += evoData.hpBonus;
@@ -671,7 +676,7 @@ function rollEvolution() {
     saveCurrentData();
     alert(`🎉 Glückwunsch! Dein Pokémon hat sich zu ${pendingEvoPokemon.name} entwickelt!`);
   } else {
-    AudioManager.playBeep(300, 0.3);
+    playBeep(300, 0.3);
     alert(`Fast geschafft! Die Entwicklung hat noch nicht geklappt.`);
   }
 
@@ -695,7 +700,7 @@ function addTrainerExp(amount) {
 }
 
 /* =========================================================
-   7. MENÜ OVERLAY LOGIK
+   6. MENÜ OVERLAY LOGIK
    ========================================================= */
 function openMenuModal() {
   loadDashboard();
@@ -759,6 +764,7 @@ function importSaveGame(e) {
   reader.readAsText(file);
 }
 
+// 7. INTRO ENGINE STARTEN
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => IntroManager.init());
 } else {
