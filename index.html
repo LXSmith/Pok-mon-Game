@@ -10,11 +10,11 @@
   <title>Pokémon Real-Life RPG - MOVE</title>
   
   <!-- Schriftart & Manifest -->
-<link rel="stylesheet" href="style.css?v=200">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- CSS-Datei -->
-  <link rel="stylesheet" href="style.css">
+  <!-- CSS-Datei (mit Cache-Buster v=300) -->
+  <link rel="stylesheet" href="style.css?v=300">
 </head>
 <body>
 
@@ -109,16 +109,16 @@
     </div>
 
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
-    <div id="screen-radar-hud" class="radar-container hidden">
+    <div id="screen-radar-hud" class="radar-hud-screen hidden">
       
-      <!-- OBERE AKTIONSLEISTE: SCAN TRIGGER -->
-      <div class="top-bar">
-        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-main">
+      <!-- OBERE AKTIONSLEISTE -->
+      <div class="hud-top-bar">
+        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-primary">
           📡 STARTE POKÉMON SCAN
         </button>
       </div>
 
-      <!-- RADAR ANZEIGEBEREICH (MITTIG) -->
+      <!-- RADAR VIEWPORT (MITTE) -->
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
           <div class="ring ring-1"></div>
@@ -132,9 +132,9 @@
         <div id="radar-timer-display" class="radar-timer hidden">20s</div>
       </div>
 
-      <!-- UNTERE MENÜLEISTE: MENÜ BUTTON -->
-      <div class="bottom-bar">
-        <button onclick="openMenuModal()" class="btn-primary btn-menu-trigger">
+      <!-- UNTERE MENÜLEISTE -->
+      <div class="hud-bottom-bar">
+        <button onclick="openMenuModal()" class="btn-menu-primary">
           ⚙️ HAUPTMENÜ & TEAM
         </button>
       </div>
@@ -250,8 +250,7 @@
 
   </div>
 
-  <!-- Skript-Einbindung ganz unten -->
-<script src="app.js?v=200"></script>
-
+  <!-- Skript-Einbindung mit Cache-Buster -->
+  <script src="app.js?v=300"></script>
 </body>
 </html>
