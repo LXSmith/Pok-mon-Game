@@ -1,230 +1,195 @@
-// SERVICE WORKER REGISTRIERUNG FÜR OFFLINE-PWA-BETRIEB
+// SERVICE WORKER REGISTRIERUNG
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[PWA] Service Worker registriert:', reg.scope))
-      .catch(err => console.log('[PWA] Service Worker Fehler:', err));
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[PWA] SW:', err));
   });
 }
 
-// GLOBALE AUDIO-KONTEXT & SOUND-BUFFER VERWALTUNG
-let audioCtx = null;
-let cardAudioBuffer = null;
-const CARD_SOUND_PATH = './freesound_community-flipcard-91468.mp3';
+/* =========================================================
+   1. AUDIO ENGINE (Synthetische Sounds via Web Audio API)
+   ========================================================= */
+const AudioManager = {
+  ctx: null,
 
-function getAudioContext() {
-  if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (AudioContextClass) audioCtx = new AudioContextClass();
-  }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
-}
+  getCtx() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    return this.ctx;
+  },
 
-async function loadCardSoundBuffer() {
-  const ctx = getAudioContext();
-  if (!ctx || cardAudioBuffer) return;
+  unlock() {
+    const ctx = this.getCtx();
+    if (ctx) {
+      try {
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+      } catch (e) {}
+    }
+  },
 
-  try {
-    const response = await fetch(CARD_SOUND_PATH);
-    const arrayBuffer = await response.arrayBuffer();
-    cardAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
-  } catch(e) {
-    console.log('[Audio] Fehler beim Laden des MP3 Buffers:', e);
-  }
-}
-
-function unlockAudio() {
-  const ctx = getAudioContext();
-  if (ctx) {
+  playBeep(pitch = 440, duration = 0.1) {
     try {
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
-    } catch(e){}
+      const ctx = this.getCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = pitch;
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {}
+  },
+
+  playWoosh() {
+    try {
+      const ctx = this.getCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const bufSize = ctx.sampleRate * 0.08;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const out = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e) {}
+  },
+
+  playSlash() {
+    try {
+      const ctx = this.getCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const bufSize = ctx.sampleRate * 0.25;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const out = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(3200, now);
+      filter.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+      filter.Q.value = 3;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.8, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e) {}
+  },
+
+  playVictory() {
+    this.playBeep(523.25, 0.15);
+    setTimeout(() => this.playBeep(659.25, 0.15), 150);
+    setTimeout(() => this.playBeep(783.99, 0.4), 300);
   }
-  loadCardSoundBuffer();
-}
+};
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Karten-Animation & Slash)
+   2. INTRO MANAGER
    ========================================================= */
 const IntroManager = {
   active: true,
 
   init() {
-    // Audio direkt beim ersten Klick/Touch freischalten
-    const startAppFlow = (e) => {
-      if (e) e.preventDefault();
-      unlockAudio();
-      
-      // Event-Listener entfernen, damit es nur einmal ausführt
+    const startAppFlow = () => {
+      AudioManager.unlock();
       window.removeEventListener('touchstart', startAppFlow);
       window.removeEventListener('pointerdown', startAppFlow);
       window.removeEventListener('click', startAppFlow);
-
       this.startMainIntro();
     };
 
     window.addEventListener('touchstart', startAppFlow, { once: true });
     window.addEventListener('pointerdown', startAppFlow, { once: true });
     window.addEventListener('click', startAppFlow, { once: true });
-
-    // Falls kein Splash-Screen da ist, direkt starten
-    const splashScreen = document.getElementById('splash-screen');
-    if (!splashScreen) {
-      this.startMainIntro();
-    }
   },
 
   startMainIntro() {
-    const splashScreen = document.getElementById('splash-screen');
-    if (splashScreen) {
-      splashScreen.classList.add('fade-out');
-      setTimeout(() => {
-        if (splashScreen.parentNode) splashScreen.parentNode.removeChild(splashScreen);
-      }, 500);
-    }
+    const container = document.getElementById('introContainer');
+    if (!container) { this.finishIntro(); return; }
 
-    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
-    const introScreen = document.getElementById('intro-screen');
-
-    if (!container || !introScreen) {
-      this.finishIntro();
-      return;
-    }
-
-    // Karten-Animation starten
     this.startCardRush();
-    // Slash-Sound nach 5.3 Sekunden abspielen
-    setTimeout(() => this.playSlashSound(), 5300);
+    setTimeout(() => AudioManager.playSlash(), 5300);
 
-    // Klick zum Überspringen (Skip)
-    const skipFlow = () => this.finishIntro();
-    container.addEventListener('pointerdown', skipFlow, { once: true });
-
-    // Nach 7.5 Sekunden automatisch ins Spiel wechseln
-    setTimeout(() => {
-      if (this.active) this.finishIntro();
-    }, 7500);
-  },
-
-  playCardFlipSound() {
-    const ctx = getAudioContext();
-    if (!ctx || !cardAudioBuffer) return;
-
-    try {
-      const source = ctx.createBufferSource();
-      source.buffer = cardAudioBuffer;
-      
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = 0.7;
-
-      source.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      source.start(0);
-    } catch(e){}
-  },
-
-  playSlashSound() {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    try {
-      const now = ctx.currentTime;
-      const bufferSize = ctx.sampleRate * 0.30;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(3500, now);
-      filter.frequency.exponentialRampToValueAtTime(200, now + 0.28);
-      filter.Q.value = 3;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(1.0, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.30);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-    } catch(e){}
+    container.addEventListener('pointerdown', () => this.finishIntro(), { once: true });
+    setTimeout(() => { if (this.active) this.finishIntro(); }, 7500);
   },
 
   startCardRush() {
-    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
+    const cardStream = document.getElementById('cardStream');
     if (!cardStream) return;
 
     const tcgCards = [
-      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
-      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
-      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
+      'https://images.pokemontcg.io/base1/4_hires.png',
+      'https://images.pokemontcg.io/base1/58_hires.png',
+      'https://images.pokemontcg.io/base1/10_hires.png',
+      'https://images.pokemontcg.io/base1/2_hires.png'
     ];
 
-    const cardCount = 14;
-    const totalDuration = 5000;
-
-    for (let i = 0; i < cardCount; i++) {
+    for (let i = 0; i < 12; i++) {
       setTimeout(() => {
         if (!this.active) return;
-        const cardData = tcgCards[i % tcgCards.length];
         const card = document.createElement('div');
         card.className = 'tcg-card';
-
-        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
-
-        const startX = (Math.random() - 0.5) * 80;
-        const startY = (Math.random() - 0.5) * 60;
-        const endX = (Math.random() - 0.5) * 380;
-        const endY = (Math.random() - 0.5) * 320;
-        const rotZ = (Math.random() - 0.5) * 22;
-        const rotY = (Math.random() - 0.5) * 18;
-
+        card.innerHTML = `<img src="${tcgCards[i % tcgCards.length]}" alt="Card">`;
         cardStream.appendChild(card);
-        this.playCardFlipSound();
+        
+        AudioManager.playWoosh();
 
-        const animation = card.animate([
-          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
-          { opacity: 1, offset: 0.15 },
-          { opacity: 1, offset: 0.70 },
-          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
-        ], {
-          duration: 600,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          fill: 'forwards'
-        });
+        const anim = card.animate([
+          { transform: 'translate3d(0,0,-600px) scale(0.3)', opacity: 0 },
+          { opacity: 1, offset: 0.2 },
+          { transform: 'translate3d(0,0,400px) scale(1.5)', opacity: 0 }
+        ], { duration: 600, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' });
 
-        animation.onfinish = () => card.remove();
-
-      }, i * (totalDuration / cardCount));
+        anim.onfinish = () => card.remove();
+      }, i * 400);
     }
   },
 
   finishIntro() {
     if (!this.active) return;
     this.active = false;
-
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
 
     if (introEl) {
       introEl.classList.add('fade-out');
       setTimeout(() => {
-        if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
+        introEl.remove();
         if (gameScreen) gameScreen.classList.remove('hidden');
         initApp();
       }, 500);
@@ -235,9 +200,8 @@ const IntroManager = {
   }
 };
 
-
 /* =========================================================
-   2. EVOLUTIONS-PFADE & DATENBANK
+   3. SPEICHER & DATENBANKEN
    ========================================================= */
 const EVOLUTION_CHAINS = {
   "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20 },
@@ -248,176 +212,37 @@ const EVOLUTION_CHAINS = {
   "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35 }
 };
 
-const FULL_GEN1_CATALOG = [
+const COMMON_POKEMON = [
   { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/57_hires.png", weakness: "elektro" },
   { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf" },
-  { name: "Pikachu", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "boden" },
-  { name: "Myrapla", type: "pflanze", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "feuer" },
   { name: "Raupy", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/45_hires.png", weakness: "feuer" },
-  { name: "Hornliu", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", weakness: "feuer" },
-  { name: "Kleinstein", type: "gestein", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/47_hires.png", weakness: "wasser" },
-  { name: "Zubat", type: "gift", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/70_hires.png", weakness: "elektro" },
-  { name: "Psyduck", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/53_hires.png", weakness: "elektro" },
+  { name: "Hornliu", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", weakness: "feuer" }
+];
+
+const RARE_POKEMON = [
+  { name: "Pikachu", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "boden" },
   { name: "Fukano", type: "feuer", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/28_hires.png", weakness: "wasser" },
-  { name: "Quapsel", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/59_hires.png", weakness: "elektro" },
-  { name: "Machollo", type: "kampf", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/52_hires.png", weakness: "psycho" },
-  { name: "Knofensa", type: "pflanze", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/49_hires.png", weakness: "feuer" },
-  { name: "Tentacha", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/66_hires.png", weakness: "elektro" },
-  { name: "Ponyta", type: "feuer", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/60_hires.png", weakness: "wasser" },
-  { name: "Flegmon", type: "wasser", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/55_hires.png", weakness: "elektro" },
-  { name: "Magnetilo", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/53_hires.png", weakness: "feuer" },
-  { name: "Drowzee", type: "psycho", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/49_hires.png", weakness: "käfer" },
-  { name: "Krabby", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/51_hires.png", weakness: "elektro" },
-  { name: "Voltobal", type: "elektro", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/67_hires.png", weakness: "boden" },
-  { name: "Tragosso", type: "boden", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/50_hires.png", weakness: "wasser" },
-  { name: "Smogon", type: "gift", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/51_hires.png", weakness: "psycho" },
-  { name: "Seeper", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/48_hires.png", weakness: "elektro" },
-  { name: "Sterndu", type: "wasser", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/65_hires.png", weakness: "elektro" },
-  { name: "Pinsir", type: "käfer", hp: 65, maxHp: 65, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
+  { name: "Kleinstein", type: "gestein", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/47_hires.png", weakness: "wasser" },
+  { name: "Pinsir", type: "käfer", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
 ];
 
-const FULL_GEN2_CATALOG = [
-  { name: "Feurigel", type: "feuer", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/57_hires.png", weakness: "wasser" },
-  { name: "Karnimani", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/81_hires.png", weakness: "pflanze" },
-  { name: "Endivie", type: "pflanze", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/54_hires.png", weakness: "feuer" },
-  { name: "Wiesor", type: "normal", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/68_hires.png", weakness: "kampf" },
-  { name: "Hoothoot", type: "normal", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/60_hires.png", weakness: "elektro" },
-  { name: "Ledyba", type: "käfer", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/63_hires.png", weakness: "feuer" },
-  { name: "Weeber", type: "käfer", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/73_hires.png", weakness: "feuer" },
-  { name: "Lanturn", type: "elektro", hp: 65, maxHp: 65, cardUrl: "https://images.pokemontcg.io/neo1/38_hires.png", weakness: "boden" },
-  { name: "Togepi", type: "normal", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/51_hires.png", weakness: "kampf" },
-  { name: "Natu", type: "psycho", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/67_hires.png", weakness: "unlicht" },
-  { name: "Voltilamm", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/64_hires.png", weakness: "boden" },
-  { name: "Marill", type: "wasser", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/neo1/66_hires.png", weakness: "elektro" },
-  { name: "Mogelbaum", type: "gestein", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/neo1/27_hires.png", weakness: "wasser" },
-  { name: "Hoppspross", type: "pflanze", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/neo1/61_hires.png", weakness: "feuer" },
-  { name: "Griffel", type: "normal", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/53_hires.png", weakness: "kampf" },
-  { name: "Sonnefel", type: "pflanze", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/78_hires.png", weakness: "feuer" },
-  { name: "Felino", type: "wasser", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/80_hires.png", weakness: "pflanze" },
-  { name: "Kramurx", type: "unlicht", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/44_hires.png", weakness: "elektro" },
-  { name: "Traunfugil", type: "geist", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/45_hires.png", weakness: "unlicht" },
-  { name: "Icognito", type: "psycho", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/neo1/50_hires.png", weakness: "unlicht" },
-  { name: "Tannza", type: "käfer", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/neo1/70_hires.png", weakness: "feuer" },
-  { name: "Dummisel", type: "normal", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/neo1/56_hires.png", weakness: "kampf" },
-  { name: "Skorgla", type: "boden", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/neo1/59_hires.png", weakness: "wasser" },
-  { name: "Snubbull", type: "fee", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/76_hires.png", weakness: "gift" },
-  { name: "Pottrott", type: "käfer", hp: 80, maxHp: 80, cardUrl: "https://images.pokemontcg.io/neo1/49_hires.png", weakness: "feuer" }
-];
-let activeDailyGen1Pool = [];
-let activeDailyGen2Pool = [];
-
-function refreshDailyPoolsIfNeeded() {
-  let today = new Date().toISOString().split('T')[0];
-  let savedDate = localStorage.getItem('pokemon_rl_last_pool_date');
-  let savedGen1 = localStorage.getItem('pokemon_rl_daily_gen1');
-  let savedGen2 = localStorage.getItem('pokemon_rl_daily_gen2');
-
-  if (savedDate !== today || !savedGen1 || !savedGen2) {
-    let getRandomSubset = (arr, count) => {
-      let shuffled = [...arr].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, Math.min(count, arr.length));
-    };
-
-    activeDailyGen1Pool = getRandomSubset(FULL_GEN1_CATALOG, 20);
-    activeDailyGen2Pool = getRandomSubset(FULL_GEN2_CATALOG, 20);
-
-    localStorage.setItem('pokemon_rl_last_pool_date', today);
-    localStorage.setItem('pokemon_rl_daily_gen1', JSON.stringify(activeDailyGen1Pool));
-    localStorage.setItem('pokemon_rl_daily_gen2', JSON.stringify(activeDailyGen2Pool));
-  } else {
-    activeDailyGen1Pool = JSON.parse(savedGen1);
-    activeDailyGen2Pool = JSON.parse(savedGen2);
-  }
-
-  preloadDailyImages();
-}
-
-function preloadDailyImages() {
-  let allDailyPokemon = [...activeDailyGen1Pool, ...activeDailyGen2Pool];
-  allDailyPokemon.forEach(mon => {
-    if (mon.cardUrl) {
-      let img = new Image();
-      img.src = mon.cardUrl;
-    }
-  });
-}
-
-async function getOrFetchEvolutionData(pokemon) {
-  if (EVOLUTION_CHAINS[pokemon.name]) return EVOLUTION_CHAINS[pokemon.name];
-
-  let cachedDb = JSON.parse(localStorage.getItem('customEvoDb') || '{}');
-  if (cachedDb[pokemon.name]) return cachedDb[pokemon.name];
-
-  try {
-    let speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.name.toLowerCase()}`);
-    let speciesData = await speciesRes.json();
-    
-    let evoChainRes = await fetch(speciesData.evolution_chain.url);
-    let evoData = await evoChainRes.json();
-
-    let nextMonName = getNextEvoInChain(evoData.chain, pokemon.name.toLowerCase());
-    if (!nextMonName) return null;
-
-    let tcgRes = await fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${nextMonName}"`);
-    let tcgData = await tcgRes.json();
-    let cardUrl = tcgData.data[0]?.images?.large || tcgData.data[0]?.images?.small;
-
-    let newEvoEntry = {
-      next: nextMonName.charAt(0).toUpperCase() + nextMonName.slice(1),
-      cardUrl: cardUrl || "https://images.pokemontcg.io/base1/61_hires.png",
-      hpBonus: 25
-    };
-
-    cachedDb[pokemon.name] = newEvoEntry;
-    localStorage.setItem('customEvoDb', JSON.stringify(cachedDb));
-    return newEvoEntry;
-  } catch (e) {
-    return null;
-  }
-}
-
-function getNextEvoInChain(chainNode, currentName) {
-  if (chainNode.species.name === currentName) {
-    return chainNode.evolves_to[0]?.species?.name || null;
-  }
-  for (let child of chainNode.evolves_to) {
-    let result = getNextEvoInChain(child, currentName);
-    if (result) return result;
-  }
-  return null;
-}
-
-let pendingEvoPokemon = null;
+let selectedFlowMode = 'continue'; // 'continue' oder 'new'
 let activeSlot = null;
-let map = null;
-let selectedMarker = null;
-let tempHomeCoords = null;
 let selectedStarter = null;
 
-let isWalking = false;
-let userLat = 0, userLon = 0;
-let lastLat = 0, lastLon = 0;
-let targetLat = null, targetLon = null;
-let timerMinutes = 0;
-let beepInterval = null;
-let encounterActive = false;
-let checkInterval = null;
-let watchId = null;
+let isScanning = false;
+let scanTimer = null;
+let scanCountdown = 20;
+let currentScanType = 'quick';
 
 let currentEnemy = null;
 let playerBattlePokemon = null;
 let playerEnergy = 0;
-let canDodge = false;
-let dodgeSuccess = false;
 let isEnemyAttacking = false;
-let isPerfectTiming = false;
-let isTrainingBattle = false;
-let selectedTrainingPokemon = null;
 let isPlayerTurn = true;
+let pendingEvoPokemon = null;
 
 let currentSaveData = {
-  homeLat: null,
-  homeLon: null,
   level: 1,
   exp: 0,
   maxExp: 100,
@@ -426,21 +251,21 @@ let currentSaveData = {
 };
 
 /* =========================================================
-   3. HAUPTSPIEL INITIALISIERUNG & KARTE
+   4. NAVIGATION & SPIELSTAND LOGIK
    ========================================================= */
 function initApp() {
-  refreshDailyPoolsIfNeeded();
   updateSlotUI();
+  showScreen('screen-main-menu');
 }
 
 function updateSlotUI() {
   for (let i = 1; i <= 3; i++) {
-    let data = localStorage.getItem('pokemon_rl_slot_' + i);
-    let infoDiv = document.getElementById(`slot-${i}-info`);
+    const data = localStorage.getItem('pokemon_rl_slot_' + i);
+    const infoDiv = document.getElementById(`slot-${i}-info`);
     if (infoDiv) {
       if (data) {
-        let parsed = JSON.parse(data);
-        infoDiv.innerHTML = `Trainer Lv. ${parsed.level} | ${parsed.pokemonTeam[0]?.name || 'Kein Pokémon'}`;
+        const parsed = JSON.parse(data);
+        infoDiv.innerText = `Trainer Lv. ${parsed.level} | ${parsed.pokemonTeam[0]?.name || 'Kein Pokémon'}`;
       } else {
         infoDiv.innerText = "Leer";
       }
@@ -448,358 +273,183 @@ function updateSlotUI() {
   }
 }
 
-function selectSlot(slotNum) {
-  activeSlot = slotNum;
-  let saved = localStorage.getItem('pokemon_rl_slot_' + activeSlot);
+function selectFlow(mode) {
+  selectedFlowMode = mode;
+  document.getElementById('slot-screen-title').innerText = 
+    (mode === 'new') ? "Neues Spiel: Wähle Slot" : "Spiel Laden: Wähle Slot";
+  showScreen('screen-slots');
+}
 
-  if (saved) {
-    currentSaveData = JSON.parse(saved);
-    showScreen('screen-dashboard');
-    loadDashboard();
-  } else {
-    currentSaveData = { homeLat: null, homeLon: null, level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [] };
-    showScreen('screen-home');
-    initMap();
+function onSlotSelected(slotNum) {
+  activeSlot = slotNum;
+  const saved = localStorage.getItem('pokemon_rl_slot_' + activeSlot);
+
+  if (selectedFlowMode === 'continue') {
+    if (saved) {
+      currentSaveData = JSON.parse(saved);
+      loadDashboard();
+      showScreen('screen-radar-hud');
+    } else {
+      alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
+    }
+  } else { // 'new'
+    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [] };
+    showScreen('screen-starter');
   }
 }
 
 function showScreen(screenId) {
-  ['screen-slots', 'screen-home', 'screen-starter', 'screen-dashboard', 'screen-battle'].forEach(id => {
-    let elem = document.getElementById(id);
-    if (elem) elem.classList.add('hidden');
+  ['screen-main-menu', 'screen-slots', 'screen-starter', 'screen-radar-hud', 'screen-battle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
   });
-  let activeElem = document.getElementById(screenId);
-  if (activeElem) activeElem.classList.remove('hidden');
-
-  if (screenId === 'screen-home' && map) {
-    setTimeout(() => { map.invalidateSize(); }, 200);
-  }
-}
-
-function switchTab(tabName) {
-  ['walk', 'pokemon', 'items', 'trainer'].forEach(t => {
-    let content = document.getElementById(`tab-content-${t}`);
-    let btn = document.getElementById(`tab-btn-${t}`);
-    if (content) content.classList.add('hidden');
-    if (btn) btn.classList.remove('active');
-  });
-
-  let activeContent = document.getElementById(`tab-content-${tabName}`);
-  let activeBtn = document.getElementById(`tab-btn-${tabName}`);
-  if (activeContent) activeContent.classList.remove('hidden');
-  if (activeBtn) activeBtn.classList.add('active');
-}
-
-function initMap() {
-  if (map) return;
-  map = L.map('map').setView([51.1657, 10.4515], 5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-
-  map.on('click', e => setHomePin(e.latlng.lat, e.latlng.lng));
-  setTimeout(() => map.invalidateSize(), 300);
-}
-
-async function searchLocation() {
-  let query = document.getElementById('search-input').value;
-  if (!query) return;
-
-  try {
-    let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-    let data = await res.json();
-    if (data && data.length > 0) {
-      let lat = parseFloat(data[0].lat);
-      let lon = parseFloat(data[0].lon);
-      map.setView([lat, lon], 14);
-      setHomePin(lat, lon);
-    } else {
-      alert("Ort nicht gefunden!");
-    }
-  } catch (e) {
-    alert("Suchfehler. Bitte versuche es erneut.");
-  }
-}
-
-function setHomePin(lat, lng) {
-  tempHomeCoords = { lat, lng };
-  if (selectedMarker) map.removeLayer(selectedMarker);
-  selectedMarker = L.marker([lat, lng]).addTo(map);
-  let confirmBtn = document.getElementById('confirm-home-btn');
-  if (confirmBtn) confirmBtn.disabled = false;
-}
-
-function useCurrentGPSLocation() {
-  if (!("geolocation" in navigator)) {
-    alert("GPS wird von diesem Browser nicht unterstützt.");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      let lat = pos.coords.latitude;
-      let lng = pos.coords.longitude;
-
-      userLat = lat;
-      userLon = lng;
-
-      if (map) {
-        map.setView([lat, lng], 16);
-      }
-      setHomePin(lat, lng);
-    },
-    (err) => {
-      alert("GPS-Fehler: Bitte erlaube den Standortzugriff in deinen Browser-Einstellungen.");
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
-}
-
-function confirmHomeLocation() {
-  if (!tempHomeCoords) return;
-  currentSaveData.homeLat = tempHomeCoords.lat;
-  currentSaveData.homeLon = tempHomeCoords.lng;
-  showScreen('screen-starter');
+  const target = document.getElementById(screenId);
+  if (target) target.classList.remove('hidden');
 }
 
 function chooseStarter(type, element) {
   document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
   element.classList.add('selected');
   selectedStarter = type;
-  let confirmBtn = document.getElementById('confirm-starter-btn');
-  if (confirmBtn) confirmBtn.disabled = false;
+  document.getElementById('confirm-starter-btn').disabled = false;
 }
 
 function confirmStarter() {
-  let starterData = {
+  const starters = {
     bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", evoChance: 0 },
     glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", evoChance: 0 },
     schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", evoChance: 0 }
   };
 
-  currentSaveData.pokemonTeam = [starterData[selectedStarter]];
+  currentSaveData.pokemonTeam = [starters[selectedStarter]];
   currentSaveData.pokeballs = 10;
   saveCurrentData();
-  showScreen('screen-dashboard');
   loadDashboard();
+  showScreen('screen-radar-hud');
 }
 
 function saveCurrentData() {
-  localStorage.setItem('pokemon_rl_slot_' + activeSlot, JSON.stringify(currentSaveData));
+  if (activeSlot) {
+    localStorage.setItem('pokemon_rl_slot_' + activeSlot, JSON.stringify(currentSaveData));
+  }
 }
 
 function loadDashboard() {
-  let slotTitle = document.getElementById('dash-slot-title');
-  if (slotTitle) slotTitle.innerText = "Slot " + activeSlot;
-  
-  let ballsCount = document.getElementById('item-pokeballs-count');
-  if (ballsCount) ballsCount.innerText = currentSaveData.pokeballs;
-  
-  let levelText = document.getElementById('trainer-level-text');
-  if (levelText) levelText.innerText = "Level " + currentSaveData.level;
+  document.getElementById('scan-active-mon').innerText = currentSaveData.pokemonTeam[0]?.name || '--';
+  document.getElementById('menu-item-pokeballs').innerText = currentSaveData.pokeballs;
+  document.getElementById('menu-trainer-level').innerText = "Level " + currentSaveData.level;
 
-  let expPct = Math.min(100, (currentSaveData.exp / currentSaveData.maxExp) * 100);
-  let expBar = document.getElementById('trainer-exp-bar');
-  if (expBar) expBar.style.width = expPct + "%";
-
-  let expText = document.getElementById('trainer-exp-text');
-  if (expText) expText.innerText = `${currentSaveData.exp} / ${currentSaveData.maxExp} EXP`;
-
-  let homeCoords = document.getElementById('trainer-home-coords');
-  if (homeCoords && currentSaveData.homeLat && currentSaveData.homeLon) {
-    homeCoords.innerText = `${currentSaveData.homeLat.toFixed(4)}, ${currentSaveData.homeLon.toFixed(4)}`;
-  }
-
-  let caughtCount = document.getElementById('trainer-caught-count');
-  if (caughtCount) caughtCount.innerText = currentSaveData.pokemonTeam.length;
-
-  if (currentSaveData.pokemonTeam) {
-    currentSaveData.pokemonTeam.forEach(p => {
-      if (!p.level) p.level = 1;
-      if (!p.exp) p.exp = 0;
-      if (!p.maxExp) p.maxExp = p.level * 15;
-      if (p.evoChance === undefined) p.evoChance = 0;
-    });
-    saveCurrentData();
-  }
+  const expPct = Math.min(100, (currentSaveData.exp / currentSaveData.maxExp) * 100);
+  document.getElementById('menu-trainer-exp-bar').style.width = expPct + "%";
+  document.getElementById('menu-trainer-exp-text').innerText = `${currentSaveData.exp} / ${currentSaveData.maxExp} EXP`;
+  document.getElementById('menu-caught-count').innerText = currentSaveData.pokemonTeam.length;
 
   renderPokemonTeam();
-
-  if (currentSaveData.pokemonTeam.length > 0) {
-    let activeMon = document.getElementById('dash-active-pokemon');
-    if (activeMon) activeMon.innerText = currentSaveData.pokemonTeam[0].name;
-  }
-
-  updateGPSDistance();
 }
 
 function renderPokemonTeam() {
-  let container = document.getElementById('pokemon-team-list');
+  const container = document.getElementById('pokemon-team-list');
   if (!container) return;
   container.innerHTML = "";
 
   currentSaveData.pokemonTeam.forEach((p, idx) => {
-    let row = document.createElement('div');
+    const row = document.createElement('div');
     row.className = "pokemon-row";
-    row.style.cursor = "pointer";
-    row.onclick = () => onPokemonClick(idx);
-
     row.innerHTML = `
-      <div style="display:flex; align-items:center;">
-        <img src="${p.cardUrl}" alt="${p.name}">
-        <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
+        <div style="text-align:left;">
           <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
-          <div style="font-size:12px; color:#4cd137; margin-top:2px;">KP: ${p.hp} / ${p.maxHp} | Evo: ${p.evoChance || 0}%</div>
+          <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp} | Evo: ${p.evoChance || 0}%</div>
         </div>
       </div>
-      ${idx === 0 ? '<span class="tag tag-gen1">Aktiv</span>' : ''}
+      ${idx === 0 ? '<span class="tag-active">Aktiv</span>' : ''}
     `;
     container.appendChild(row);
   });
 }
 
-function updateGPSDistance() {
-  if (userLat === 0 || userLon === 0 || !currentSaveData.homeLat) return;
-  let dist = calculateDistanceKm(userLat, userLon, currentSaveData.homeLat, currentSaveData.homeLon);
-  let distElement = document.getElementById('dash-dist');
-  if (distElement) distElement.innerText = dist.toFixed(2) + " km";
+/* =========================================================
+   5. RADAR- & SCAN-MECHANIK (Gekapselt)
+   ========================================================= */
+function openScanModal() {
+  if (isScanning) {
+    cancelScan();
+    return;
+  }
+  document.getElementById('modal-scan').classList.remove('hidden');
+}
 
-  let zoneTag = document.getElementById('dash-zone-tag');
-  if (zoneTag) {
-    if (dist >= 0.5) {
-      zoneTag.innerText = "Gen 2+ Zone";
-      zoneTag.className = "tag tag-gen2";
-    } else {
-      zoneTag.innerText = "Gen 1 Zone";
-      zoneTag.className = "tag tag-gen1";
+function closeScanModal() {
+  document.getElementById('modal-scan').classList.add('hidden');
+}
+
+function startScanProcess(type) {
+  closeScanModal();
+  currentScanType = type;
+  isScanning = true;
+
+  const triggerBtn = document.getElementById('btn-scan-trigger');
+  const ringContainer = document.getElementById('radar-ring-container');
+  const statusText = document.getElementById('radar-status-text');
+
+  triggerBtn.innerText = "🛑 SCAN ABBRECHEN";
+  ringContainer.className = "radar-rings state-scanning";
+  statusText.innerText = "Scanne Umgebung...";
+
+  // Zufällige Suchdauer (3 bis 7 Sekunden) bis Signal gefunden wird
+  const searchDelay = Math.floor(Math.random() * 4000) + 3000;
+
+  scanTimer = setTimeout(() => {
+    triggerSignalDetected();
+  }, searchDelay);
+}
+
+function triggerSignalDetected() {
+  const ringContainer = document.getElementById('radar-ring-container');
+  const statusText = document.getElementById('radar-status-text');
+  const timerDisplay = document.getElementById('radar-timer-display');
+
+  ringContainer.className = "radar-rings state-detected";
+  statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
+  timerDisplay.classList.remove('hidden');
+
+  scanCountdown = 20;
+  timerDisplay.innerText = scanCountdown + "s";
+
+  // Sanfte VIBRIERUNG bei Signal
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  AudioManager.playBeep(880, 0.3);
+
+  // 20-Sekunden Ortungs-Phase
+  clearInterval(scanTimer);
+  scanTimer = setInterval(() => {
+    scanCountdown--;
+    timerDisplay.innerText = scanCountdown + "s";
+
+    if (scanCountdown <= 10 && scanCountdown > 3) {
+      // Annäherung: Schnelleres Pulsieren & Vibration
+      ringContainer.className = "radar-rings state-warning";
+      if (navigator.vibrate) navigator.vibrate(100);
+      AudioManager.playBeep(600, 0.05);
+    } else if (scanCountdown <= 3 && scanCountdown > 0) {
+      // Ziel-Lock: Rot & intensive Vibration
+      ringContainer.className = "radar-rings state-target";
+      if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
+      AudioManager.playBeep(1200, 0.1);
+    } else if (scanCountdown <= 0) {
+      clearInterval(scanTimer);
+      startBattleFromScan();
     }
-  }
+  }, 1000);
 }
 
-function startWalk() {
-  unlockAudio();
-  refreshDailyPoolsIfNeeded();
-  isWalking = true;
-
-  let idleState = document.getElementById('walk-idle-state');
-  let activeState = document.getElementById('walk-active-state');
-  if (idleState) idleState.classList.add('hidden');
-  if (activeState) activeState.classList.remove('hidden');
-
-  if ("geolocation" in navigator) {
-    watchId = navigator.geolocation.watchPosition(pos => {
-      userLat = pos.coords.latitude;
-      userLon = pos.coords.longitude;
-      if (lastLat === 0 && lastLon === 0) { lastLat = userLat; lastLon = userLon; }
-
-      updateGPSDistance();
-
-      if (encounterActive && targetLat !== null) {
-        let distMeters = calculateDistanceKm(userLat, userLon, targetLat, targetLon) * 1000;
-        let radarDist = document.getElementById('radar-distance');
-        if (radarDist) radarDist.innerText = Math.round(distMeters) + " m";
-        updateBeepFrequency(distMeters);
-
-        if (distMeters <= 5) triggerCatchPhase();
-      }
-    }, err => {}, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
-  }
-
-  checkInterval = setInterval(checkEncounterChance, 60000);
-}
-
-function stopWalk() {
-  isWalking = false;
-  encounterActive = false;
-  if (checkInterval) clearInterval(checkInterval);
-  if (beepInterval) clearInterval(beepInterval);
-  if (watchId && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
-
-  let idleState = document.getElementById('walk-idle-state');
-  let activeState = document.getElementById('walk-active-state');
-  let radarCard = document.getElementById('radar-card');
-  if (idleState) idleState.classList.remove('hidden');
-  if (activeState) activeState.classList.add('hidden');
-  if (radarCard) radarCard.classList.add('hidden');
-}
-
-function checkEncounterChance() {
-  if (encounterActive || !isWalking) return;
-  timerMinutes++;
-  let chance = Math.min(timerMinutes * 0.05, 1.0);
-
-  if (Math.random() <= chance) {
-    spawnPokemonNearUser();
-    lastLat = userLat;
-    lastLon = userLon;
-  }
-}
-
-function spawnPokemonNearUser() {
-  encounterActive = true;
-  timerMinutes = 0;
-  let radiusInMeters = 40;
-  let getRandomOffset = () => (Math.random() - 0.5) * (radiusInMeters / 111320);
-
-  targetLat = userLat + getRandomOffset();
-  targetLon = userLon + getRandomOffset();
-
-  let radarCard = document.getElementById('radar-card');
-  let startBtn = document.getElementById('btn-start-battle');
-  if (radarCard) radarCard.classList.remove('hidden');
-  if (startBtn) startBtn.classList.add('hidden');
-  playBeep(880, 0.3);
-}
-
-function playBeep(pitch = 440, duration = 0.1) {
-  try {
-    let ctx = getAudioContext();
-    if (!ctx) return;
-
-    let osc = ctx.createOscillator();
-    let gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = pitch;
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-  } catch(e) {}
-}
-
-function updateBeepFrequency(distanceMeters) {
-  if (beepInterval) clearInterval(beepInterval);
-  let intervalMs = Math.max(200, distanceMeters * 30);
-
-  beepInterval = setInterval(() => {
-    let pitch = Math.min(1200, 1000 - (distanceMeters * 10));
-    playBeep(Math.max(400, pitch), 0.08);
-  }, intervalMs);
-}
-
-function triggerCatchPhase() {
-  if (beepInterval) clearInterval(beepInterval);
-  playBeep(1200, 0.5);
-  let distElem = document.getElementById('radar-distance');
-  let instrElem = document.getElementById('radar-instruction');
-  let startBtn = document.getElementById('btn-start-battle');
-  if (distElem) distElem.innerText = "GEFUNDEN!";
-  if (instrElem) instrElem.innerText = "Ein wildes Pokémon ist aufgetaucht!";
-  if (startBtn) startBtn.classList.remove('hidden');
-}
-
-function startBattle() {
-  stopWalk();
+function startBattleFromScan() {
+  resetRadarUI();
   showScreen('screen-battle');
 
-  isTrainingBattle = false;
-  refreshDailyPoolsIfNeeded();
-
-  let distFromHome = calculateDistanceKm(userLat, userLon, currentSaveData.homeLat, currentSaveData.homeLon);
-  let pool = (distFromHome >= 0.5) 
-    ? [...activeDailyGen1Pool, ...activeDailyGen2Pool] 
-    : activeDailyGen1Pool;
-  
-  let template = pool[Math.floor(Math.random() * pool.length)];
+  const pool = (currentScanType === 'power') ? RARE_POKEMON : COMMON_POKEMON;
+  const template = pool[Math.floor(Math.random() * pool.length)];
   currentEnemy = { ...template, hp: template.maxHp };
 
   playerBattlePokemon = currentSaveData.pokemonTeam[0];
@@ -808,146 +458,67 @@ function startBattle() {
   isEnemyAttacking = false;
 
   updateBattleUI();
-  let box = document.getElementById('battle-warning-box');
-  if (box) box.innerText = `Ein wildes ${currentEnemy.name} greift an! Du bist am Zug.`;
+  document.getElementById('battle-warning-box').innerText = `Ein wildes ${currentEnemy.name} greift an!`;
 }
 
-function startTrainingBattle(opponent) {
-  closeTrainingSelect();
-  showScreen('screen-battle');
-
-  isTrainingBattle = true;
-
-  currentEnemy = { ...opponent, hp: opponent.maxHp };
-  playerBattlePokemon = selectedTrainingPokemon || currentSaveData.pokemonTeam[0];
-  playerEnergy = 0;
-  isPlayerTurn = true;
-  isEnemyAttacking = false;
-
-  updateBattleUI();
-  let box = document.getElementById('battle-warning-box');
-  if (box) box.innerText = `Trainingskampf gestartet! Du bist am Zug.`;
+function cancelScan() {
+  clearInterval(scanTimer);
+  clearTimeout(scanTimer);
+  resetRadarUI();
 }
 
+function resetRadarUI() {
+  isScanning = false;
+  document.getElementById('btn-scan-trigger').innerText = "📡 STARTE POKÉMON SCAN";
+  document.getElementById('radar-ring-container').className = "radar-rings";
+  document.getElementById('radar-status-text').innerText = "Bereit für Scan...";
+  document.getElementById('radar-timer-display').classList.add('hidden');
+}
+
+/* =========================================================
+   6. KAMPFSYSTEM & FANGSYSTEM
+   ========================================================= */
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
-  let enemyTitle = document.getElementById('enemy-title');
-  let enemyCard = document.getElementById('enemy-card-img');
-  let enemyHpText = document.getElementById('enemy-hp-text');
-  let enemyHpBar = document.getElementById('enemy-hp-bar');
+  document.getElementById('enemy-title').innerText = "WILDES " + currentEnemy.name.toUpperCase();
+  document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
+  document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
+  document.getElementById('enemy-hp-bar').style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
 
-  if (enemyTitle) enemyTitle.innerText = (isTrainingBattle ? "TRAINING: " : "WILDES ") + currentEnemy.name.toUpperCase();
-  if (enemyCard) enemyCard.src = currentEnemy.cardUrl;
-  if (enemyHpText) enemyHpText.innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
-  if (enemyHpBar) enemyHpBar.style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
+  document.getElementById('player-title').innerText = playerBattlePokemon.name.toUpperCase();
+  document.getElementById('player-card-img').src = playerBattlePokemon.cardUrl;
+  document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp} / ${playerBattlePokemon.maxHp} KP`;
+  document.getElementById('player-hp-bar').style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
 
-  let playerTitle = document.getElementById('player-title');
-  let playerCard = document.getElementById('player-card-img');
-  let playerHpText = document.getElementById('player-hp-text');
-  let playerHpBar = document.getElementById('player-hp-bar');
-
-  if (playerTitle) playerTitle.innerText = playerBattlePokemon.name.toUpperCase();
-  if (playerCard) playerCard.src = playerBattlePokemon.cardUrl;
-  if (playerHpText) playerHpText.innerText = `${playerBattlePokemon.hp} / ${playerBattlePokemon.maxHp} KP`;
-  if (playerHpBar) playerHpBar.style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
-
-  let ballsCount = document.getElementById('battle-balls-count');
-  if (ballsCount) ballsCount.innerText = currentSaveData.pokeballs;
-
-  let catchBtn = document.getElementById('btn-catch-pokemon');
-  if (catchBtn) {
-    if (isTrainingBattle) {
-      catchBtn.disabled = true;
-      catchBtn.style.opacity = "0.3";
-    } else {
-      catchBtn.disabled = false;
-      catchBtn.style.opacity = "1";
-    }
-  }
+  document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
 
   let dots = "";
-  for(let i = 0; i < 3; i++) dots += (i < playerEnergy) ? "🟡 " : "⚪ ";
-  let energyDots = document.getElementById('player-energy-dots');
-  if (energyDots) energyDots.innerText = dots;
+  for (let i = 0; i < 3; i++) dots += (i < playerEnergy) ? "🟡 " : "⚪ ";
+  document.getElementById('player-energy-dots').innerText = dots;
 
-  let specBtn = document.getElementById('btn-special-attack');
-  if (specBtn) {
-    if (playerEnergy >= 3 && isPlayerTurn && !isEnemyAttacking) {
-      specBtn.disabled = false;
-      specBtn.style.opacity = "1";
-    } else {
-      specBtn.disabled = true;
-      specBtn.style.opacity = "0.4";
-    }
-  }
+  const specBtn = document.getElementById('btn-special-attack');
+  specBtn.disabled = !(playerEnergy >= 3 && isPlayerTurn && !isEnemyAttacking);
+  specBtn.style.opacity = specBtn.disabled ? "0.4" : "1";
 }
 
 function executePlayerAttack() {
-  if (!isPlayerTurn || isEnemyAttacking || !currentEnemy || currentEnemy.hp <= 0) return;
+  if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
   isPlayerTurn = false;
   isEnemyAttacking = true;
-  updateBattleUI();
 
-  let card = document.getElementById('player-card-img');
-  if (card) {
-    card.classList.add('card-attack-anim');
-    setTimeout(() => card.classList.remove('card-attack-anim'), 200);
-  }
-
-  let box = document.getElementById('battle-warning-box');
-
-  let enemyDodged = Math.random() < 0.25;
-  if (enemyDodged) {
-    if (box) box.innerText = `💨 ${currentEnemy.name} ist flink ausgewichen! (0 KP)`;
-    playBeep(350, 0.15);
-
-    let enemyCard = document.getElementById('enemy-card-img');
-    if (enemyCard) {
-      enemyCard.style.transform = "translateX(25px)";
-      setTimeout(() => enemyCard.style.transform = "translateX(0)", 150);
-    }
-
-    addEnergy(1);
-    updateBattleUI();
-    setTimeout(scheduleEnemyAttack, 1000);
-    return;
-  }
-
-  let baseDmg = Math.round(playerBattlePokemon.maxHp * 0.25);
-  let isCritical = Math.random() < 0.15;
-  let dmg = isCritical ? baseDmg * 2 : baseDmg;
-
-  let isEffective = currentEnemy.weakness === playerBattlePokemon.type;
-  if (isEffective) dmg = Math.round(dmg * 1.5);
-
-  if (box) {
-    if (isCritical && isEffective) {
-      box.innerText = `🎯 VOLLTREFFER! 🔥 Sehr effektiv! (-${dmg} KP)`;
-      playBeep(1200, 0.2); setTimeout(() => playBeep(1600, 0.25), 100);
-    } else if (isCritical) {
-      box.innerText = `🎯 KRITISCHER TREFFER! (-${dmg} KP)`;
-      playBeep(1100, 0.25);
-    } else if (isEffective) {
-      box.innerText = `Sehr effektiv! (-${dmg} KP)`;
-      playBeep(600, 0.1);
-    } else {
-      box.innerText = `Angriff trifft! (-${dmg} KP)`;
-      playBeep(600, 0.1);
-    }
-  }
+  let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
+  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
   currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-  addEnergy(1);
+  playerEnergy = Math.min(3, playerEnergy + 1);
   updateBattleUI();
 
-  if (currentEnemy.hp <= 0) { 
-    isEnemyAttacking = false;
-    winBattle(); 
-    return; 
-  }
+  document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+  AudioManager.playBeep(600, 0.1);
 
+  if (currentEnemy.hp <= 0) return winBattle();
   setTimeout(scheduleEnemyAttack, 1000);
 }
 
@@ -957,225 +528,59 @@ function executePlayerSpecial() {
   isPlayerTurn = false;
   isEnemyAttacking = true;
   playerEnergy = 0;
-  updateBattleUI();
 
   let dmg = Math.round(playerBattlePokemon.maxHp * 0.70);
+  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
-  let playerCard = document.getElementById('player-card-img');
-  let enemyCard = document.getElementById('enemy-card-img');
-  let battleScreen = document.getElementById('screen-battle');
-
-  if (playerCard) {
-    playerCard.classList.add('card-special-launch');
-    setTimeout(() => playerCard.classList.remove('card-special-launch'), 400);
-  }
-
-  playBeep(250, 0.15);
-  setTimeout(() => playBeep(900, 0.35), 150);
-
-  setTimeout(() => {
-    if (enemyCard) enemyCard.classList.add('card-fire-hit');
-    if (battleScreen) battleScreen.classList.add('screen-shake');
-
-    setTimeout(() => {
-      if (enemyCard) enemyCard.classList.remove('card-fire-hit');
-      if (battleScreen) battleScreen.classList.remove('screen-shake');
-    }, 600);
-
-    let box = document.getElementById('battle-warning-box');
-    if (currentEnemy.weakness === playerBattlePokemon.type) {
-      dmg = Math.round(dmg * 1.5);
-      if (box) box.innerText = `SPEZIALKONTRA! 🔥 Sehr effektiv! (-${dmg} KP)`;
-    } else {
-      if (box) box.innerText = `SPEZIALANGRIFF! 🔥 (-${dmg} KP)`;
-    }
-
-    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-    updateBattleUI();
-
-    if (currentEnemy.hp <= 0) { 
-      isEnemyAttacking = false;
-      winBattle(); 
-      return; 
-    }
-    setTimeout(scheduleEnemyAttack, 1000);
-  }, 200);
-}
-
-function addEnergy(amount) { playerEnergy = Math.min(3, playerEnergy + amount); }
-
-function scheduleEnemyAttack() {
-  if (!currentEnemy || currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) {
-    isEnemyAttacking = false;
-    isPlayerTurn = true;
-    updateBattleUI();
-    return;
-  }
-  
-  isEnemyAttacking = true;
-  isPlayerTurn = false;
+  currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
   updateBattleUI();
 
-  let box = document.getElementById('battle-warning-box');
-  let enemyCard = document.getElementById('enemy-card-img');
-  let battleScreen = document.getElementById('screen-battle');
+  document.getElementById('battle-warning-box').innerText = `SPEZIALANGRIFF! (-${dmg} KP)`;
+  AudioManager.playBeep(900, 0.35);
 
-  let isSpecialAttack = Math.random() < 0.20;
-
-  if (isSpecialAttack) {
-    if (box) box.innerText = `🔥 ${currentEnemy.name} lädt einen SPEZIALANGRIFF auf!`;
-    if (enemyCard) enemyCard.classList.add('card-special-launch');
-    playBeep(300, 0.2);
-
-    setTimeout(() => {
-      if (enemyCard) enemyCard.classList.remove('card-special-launch');
-      if (battleScreen) battleScreen.classList.add('screen-shake');
-      
-      let specDmg = Math.round(currentEnemy.maxHp * 0.40);
-      playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
-
-      if (box) box.innerText = `💥 GEGNER-SPEZIALANGRIFF TRIFFT VOLLE KANNE! (-${specDmg} KP)`;
-      playBeep(200, 0.4);
-
-      setTimeout(() => {
-        if (battleScreen) battleScreen.classList.remove('screen-shake');
-      }, 300);
-
-      isEnemyAttacking = false;
-      
-      if (!checkPlayerDefeat()) {
-        isPlayerTurn = true;
-        updateBattleUI();
-      }
-    }, 1000);
-
-    return;
-  }
-
-  let givesDodgeChance = Math.random() < 0.50;
-
-  if (givesDodgeChance) {
-    if (box) box.innerText = `⚠️ ${currentEnemy.name} holt Schwung...`;
-
-    setTimeout(() => {
-      if (box) {
-        box.innerText = "🔴 JETZT AUSWEICHEN!";
-        box.classList.add('warning-red');
-      }
-      canDodge = true;
-      dodgeSuccess = false;
-      isPerfectTiming = false;
-
-      playBeep(900, 0.1);
-
-      let timingTimer = setTimeout(() => { isPerfectTiming = true; }, 200);
-
-      setTimeout(() => {
-        clearTimeout(timingTimer);
-        if (box) box.classList.remove('warning-red');
-        canDodge = false;
-        resolveEnemyAttack(true);
-      }, 500);
-    }, 600);
-
-  } else {
-    if (box) box.innerText = `⚡ ${currentEnemy.name} greift blitzschnell an!`;
-    playBeep(400, 0.15);
-
-    setTimeout(() => { resolveEnemyAttack(false); }, 600);
-  }
+  if (currentEnemy.hp <= 0) return winBattle();
+  setTimeout(scheduleEnemyAttack, 1000);
 }
 
-function resolveEnemyAttack(hadDodgeChance) {
-  let box = document.getElementById('battle-warning-box');
-  let enemyDmg = Math.round(currentEnemy.maxHp * 0.20);
+function scheduleEnemyAttack() {
+  if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
 
-  if (hadDodgeChance && dodgeSuccess) {
-    if (isPerfectTiming) {
-      let counterDmg = Math.round(playerBattlePokemon.maxHp * 0.30);
-      currentEnemy.hp = Math.max(0, currentEnemy.hp - counterDmg);
-      
-      if (box) box.innerText = `⚡ PERFEKTER KONTER! Gegnerschaden ignoriert & -${counterDmg} KP zugefügt!`;
-      playBeep(1400, 0.25);
+  isEnemyAttacking = true;
+  isPlayerTurn = false;
 
-      let enemyCard = document.getElementById('enemy-card-img');
-      if (enemyCard) {
-        enemyCard.classList.add('card-attack-anim');
-        setTimeout(() => enemyCard.classList.remove('card-attack-anim'), 200);
-      }
+  const dmg = Math.round(currentEnemy.maxHp * 0.20);
+  playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
 
-    } else {
-      if (box) box.innerText = "✨ Ausgewichen! (+1 Energie)";
-      addEnergy(1);
-      playBeep(1200, 0.15);
-    }
-  } else {
-    if (box) {
-      if (!hadDodgeChance) {
-        box.innerText = `💥 Überrascht worden! (-${enemyDmg} KP)`;
-      } else {
-        enemyDmg = Math.round(enemyDmg * 1.3);
-        box.innerText = `💥 Zu spät ausgewichen! (-${enemyDmg} KP)`;
-      }
-    }
-    
-    playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - enemyDmg);
-    playBeep(300, 0.25);
-  }
+  document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
+  AudioManager.playBeep(300, 0.25);
 
   isEnemyAttacking = false;
 
-  if (currentEnemy.hp <= 0) {
-    winBattle();
-  } else if (playerBattlePokemon.hp <= 0) {
-    checkPlayerDefeat();
-  } else {
-    isPlayerTurn = true;
-    updateBattleUI();
-  }
-}
-
-function checkPlayerDefeat() {
   if (playerBattlePokemon.hp <= 0) {
     setTimeout(() => {
       playerBattlePokemon.hp = playerBattlePokemon.maxHp;
       saveCurrentData();
-      alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es wurde im Pokémon-Center wieder geheilt.`);
-      exitToSlots();
+      alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
+      showScreen('screen-radar-hud');
     }, 500);
-    return true;
-  }
-  return false;
-}
-
-function triggerDodge() {
-  if (canDodge && !dodgeSuccess) {
-    dodgeSuccess = true;
-    canDodge = false;
+  } else {
+    isPlayerTurn = true;
+    updateBattleUI();
   }
 }
 
 function attemptCatch() {
-  if (isTrainingBattle) {
-    alert("Im Trainingskampf kannst du keine Pokémon fangen!");
-    return;
-  }
-
-  if (currentSaveData.pokeballs <= 0) {
-    alert("Du hast keine Pokébälle mehr im Beutel!");
-    return;
-  }
+  if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
 
   currentSaveData.pokeballs--;
   updateBattleUI();
 
-  let hpPercent = (currentEnemy.hp / currentEnemy.maxHp);
-  let catchChance = 1.0 - (hpPercent * 0.7);
+  const catchChance = 1.0 - ((currentEnemy.hp / currentEnemy.maxHp) * 0.7);
 
   if (Math.random() <= catchChance) {
-    playBeep(1200, 0.4);
-    alert(`Erfolg! Du hast ${currentEnemy.name} gefangen!`);
-    
+    AudioManager.playBeep(1200, 0.4);
+    alert(`Du hast ${currentEnemy.name} gefangen!`);
+
     currentSaveData.pokemonTeam.push({
       name: currentEnemy.name,
       type: currentEnemy.type,
@@ -1188,58 +593,36 @@ function attemptCatch() {
 
     addTrainerExp(30);
     saveCurrentData();
-    showScreen('screen-dashboard');
-    loadDashboard();
+    showScreen('screen-radar-hud');
   } else {
-    playBeep(400, 0.2);
-    let box = document.getElementById('battle-warning-box');
-    if (box) box.innerText = "Schade! Das Pokémon ist entkommen!";
+    AudioManager.playBeep(400, 0.2);
+    document.getElementById('battle-warning-box').innerText = "Schade! Das Pokémon ist entkommen!";
     setTimeout(scheduleEnemyAttack, 1000);
   }
 }
 
 function winBattle() {
-  let enemyCard = document.getElementById('enemy-card-img');
-  if (enemyCard) enemyCard.classList.add('card-defeat-anim');
-  
-  let box = document.getElementById('battle-warning-box');
-  if (box) box.innerText = `💥 ${currentEnemy.name} wurde besiegt!`;
-  playVictoryJingle();
+  document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
+  AudioManager.playVictory();
 
-  setTimeout(async () => {
-    if (enemyCard) enemyCard.classList.remove('card-defeat-anim');
-    
-    let enemyLevel = currentEnemy.level || 1;
-    let earnedExp = 10 + (enemyLevel * 5);
-
+  setTimeout(() => {
+    const earnedExp = 20;
     addTrainerExp(earnedExp);
+    currentSaveData.pokeballs += 2;
 
-    let activeMon = playerBattlePokemon;
-    let leveledUp = addPokemonExp(activeMon, earnedExp);
-
-    let ballReward = isTrainingBattle ? 1 : 2;
-    currentSaveData.pokeballs += ballReward;
-
+    const activeMon = playerBattlePokemon;
+    const leveledUp = addPokemonExp(activeMon, earnedExp);
     activeMon.hp = activeMon.maxHp;
     saveCurrentData();
 
-    let evoData = await getOrFetchEvolutionData(activeMon);
-
-    if (leveledUp && evoData) {
+    if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
       pendingEvoPokemon = activeMon;
-      showEvolutionScreen(activeMon, evoData);
+      showEvolutionScreen(activeMon);
     } else {
-      let subElem = document.getElementById('victory-subtitle');
-      let expElem = document.getElementById('victory-exp-text');
-      let itemTextElem = document.getElementById('victory-item-text');
-      let vicScreen = document.getElementById('victory-screen');
-
-      if (subElem) subElem.innerText = `Du hast ${currentEnemy.name} erfolgreich besiegt!`;
-      if (expElem) expElem.innerText = `+${earnedExp} EXP`;
-      if (itemTextElem) itemTextElem.innerText = `+${ballReward} 🔴 Pokéball erhalten!`;
-      if (vicScreen) vicScreen.classList.remove('hidden');
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
+      document.getElementById('victory-screen').classList.remove('hidden');
     }
-  }, 1300);
+  }, 1000);
 }
 
 function addPokemonExp(pokemon, amount) {
@@ -1257,29 +640,48 @@ function addPokemonExp(pokemon, amount) {
     pokemon.hp = pokemon.maxHp;
     
     if (pokemon.evoChance === undefined) pokemon.evoChance = 0;
-    pokemon.evoChance = Math.min(100, pokemon.evoChance + 3);
-    
+    pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
     didLevelUp = true;
   }
-
   return didLevelUp;
 }
 
-function closeVictoryOverlay() {
-  let vicScreen = document.getElementById('victory-screen');
-  if (vicScreen) vicScreen.classList.add('hidden');
-  showScreen('screen-dashboard');
-  loadDashboard();
+function showEvolutionScreen(pokemon) {
+  const evoData = EVOLUTION_CHAINS[pokemon.name];
+  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} ist bereit!`;
+  document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
+  document.getElementById('evo-card-img').src = pokemon.cardUrl;
+  document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
+  document.getElementById('evo-screen').classList.remove('hidden');
 }
 
-function playVictoryJingle() {
-  try {
-    let ctx = getAudioContext();
-    if (!ctx) return;
-    playBeep(523.25, 0.15);
-    setTimeout(() => playBeep(659.25, 0.15), 150);
-    setTimeout(() => playBeep(783.99, 0.4), 300);
-  } catch(e) {}
+function rollEvolution() {
+  if (!pendingEvoPokemon) return;
+  const roll = Math.floor(Math.random() * 100) + 1;
+  const evoData = EVOLUTION_CHAINS[pendingEvoPokemon.name];
+  const currentChance = pendingEvoPokemon.evoChance || 0;
+
+  if (roll <= currentChance && evoData) {
+    AudioManager.playVictory();
+    pendingEvoPokemon.name = evoData.next;
+    pendingEvoPokemon.cardUrl = evoData.cardUrl;
+    pendingEvoPokemon.maxHp += evoData.hpBonus;
+    pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
+    pendingEvoPokemon.evoChance = 0;
+    saveCurrentData();
+    alert(`🎉 Glückwunsch! Dein Pokémon hat sich zu ${pendingEvoPokemon.name} entwickelt!`);
+  } else {
+    AudioManager.playBeep(300, 0.3);
+    alert(`Fast geschafft! Die Entwicklung hat noch nicht geklappt.`);
+  }
+
+  document.getElementById('evo-screen').classList.add('hidden');
+  showScreen('screen-radar-hud');
+}
+
+function closeVictoryOverlay() {
+  document.getElementById('victory-screen').classList.add('hidden');
+  showScreen('screen-radar-hud');
 }
 
 function addTrainerExp(amount) {
@@ -1292,254 +694,73 @@ function addTrainerExp(amount) {
   }
 }
 
-function exitToSlots() {
-  stopWalk();
+/* =========================================================
+   7. MENÜ OVERLAY LOGIK
+   ========================================================= */
+function openMenuModal() {
+  loadDashboard();
+  document.getElementById('modal-menu').classList.remove('hidden');
+}
+
+function closeMenuModal() {
+  document.getElementById('modal-menu').classList.add('hidden');
+}
+
+function switchMenuTab(tabName) {
+  ['pokemon', 'items', 'exp'].forEach(t => {
+    document.getElementById(`mtab-content-${t}`).classList.add('hidden');
+    document.getElementById(`mtab-btn-${t}`).classList.remove('active');
+  });
+
+  document.getElementById(`mtab-content-${tabName}`).classList.remove('hidden');
+  document.getElementById(`mtab-btn-${tabName}`).classList.add('active');
+}
+
+function exitToMainMenu() {
+  closeMenuModal();
+  cancelScan();
   saveCurrentData();
   updateSlotUI();
-  showScreen('screen-slots');
+  showScreen('screen-main-menu');
 }
 
-function calculateDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
-function closePokemonModal() {
-  let modal = document.getElementById('pokemon-action-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function closeTrainingSelect() {
-  let modal = document.getElementById('training-select-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function onPokemonClick(index) {
-  selectedTrainingPokemon = currentSaveData.pokemonTeam[index];
-  let nameElem = document.getElementById('selected-pokemon-name');
-  let modal = document.getElementById('pokemon-action-modal');
-  if (nameElem) nameElem.innerText = selectedTrainingPokemon.name + " (Lv. " + selectedTrainingPokemon.level + ")";
-  if (modal) modal.classList.remove('hidden');
-}
-
-function openTrainingOpponentSelect() {
-  closePokemonModal();
-  let container = document.getElementById('training-opponents-list');
-  if (!container) return;
-  container.innerHTML = "";
-
-  let defaultRow = document.createElement('div');
-  defaultRow.className = "pokemon-row";
-  defaultRow.onclick = () => startTrainingBattle({
-    name: "Rattfratz (Sparring)", type: "normal", hp: 30, maxHp: 30, 
-    cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf"
-  });
-  defaultRow.innerHTML = `
-    <div style="display:flex; align-items:center;">
-      <img src="https://images.pokemontcg.io/base1/61_hires.png" alt="Rattfratz">
-      <div><strong>Rattfratz</strong> <span style="font-size:11px; color:#aaa;">(Standard-Übung)</span></div>
-    </div>
-    <button style="width:auto; padding:6px 12px; font-size:12px;">Wählen</button>
-  `;
-  container.appendChild(defaultRow);
-
-  currentSaveData.pokemonTeam.forEach((p) => {
-    if (p !== selectedTrainingPokemon) {
-      let row = document.createElement('div');
-      row.className = "pokemon-row";
-      row.onclick = () => startTrainingBattle(p);
-      row.innerHTML = `
-        <div style="display:flex; align-items:center;">
-          <img src="${p.cardUrl}" alt="${p.name}">
-          <div><strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span></div>
-        </div>
-        <button style="width:auto; padding:6px 12px; font-size:12px;">Wählen</button>
-      `;
-      container.appendChild(row);
-    }
-  });
-
-  let trainModal = document.getElementById('training-select-modal');
-  if (trainModal) trainModal.classList.remove('hidden');
-}
-
-function showEvolutionScreen(pokemon, evoData) {
-  let title = document.getElementById('evo-title');
-  let sub = document.getElementById('evo-subtitle');
-  let img = document.getElementById('evo-card-img');
-  let chance = document.getElementById('evo-chance-info');
-  let btn = document.getElementById('evo-roll-btn');
-
-  if (title) title.innerText = `Was? ${pokemon.name} ist bereit!`;
-  if (sub) sub.innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
-  if (img) img.src = pokemon.cardUrl;
-  if (chance) chance.innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
-  if (btn) {
-    btn.innerText = "🎲 JETZT WÜRFELN!";
-    btn.disabled = false;
-  }
-
-  let evoScreen = document.getElementById('evo-screen');
-  if (evoScreen) evoScreen.classList.remove('hidden');
-}
-
-async function rollEvolution() {
-  if (!pendingEvoPokemon) return;
-
-  let btn = document.getElementById('evo-roll-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "🎲 Würfelt...";
-  }
-
-  let roll = Math.floor(Math.random() * 100) + 1;
-  let evoData = await getOrFetchEvolutionData(pendingEvoPokemon);
-  let currentChance = pendingEvoPokemon.evoChance || 0;
-
-  setTimeout(() => {
-    let title = document.getElementById('evo-title');
-    let sub = document.getElementById('evo-subtitle');
-    let img = document.getElementById('evo-card-img');
-    let chance = document.getElementById('evo-chance-info');
-    let evoScreen = document.getElementById('evo-screen');
-
-    if (roll <= currentChance && evoData) {
-      playVictoryJingle();
-      
-      let oldName = pendingEvoPokemon.name;
-      pendingEvoPokemon.name = evoData.next;
-      pendingEvoPokemon.cardUrl = evoData.cardUrl;
-      pendingEvoPokemon.maxHp += (evoData.hpBonus || 20);
-      pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
-      pendingEvoPokemon.evoChance = 0;
-
-      if (title) title.innerText = `🎉 GLÜCKWUNSCH!`;
-      if (sub) sub.innerText = `${oldName} hat sich zu ${pendingEvoPokemon.name} entwickelt!`;
-      if (img) img.src = pendingEvoPokemon.cardUrl;
-      if (chance) chance.innerText = `Max-KP stiegen auf ${pendingEvoPokemon.maxHp}!`;
-
-      saveCurrentData();
-
-      setTimeout(() => {
-        if (evoScreen) evoScreen.classList.add('hidden');
-        showScreen('screen-dashboard');
-        loadDashboard();
-      }, 2500);
-
-    } else {
-      playBeep(300, 0.3);
-      if (title) title.innerText = `Fast geschafft!`;
-      if (sub) sub.innerText = `${pendingEvoPokemon.name} hat sich noch nicht entwickelt.`;
-      if (chance) chance.innerText = `Chance beim nächsten Level: ${currentChance + 3}%!`;
-
-      setTimeout(() => {
-        if (evoScreen) evoScreen.classList.add('hidden');
-        showScreen('screen-dashboard');
-        loadDashboard();
-      }, 2000);
-    }
-  }, 1000);
-}
-
-function simulateMove(latOffset, lonOffset) {
-  if (userLat === 0 && userLon === 0) {
-    userLat = currentSaveData.homeLat || 51.1657;
-    userLon = currentSaveData.homeLon || 10.4515;
-  }
-
-  userLat += latOffset;
-  userLon += lonOffset;
-
-  updateGPSDistance();
-
-  if (encounterActive && targetLat !== null) {
-    let distMeters = calculateDistanceKm(userLat, userLon, targetLat, targetLon) * 1000;
-    let distDisplay = document.getElementById('radar-distance');
-    if (distDisplay) distDisplay.innerText = Math.round(distMeters) + " m";
-    updateBeepFrequency(distMeters);
-
-    if (distMeters <= 5) triggerCatchPhase();
-  }
-
-  playBeep(600, 0.05);
-}
-
-function forceSpawnEncounter() {
-  if (!isWalking) startWalk();
-  if (userLat === 0 && userLon === 0) {
-    userLat = currentSaveData.homeLat || 51.1657;
-    userLon = currentSaveData.homeLon || 10.4515;
-  }
-
-  spawnPokemonNearUser();
-}
-
-function reshuffleEncounter() {
-  if (!encounterActive) return;
-  playBeep(300, 0.2);
-  spawnPokemonNearUser();
-  let instr = document.getElementById('radar-instruction');
-  if (instr) instr.innerText = "Das Pokémon ist geflüchtet! Neues Signal gesucht...";
-}
-
-/* =========================================================
-   4. APPLIKATIONS-START VIA INTRO MANAGER
-   ========================================================= */
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => IntroManager.init());
-} else {
-  IntroManager.init();
-}
-
-// ==========================================
-// BACKUP-SYSTEM (EXPORT / IMPORT)
-// ==========================================
-
+/* BACKUP SYSTEM */
 function exportSaveGame() {
-  const backupData = {
+  const backup = {
     slot1: localStorage.getItem('pokemon_rl_slot_1'),
     slot2: localStorage.getItem('pokemon_rl_slot_2'),
-    slot3: localStorage.getItem('pokemon_rl_slot_3'),
-    pokedex: localStorage.getItem('customEvoDb')
+    slot3: localStorage.getItem('pokemon_rl_slot_3')
   };
-
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", "pokemon_move_backup.json");
-  document.body.appendChild(downloadAnchorNode);
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pokemon_rpg_backup.json';
+  a.click();
 }
 
 function triggerImport() {
   document.getElementById('import-file-input').click();
 }
 
-function importSaveGame(event) {
-  const file = event.target.files[0];
+function importSaveGame(e) {
+  const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = (event) => {
     try {
-      const importedData = JSON.parse(e.target.result);
-      
-      if (importedData.slot1) localStorage.setItem('pokemon_rl_slot_1', importedData.slot1);
-      if (importedData.slot2) localStorage.setItem('pokemon_rl_slot_2', importedData.slot2);
-      if (importedData.slot3) localStorage.setItem('pokemon_rl_slot_3', importedData.slot3);
-      if (importedData.pokedex) localStorage.setItem('customEvoDb', importedData.pokedex);
-
-      alert("Spielstand erfolgreich wiederhergestellt! Das Spiel wird jetzt neu geladen.");
+      const data = JSON.parse(event.target.result);
+      if (data.slot1) localStorage.setItem('pokemon_rl_slot_1', data.slot1);
+      if (data.slot2) localStorage.setItem('pokemon_rl_slot_2', data.slot2);
+      if (data.slot3) localStorage.setItem('pokemon_rl_slot_3', data.slot3);
+      alert("Spielstand erfolgreich wiederhergestellt!");
       location.reload();
-    } catch (err) {
-      alert("Fehler beim Lesen der Datei. Ist es das richtige Backup?");
-    }
+    } catch (err) { alert("Fehlerhafte Datei."); }
   };
   reader.readAsText(file);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => IntroManager.init());
+} else {
+  IntroManager.init();
 }
