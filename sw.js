@@ -1,12 +1,13 @@
-const CACHE_NAME = 'pokemon-rpg-v8';
+const CACHE_NAME = 'pokemon-rpg-v9'; // Version nochmals hochstufen
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './card-flip.mp3', // <-- Hier direkt im Array!
+  './freesound_community-flipcard-91468.mp3', // Exakter Dateiname aus GitHub
   './manifest.json'
 ];
+
 
 // 1. INSTALLATION (Cacht alle Dateien inklusive des neuen MP3-Sounds)
 self.addEventListener('install', (event) => {
