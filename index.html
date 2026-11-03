@@ -3,235 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#030406">
   <title>Pokémon Real-Life RPG - MOVE</title>
   
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 1. INTRO SCREEN -->
+  <!-- CINEMATIC INTRO SCREEN -->
   <div id="intro-screen">
     <div class="intro-container" id="introContainer">
       <div class="card-stream" id="cardStream"></div>
       <div class="bg-glow"></div>
       <div class="slash-effect"></div>
+      <div class="flash-overlay"></div>
+
       <div class="title-wrapper">
         <div class="title-pokemon">Pokémon</div>
         <div class="title-move">MOVE</div>
       </div>
+
       <div class="start-prompt">BERÜHREN ZUM STARTEN</div>
     </div>
   </div>
 
-  <!-- 2. HAUPT-GAME CONTAINER -->
+  <!-- GAME SCREEN CONTAINER -->
   <div id="game-screen" class="container hidden">
-
-    <!-- SCREEN: MAIN MENU (Start) -->
-    <div id="screen-main-menu" class="card-ui">
-      <h1 class="logo-title">Pokémon RPG</h1>
-      <p class="subtitle">Real-Life AR Adventure</p>
-      
-      <div class="menu-actions">
-        <button onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
-        <button onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
-      </div>
-
-      <!-- Backup System -->
-      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
-      <div class="backup-bar">
-        <button onclick="exportSaveGame()" class="btn-mini">💾 Backup Download</button>
-        <button onclick="triggerImport()" class="btn-mini">📂 Backup Import</button>
-      </div>
-    </div>
-
-    <!-- SCREEN: SLOT SELECTION -->
-    <div id="screen-slots" class="card-ui hidden">
-      <h2 id="slot-screen-title">Wähle einen Speicherplatz</h2>
-      
-      <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)">
-        <h3>Slot 1</h3>
-        <div id="slot-1-info" class="slot-info">Leer</div>
-      </div>
-
-      <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)">
-        <h3>Slot 2</h3>
-        <div id="slot-2-info" class="slot-info">Leer</div>
-      </div>
-
-      <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)">
-        <h3>Slot 3</h3>
-        <div id="slot-3-info" class="slot-info">Leer</div>
-      </div>
-
-      <button onclick="showScreen('screen-main-menu')" class="btn-secondary">Zurück</button>
-    </div>
-
-    <!-- SCREEN: STARTER SELECTION -->
-    <div id="screen-starter" class="card-ui hidden">
-      <h2>Wähle dein erstes Pokémon</h2>
-      <p class="subtitle">Prof. Eich schenkt dir deinen ersten Partner!</p>
-
-      <div class="starter-container">
-        <div class="starter-card" onclick="chooseStarter('bisasam', this)">
-          <img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam">
-          <div class="starter-name">Bisasam</div>
-        </div>
-        <div class="starter-card" onclick="chooseStarter('glumanda', this)">
-          <img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda">
-          <div class="starter-name">Glumanda</div>
-        </div>
-        <div class="starter-card" onclick="chooseStarter('schiggy', this)">
-          <img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy">
-          <div class="starter-name">Schiggy</div>
-        </div>
-      </div>
-
-      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:20px;">
-        Pokémon Wählen & Starten
-      </button>
-    </div>
-
-    <!-- SCREEN: RADAR HUD (HAUPTSPIEL) -->
-    <div id="screen-radar-hud" class="hidden">
-      
-      <!-- TOP ACTION BAR -->
-      <div class="top-bar">
-        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-main">
-          📡 STARTE POKÉMON SCAN
-        </button>
-      </div>
-
-      <!-- RADAR DISPLAY -->
-      <div class="radar-viewport">
-        <div id="radar-ring-container" class="radar-rings">
-          <div class="ring ring-1"></div>
-          <div class="ring ring-2"></div>
-          <div class="ring ring-3"></div>
-          <div id="radar-sweeper" class="sweeper"></div>
-        </div>
-        
-        <div class="radar-center-dot"></div>
-        <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
-        <div id="radar-timer-display" class="radar-timer hidden">20s</div>
-      </div>
-
-      <!-- BOTTOM NAVIGATION -->
-      <div class="bottom-bar">
-        <button onclick="openMenuModal()" class="btn-menu-trigger">
-          ⚙️ MENÜ
-        </button>
-      </div>
-    </div>
-
-    <!-- SCREEN: BATTLE SYSTEM -->
-    <div id="screen-battle" class="card-ui hidden">
-      <div class="battle-header">
-        <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
-        <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
-        <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
-        <img id="enemy-card-img" class="battle-card-img" src="" alt="Gegner">
-      </div>
-
-      <div id="battle-warning-box" class="battle-box">Kampf beginnt!</div>
-
-      <div class="battle-footer">
-        <img id="player-card-img" class="battle-card-img" src="" alt="Spieler">
-        <div id="player-title" class="battle-title">Dein Pokémon</div>
-        <div class="bar-bg"><div id="player-hp-bar" class="bar-fill hp-fill"></div></div>
-        <div id="player-hp-text" class="bar-text">50 / 50 KP</div>
-        <div class="energy-display">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
-      </div>
-
-      <div class="battle-controls">
-        <button onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
-        <button id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-action btn-special">🔥 Spezial</button>
-        <button id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Pokéball (<span id="battle-balls-count">10</span>)</button>
-      </div>
-    </div>
-
-    <!-- OVERLAY: SCAN TYPE MODAL -->
-    <div id="modal-scan" class="modal-overlay hidden">
-      <div class="modal-card">
-        <h3>Wähle deine Scan-Art</h3>
-        <p class="subtitle">Aktives Pokémon: <strong id="scan-active-mon">--</strong></p>
-        
-        <button onclick="startScanProcess('quick')" class="btn-primary">
-          ⚡ Schneller Scan
-          <span class="btn-subtext">Findet schnell gewöhnliche Pokémon</span>
-        </button>
-
-        <button onclick="startScanProcess('power')" class="btn-special" style="margin-top:12px;">
-          💎 Power Scan
-          <span class="btn-subtext">Seltener Signal, aber viel stärkere Pokémon</span>
-        </button>
-
-        <button onclick="closeScanModal()" class="btn-secondary" style="margin-top:15px;">Abbrechen</button>
-      </div>
-    </div>
-
-    <!-- OVERLAY: MENU MODAL -->
-    <div id="modal-menu" class="modal-overlay hidden">
-      <div class="modal-card">
-        <h3>Hauptmenü</h3>
-        
-        <div class="menu-tab-buttons">
-          <button onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team</button>
-          <button onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
-          <button onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
-        </div>
-
-        <!-- TAB: POKEMON -->
-        <div id="mtab-content-pokemon" class="mtab-content">
-          <div id="pokemon-team-list"></div>
-        </div>
-
-        <!-- TAB: ITEMS -->
-        <div id="mtab-content-items" class="mtab-content hidden">
-          <div class="item-row">
-            <span>🔴 Pokébälle</span>
-            <strong id="menu-item-pokeballs">10</strong>
-          </div>
-        </div>
-
-        <!-- TAB: EXP & STATS -->
-        <div id="mtab-content-exp" class="mtab-content hidden">
-          <div class="trainer-card-inner">
-            <h4 id="menu-trainer-level">Level 1</h4>
-            <div class="bar-bg"><div id="menu-trainer-exp-bar" class="bar-fill exp-fill"></div></div>
-            <div id="menu-trainer-exp-text" class="bar-text">0 / 100 EXP</div>
-            <div class="stat-line">Gefangene Pokémon: <strong id="menu-caught-count">1</strong></div>
-          </div>
-        </div>
-
-        <button onclick="exitToMainMenu()" class="btn-primary" style="margin-top:20px; background:#e74c3c;">💾 Speichern & Hauptmenü</button>
-        <button onclick="closeMenuModal()" class="btn-secondary" style="margin-top:10px;">Schließen</button>
-      </div>
-    </div>
-
-    <!-- OVERLAY: EVOLUTION SCREEN -->
-    <div id="evo-screen" class="modal-overlay hidden">
-      <div class="modal-card">
-        <h2 id="evo-title" style="color:var(--accent-yellow);">Was? ...</h2>
-        <p id="evo-subtitle">Dein Pokémon entwickelt sich!</p>
-        <img id="evo-card-img" class="battle-card-img evo-pulse" src="" alt="Evo Card">
-        <div id="evo-chance-info" class="evo-chance-text">Chance: 35%</div>
-        <button id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary">🎲 JETZT WÜRFELN!</button>
-      </div>
-    </div>
-
-    <!-- OVERLAY: VICTORY SCREEN -->
-    <div id="victory-screen" class="modal-overlay hidden">
-      <div class="modal-card">
-        <div class="victory-title">🏆 SIEG!</div>
-        <p id="victory-subtitle">Kampf erfolgreich!</p>
-        <div id="victory-exp-text" class="reward-text">+15 EXP</div>
-        <div id="victory-item-text" class="reward-subtext">+2 Pokébälle</div>
-        <button onclick="closeVictoryOverlay()" class="btn-primary" style="margin-top:20px;">Weiter</button>
-      </div>
-    </div>
-
+    <!-- Rest deiner HTML-Screens (Main Menu, Slots, Radar, etc.) -->
   </div>
 
   <script src="app.js"></script>
