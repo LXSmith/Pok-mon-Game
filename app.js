@@ -1467,3 +1467,52 @@ if (document.readyState === 'loading') {
 } else {
   IntroManager.init();
 }
+
+// ==========================================
+// BACKUP-SYSTEM (EXPORT / IMPORT)
+// ==========================================
+
+function exportSaveGame() {
+  const backupData = {
+    slot1: localStorage.getItem('pokemon_rl_slot_1'),
+    slot2: localStorage.getItem('pokemon_rl_slot_2'),
+    slot3: localStorage.getItem('pokemon_rl_slot_3'),
+    pokedex: localStorage.getItem('customEvoDb')
+  };
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "pokemon_move_backup.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function triggerImport() {
+  document.getElementById('import-file-input').click();
+}
+
+function importSaveGame(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      
+      if (importedData.slot1) localStorage.setItem('pokemon_rl_slot_1', importedData.slot1);
+      if (importedData.slot2) localStorage.setItem('pokemon_rl_slot_2', importedData.slot2);
+      if (importedData.slot3) localStorage.setItem('pokemon_rl_slot_3', importedData.slot3);
+      if (importedData.pokedex) localStorage.setItem('customEvoDb', importedData.pokedex);
+
+      alert("Spielstand erfolgreich wiederhergestellt! Das Spiel wird jetzt neu geladen.");
+      location.reload();
+    } catch (err) {
+      alert("Fehler beim Lesen der Datei. Ist es das richtige Backup?");
+    }
+  };
+  reader.readAsText(file);
+}
+
