@@ -36,39 +36,60 @@ window.addEventListener('pointerdown', unlockAudio);
    ========================================================= */
 const IntroManager = {
   active: true,
-  canStart: false,
+  canStart: false, // Erst nach Ablauf der Animation true!
+  audioUnlocked: false,
 
   init() {
     const introScreen = document.getElementById('intro-screen');
     const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
 
     if (!introScreen || !container) {
-      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden -> Überspringe Intro.');
+      console.warn('[Intro] Intro-Screen oder Container nicht im HTML gefunden.');
       this.finishIntro();
       return;
     }
 
-    container.addEventListener('pointerdown', () => {
-      getAudioContext();
-    });
+    // Visuelle Animation startet sofort (Karten fliegen)
+    this.startCardRush();
 
-    container.addEventListener('click', () => {
-      if (this.canStart) {
+    const promptElem = document.querySelector('.start-prompt');
+    if (promptElem) promptElem.innerText = "BERÜHREN FÜR SOUND";
+
+    // 1. Klick schaltet NUR den Ton frei
+    const handleTouch = () => {
+      if (!this.audioUnlocked) {
+        this.audioUnlocked = true;
+        getAudioContext(); // Entsperrt Web Audio im Safari/Chrome
+        this.playSlashSound();
+        if (promptElem) promptElem.innerText = "INTRO LÄUFT...";
+      } else if (this.canStart) {
+        // Erst nach Ablauf der Zeit lässt sich das Intro manuell wegklicken
         this.finishIntro();
       }
-    });
+    };
 
-    this.startCardRush();
+    container.addEventListener('pointerdown', handleTouch);
+
+    // Nach 5.3s ertönt automatisch der Slash-Sound (falls Audio bereits entsperrt wurde)
     setTimeout(() => this.playSlashSound(), 5300);
 
+    // Freigabe des Starts/Überspringens erst nach Ablauf der gesamten Animation (~6.4s)
     setTimeout(() => {
       this.canStart = true;
+      if (promptElem) promptElem.innerText = "BERÜHREN ZUM STARTEN";
     }, 6400);
+
+    // Automatischer Übergang ins Spiel nach 8 Sekunden (falls der Nutzer gar nicht klickt)
+    setTimeout(() => {
+      if (this.active) {
+        this.finishIntro();
+      }
+    }, 8000);
   },
 
   playWhooshSound() {
     const ctx = getAudioContext();
-    if (!ctx) return;
+    if (!ctx || !this.audioUnlocked) return;
     try {
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.10;
@@ -98,7 +119,7 @@ const IntroManager = {
 
   playSlashSound() {
     const ctx = getAudioContext();
-    if (!ctx) return;
+    if (!ctx || !this.audioUnlocked) return;
     try {
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.28;
@@ -202,7 +223,6 @@ const IntroManager = {
     }
   }
 };
-
 
 /* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
