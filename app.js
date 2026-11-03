@@ -42,48 +42,43 @@ const IntroManager = {
 
   init() {
     const splashScreen = document.getElementById('splash-screen');
-    const introScreen = document.getElementById('intro-screen');
 
     if (!splashScreen) {
-      // Fallback falls Splash-Screen im HTML fehlt
       this.startMainIntro();
       return;
     }
 
-    // Erst bei Klick/Touch auf das Splash-Logo starten wir das Haupt-Intro
-    const handleSplashClick = () => {
-      splashScreen.removeEventListener('pointerdown', handleSplashClick);
-      
-      // 1. Audio nativ entsperren durch die Benutzer-Interaktion
+    const startAppFlow = () => {
       unlockAudio();
-
-      // 2. Splash Screen ausblenden
       splashScreen.style.opacity = '0';
       setTimeout(() => {
-        splashScreen.remove();
-        // 3. Karten-Intro mit funktionierendem Sound starten
+        if (splashScreen && splashScreen.parentNode) {
+          splashScreen.parentNode.removeChild(splashScreen);
+        }
         this.startMainIntro();
-      }, 600);
+      }, 500);
     };
 
-    splashScreen.addEventListener('pointerdown', handleSplashClick);
+    // Robuste Event-Bindings für iOS Safari & Chrome
+    splashScreen.addEventListener('pointerdown', startAppFlow, { once: true });
+    splashScreen.addEventListener('click', startAppFlow, { once: true });
   },
 
   startMainIntro() {
     const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
-    if (!container) {
+    const introScreen = document.getElementById('intro-screen');
+
+    if (!container || !introScreen) {
       this.finishIntro();
       return;
     }
 
-    // Animation & Sounds laufen jetzt perfekt synchron
     this.startCardRush();
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // Klick auf das Intro überspringt es
-    container.addEventListener('pointerdown', () => this.finishIntro());
+    const skipFlow = () => this.finishIntro();
+    container.addEventListener('pointerdown', skipFlow, { once: true });
 
-    // Auto-Start nach 7,5 Sekunden
     setTimeout(() => {
       if (this.active) this.finishIntro();
     }, 7500);
@@ -212,7 +207,7 @@ const IntroManager = {
     if (introEl) {
       introEl.classList.add('fade-out');
       setTimeout(() => {
-        introEl.remove();
+        if (introEl.parentNode) introEl.parentNode.removeChild(introEl);
         if (gameScreen) gameScreen.classList.remove('hidden');
         initApp();
       }, 500);
@@ -223,6 +218,7 @@ const IntroManager = {
   }
 };
 
+/* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
    ========================================================= */
 const EVOLUTION_CHAINS = {
@@ -291,7 +287,6 @@ const FULL_GEN2_CATALOG = [
   { name: "Snubbull", type: "fee", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/76_hires.png", weakness: "gift" },
   { name: "Pottrott", type: "käfer", hp: 80, maxHp: 80, cardUrl: "https://images.pokemontcg.io/neo1/49_hires.png", weakness: "feuer" }
 ];
-
 let activeDailyGen1Pool = [];
 let activeDailyGen2Pool = [];
 
@@ -488,7 +483,6 @@ function initMap() {
   setTimeout(() => map.invalidateSize(), 300);
 }
 
-// SUCHE NACH ORTEN BEI HEIMATORT-EINSTELLUNG
 async function searchLocation() {
   let query = document.getElementById('search-input').value;
   if (!query) return;
@@ -1533,4 +1527,3 @@ function importSaveGame(event) {
   };
   reader.readAsText(file);
 }
-
