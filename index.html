@@ -109,16 +109,16 @@
     </div>
 
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
-    <div id="screen-radar-hud" class="hidden">
+    <div id="screen-radar-hud" class="radar-container hidden">
       
-      <!-- OBERE AKTIONSLEISTE -->
+      <!-- OBERE AKTIONSLEISTE: SCAN TRIGGER -->
       <div class="top-bar">
         <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-main">
           📡 STARTE POKÉMON SCAN
         </button>
       </div>
 
-      <!-- RADAR ANZEIGEBEREICH -->
+      <!-- RADAR ANZEIGEBEREICH (MITTIG) -->
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
           <div class="ring ring-1"></div>
@@ -132,12 +132,13 @@
         <div id="radar-timer-display" class="radar-timer hidden">20s</div>
       </div>
 
-      <!-- UNTERE MENÜLEISTE -->
+      <!-- UNTERE MENÜLEISTE: MENÜ BUTTON -->
       <div class="bottom-bar">
-        <button onclick="openMenuModal()" class="btn-menu-trigger">
-          ⚙️ MENÜ
+        <button onclick="openMenuModal()" class="btn-primary btn-menu-trigger">
+          ⚙️ HAUPTMENÜ & TEAM
         </button>
       </div>
+
     </div>
 
     <!-- SCREEN 5: KAMPFSYSTEM -->
