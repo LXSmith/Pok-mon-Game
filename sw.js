@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-rpg-v2'; // Versionsnummer erhöht!
+const CACHE_NAME = 'pokemon-rpg-v3'; // Versionsnummer erhöht!
 
 const STATIC_ASSETS = [
   './',
