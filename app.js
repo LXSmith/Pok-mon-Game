@@ -23,7 +23,6 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// Lädt und dekodiert die MP3 erst, wenn der AudioContext durch Klick aktiv ist
 async function loadCardSoundBuffer() {
   const ctx = getAudioContext();
   if (!ctx || cardAudioBuffer) return;
@@ -32,7 +31,6 @@ async function loadCardSoundBuffer() {
     const response = await fetch(CARD_SOUND_PATH);
     const arrayBuffer = await response.arrayBuffer();
     cardAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    console.log('[Audio] MP3-Buffer erfolgreich geladen!');
   } catch(e) {
     console.log('[Audio] Fehler beim Laden des MP3 Buffers:', e);
   }
@@ -49,8 +47,6 @@ function unlockAudio() {
       source.start(0);
     } catch(e){}
   }
-  
-  // Lädt und aktiviert das Audio direkt beim Touch/Klick
   loadCardSoundBuffer();
 }
 
@@ -242,7 +238,6 @@ const EVOLUTION_CHAINS = {
   "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35 }
 };
 
-// FULL KATALOG GENERATION 1 (Home Area)
 const FULL_GEN1_CATALOG = [
   { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/57_hires.png", weakness: "elektro" },
   { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf" },
@@ -271,7 +266,6 @@ const FULL_GEN1_CATALOG = [
   { name: "Pinsir", type: "käfer", hp: 65, maxHp: 65, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
 ];
 
-// FULL KATALOG GENERATION 2 (Out of Home Area)
 const FULL_GEN2_CATALOG = [
   { name: "Feurigel", type: "feuer", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/57_hires.png", weakness: "wasser" },
   { name: "Karnimani", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/neo1/81_hires.png", weakness: "pflanze" },
