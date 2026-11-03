@@ -7,7 +7,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// GLOBALE AUDIO-KONTEXT VERWALTUNG (iOS-optimiert)
+// GLOBALE AUDIO-KONTEXT VERWALTUNG (iOS-Hardware-Fix)
 let audioCtx = null;
 
 function getAudioContext() {
@@ -21,16 +21,20 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// Spielt einen unhörbaren 1ms-Ton ab, um iOS Safari garantiert aufzuwecken
+// Zwingt das iPhone mit einem kurzen Piepser, den Lautsprecher Hardware-seitig zu aktivieren
 function unlockAudio() {
   const ctx = getAudioContext();
   if (ctx) {
     try {
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      gain.gain.setValueAtTime(0.01, ctx.currentTime); // Fast stumm, aber aktiv
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(0);
+      osc.stop(ctx.currentTime + 0.05);
     } catch(e){}
   }
 }
@@ -64,12 +68,13 @@ const IntroManager = {
     if (promptElem) promptElem.innerText = "BERÜHREN FÜR SOUND";
 
     const handleTouch = (e) => {
-      // ERSTER TIPP: Sound freischalten & Bestätigungssound spielen
+      // ERSTER TIPP: Sound freischalten & Slash-Sound testen
       if (!this.audioUnlocked) {
         this.audioUnlocked = true;
-        unlockAudio(); // Audio-Hardware des Handys entsperren
+        unlockAudio(); // Hardware-Aufwecker
         
-        this.playSlashSound(); // Sofort als Feedback abspielen!
+        // Sofort ein spürbares akustisches Feedback abspielen
+        setTimeout(() => this.playSlashSound(), 50);
         
         if (promptElem) {
           promptElem.innerText = this.canStart ? "BERÜHREN ZUM STARTEN" : "INTRO LÄUFT...";
@@ -77,7 +82,7 @@ const IntroManager = {
         return;
       }
 
-      // ZWEITER TIPP: Spiel starten (nur wenn Animation fertig ist)
+      // ZWEITER TIPP: Spiel starten (sofern Animation fertig ist)
       if (this.canStart) {
         this.finishIntro();
       }
@@ -85,7 +90,7 @@ const IntroManager = {
 
     container.addEventListener('pointerdown', handleTouch);
 
-    // Freigabe des Starts nach 6,4 Sekunden
+    // Freigabe nach 6,4 Sekunden
     setTimeout(() => {
       this.canStart = true;
       if (promptElem && this.audioUnlocked) {
@@ -107,7 +112,7 @@ const IntroManager = {
     if (!ctx) return;
     try {
       const now = ctx.currentTime;
-      const bufferSize = ctx.sampleRate * 0.10;
+      const bufferSize = ctx.sampleRate * 0.12;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
@@ -115,15 +120,14 @@ const IntroManager = {
       const noise = ctx.createBufferSource();
       noise.buffer = buffer;
 
-      const randomStartFreq = 500 + Math.random() * 350;
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(randomStartFreq, now);
-      filter.frequency.exponentialRampToValueAtTime(120, now + 0.10);
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.exponentialRampToValueAtTime(150, now + 0.12);
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.13, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
+      gain.gain.setValueAtTime(0.5, now); // Lautstärke deutlich angehoben (0.13 -> 0.5)
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
 
       noise.connect(filter);
       filter.connect(gain);
@@ -138,7 +142,7 @@ const IntroManager = {
     if (!ctx) return;
     try {
       const now = ctx.currentTime;
-      const bufferSize = ctx.sampleRate * 0.28;
+      const bufferSize = ctx.sampleRate * 0.30;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
@@ -148,13 +152,98 @@ const IntroManager = {
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(4500, now);
-      filter.frequency.exponentialRampToValueAtTime(250, now + 0.25);
-      filter.Q.value = 4;
+      filter.frequency.setValueAtTime(3500, now);
+      filter.frequency.exponentialRampToValueAtTime(200, now + 0.28);
+      filter.Q.value = 3;
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.95, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26
+      gain.gain.setValueAtTime(1.0, now); // Volle Lautstärke (1.0)
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.30);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+    } catch(e){}
+  },
+
+  startCardRush() {
+    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
+    if (!cardStream) return;
+
+    const tcgCards = [
+      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
+      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' },
+      { tcg: 'https://images.pokemontcg.io/jungle/11_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/8_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/68.png' }
+    ];
+
+    const cardCount = 14;
+    const totalDuration = 5000;
+
+    for (let i = 0; i < cardCount; i++) {
+      setTimeout(() => {
+        if (!this.active) return;
+        const cardData = tcgCards[i % tcgCards.length];
+        const card = document.createElement('div');
+        card.className = 'tcg-card';
+
+        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
+
+        const startX = (Math.random() - 0.5) * 80;
+        const startY = (Math.random() - 0.5) * 60;
+        const endX = (Math.random() - 0.5) * 380;
+        const endY = (Math.random() - 0.5) * 320;
+        const rotZ = (Math.random() - 0.5) * 22;
+        const rotY = (Math.random() - 0.5) * 18;
+
+        cardStream.appendChild(card);
+
+        const animation = card.animate([
+          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
+          { opacity: 1, offset: 0.15 },
+          { opacity: 1, offset: 0.70 },
+          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          fill: 'forwards'
+        });
+
+        this.playWhooshSound();
+        animation.onfinish = () => card.remove();
+
+      }, i * (totalDuration / cardCount));
+    }
+  },
+
+  finishIntro() {
+    if (!this.active) return;
+    this.active = false;
+
+    unlockAudio();
+
+    const introEl = document.getElementById('intro-screen');
+    const gameScreen = document.getElementById('game-screen');
+
+    if (introEl) {
+      introEl.classList.add('fade-out');
+      setTimeout(() => {
+        introEl.remove();
+        if (gameScreen) gameScreen.classList.remove('hidden');
+        initApp();
+      }, 500);
+    } else {
+      if (gameScreen) gameScreen.classList.remove('hidden');
+      initApp();
+    }
+  }
+};
+
 
 /* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
