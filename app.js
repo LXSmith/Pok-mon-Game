@@ -51,39 +51,45 @@ function unlockAudio() {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Projekt "Pokémon MOVE")
+   1. CINEMATIC INTRO ENGINE (Karten-Animation & Slash)
    ========================================================= */
 const IntroManager = {
   active: true,
 
   init() {
-    const splashScreen = document.getElementById('splash-screen');
-
-    if (!splashScreen) {
-      this.startMainIntro();
-      return;
-    }
-
+    // Audio direkt beim ersten Klick/Touch freischalten
     const startAppFlow = (e) => {
       if (e) e.preventDefault();
       unlockAudio();
-
-      splashScreen.classList.add('fade-out');
       
-      setTimeout(() => {
-        if (splashScreen && splashScreen.parentNode) {
-          splashScreen.parentNode.removeChild(splashScreen);
-        }
-        this.startMainIntro();
-      }, 500);
+      // Event-Listener entfernen, damit es nur einmal ausführt
+      window.removeEventListener('touchstart', startAppFlow);
+      window.removeEventListener('pointerdown', startAppFlow);
+      window.removeEventListener('click', startAppFlow);
+
+      this.startMainIntro();
     };
 
-    splashScreen.addEventListener('touchstart', startAppFlow, { once: true });
-    splashScreen.addEventListener('pointerdown', startAppFlow, { once: true });
-    splashScreen.addEventListener('click', startAppFlow, { once: true });
+    window.addEventListener('touchstart', startAppFlow, { once: true });
+    window.addEventListener('pointerdown', startAppFlow, { once: true });
+    window.addEventListener('click', startAppFlow, { once: true });
+
+    // Falls kein Splash-Screen da ist, direkt starten
+    const splashScreen = document.getElementById('splash-screen');
+    if (!splashScreen) {
+      this.startMainIntro();
+    }
   },
 
   startMainIntro() {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+      splashScreen.classList.add('fade-out');
+      setTimeout(() => {
+        if (splashScreen.parentNode) splashScreen.parentNode.removeChild(splashScreen);
+      }, 500);
+    }
+
     const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
     const introScreen = document.getElementById('intro-screen');
 
@@ -92,12 +98,16 @@ const IntroManager = {
       return;
     }
 
+    // Karten-Animation starten
     this.startCardRush();
+    // Slash-Sound nach 5.3 Sekunden abspielen
     setTimeout(() => this.playSlashSound(), 5300);
 
+    // Klick zum Überspringen (Skip)
     const skipFlow = () => this.finishIntro();
     container.addEventListener('pointerdown', skipFlow, { once: true });
 
+    // Nach 7.5 Sekunden automatisch ins Spiel wechseln
     setTimeout(() => {
       if (this.active) this.finishIntro();
     }, 7500);
@@ -185,7 +195,6 @@ const IntroManager = {
         const rotY = (Math.random() - 0.5) * 18;
 
         cardStream.appendChild(card);
-
         this.playCardFlipSound();
 
         const animation = card.animate([
@@ -225,6 +234,7 @@ const IntroManager = {
     }
   }
 };
+
 
 /* =========================================================
    2. EVOLUTIONS-PFADE & DATENBANK
