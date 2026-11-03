@@ -1,147 +1,630 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap');
 
+/* =========================================================
+   1. GLOBALE VARIABLEN & RESET
+   ========================================================= */
 :root {
   --bg-gradient: radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 100%);
+  --card-bg: rgba(30, 41, 59, 0.85);
   --accent-yellow: #ffcb05;
+  --accent-yellow-dark: #e6a100;
+  --accent-blue: #2a75bb;
   --accent-green: #10b981;
   --accent-warning: #f59e0b;
-  --accent-red: #ef4444;
+  --accent-red: #ff3b5c;
+  --accent-purple: #9d4edd;
+  --accent-cyan: #00f0ff;
   --text-main: #f8fafc;
   --text-sub: #94a3b8;
+  --shadow-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
 }
 
-* { box-sizing: border-box; user-select: none; }
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 
 body, html {
-  width: 100%; height: 100%; margin: 0; padding: 0;
-  font-family: 'Fredoka', sans-serif;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-gradient);
   color: var(--text-main);
   text-align: center;
   overflow: hidden;
 }
 
-.hidden { display: none !important; }
-
-/* INTRO STYLES */
-#intro-screen {
-  position: fixed; inset: 0; z-index: 1000; background: #030406;
-  transition: opacity 0.5s ease;
+.hidden {
+  display: none !important;
 }
-#intro-screen.fade-out { opacity: 0; pointer-events: none; }
+
+/* =========================================================
+   2. CINEMATIC INTRO STYLES & ANIMATIONEN
+   ========================================================= */
+#intro-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background-color: #030406;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+  overflow: hidden;
+}
+
+#intro-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 
 .intro-container {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  justify-content: center; align-items: center; position: relative;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  perspective: 1200px; /* 3D-Flugperspektive */
 }
-.card-stream { position: absolute; inset: 0; transform-style: preserve-3d; }
-.tcg-card {
-  position: absolute; top: 50%; left: 50%; width: 140px; height: 195px;
-  margin-top: -97px; margin-left: -70px; border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8); overflow: hidden;
-}
-.tcg-card img { width: 100%; height: 100%; object-fit: contain; }
-.title-pokemon { font-size: 1.5rem; letter-spacing: 0.4em; color: #fff; }
-.title-move { font-size: 4.5rem; font-style: italic; color: var(--accent-red); margin-top: -10px; }
-.start-prompt { margin-top: 60px; font-size: 0.9rem; color: var(--text-sub); }
 
-/* UI CARDS & LAYOUT */
-.container { max-width: 440px; height: 100vh; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+/* KARTEN STREAM CONTAINER */
+.card-stream {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* TCG KARTE */
+.tcg-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160px;
+  height: 223px;
+  margin-top: -111px;
+  margin-left: -80px;
+  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.15);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  background: #111827;
+  overflow: hidden;
+}
+
+.tcg-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* SLASH & BACKGROUND GLOW EFFEKTE */
+.bg-glow {
+  position: absolute;
+  width: 850px;
+  height: 850px;
+  background: radial-gradient(circle, rgba(255, 59, 92, 0.22) 0%, rgba(157, 78, 221, 0.15) 45%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: fadeInGlow 1.2s ease 5.5s forwards;
+}
+
+.slash-effect {
+  position: absolute;
+  width: 170%;
+  height: 10px;
+  background: #ffffff;
+  box-shadow: 0 0 25px #fff, 0 0 50px var(--accent-red), 0 0 90px var(--accent-cyan);
+  transform: rotate(-22deg) scaleX(0);
+  transform-origin: left center;
+  z-index: 10;
+  animation: performSlash 0.42s cubic-bezier(0.11, 0, 0.5, 0) 5.3s forwards;
+}
+
+.flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9;
+  animation: screenFlash 0.35s ease 5.55s forwards;
+}
+
+/* TYPOGRAFIE & LOGO */
+.title-wrapper {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title-pokemon {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.55em;
+  color: #ffffff;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: revealTextUpper 0.5s cubic-bezier(0.16, 1, 0.3, 1) 5.65s forwards;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.title-move {
+  font-size: 5.5rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, #ffffff 15%, var(--accent-red) 60%, var(--accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 0.9;
+  margin-top: 6px;
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  animation: revealMoveTitle 0.65s cubic-bezier(0.16, 1, 0.3, 1) 5.6s forwards;
+  filter: drop-shadow(0 15px 35px rgba(255, 59, 92, 0.5));
+}
+
+.start-prompt {
+  margin-top: 80px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  opacity: 0;
+  animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards;
+  z-index: 5;
+}
+
+/* KEYFRAMES */
+@keyframes performSlash {
+  0% { transform: rotate(-22deg) scaleX(0); opacity: 1; }
+  50% { transform: rotate(-22deg) scaleX(1); opacity: 1; }
+  100% { transform: rotate(-22deg) scaleX(1) translateY(60px); opacity: 0; }
+}
+
+@keyframes screenFlash {
+  0% { opacity: 0; }
+  40% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+@keyframes revealMoveTitle {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); transform: scale(1.1); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: scale(1); }
+}
+
+@keyframes revealTextUpper { to { opacity: 0.9; transform: translateY(0); } }
+@keyframes fadeInGlow { to { opacity: 1; } }
+@keyframes fadeInPrompt { to { opacity: 0.7; } }
+@keyframes pulseText { from { opacity: 0.3; transform: scale(0.98); } to { opacity: 0.9; transform: scale(1.02); } }
+
+/* =========================================================
+   3. HAUPT-GAME CONTAINER & BUTTONS
+   ========================================================= */
+.container {
+  max-width: 440px;
+  height: 100vh;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
 .card-ui {
-  background: rgba(30, 41, 59, 0.85);
+  background: var(--card-bg);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px; padding: 24px;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow-glow);
 }
 
-.logo-title { font-size: 32px; color: var(--accent-yellow); margin: 0; }
-.subtitle { color: var(--text-sub); font-size: 14px; margin-bottom: 20px; }
+.logo-title {
+  font-size: 32px;
+  color: var(--accent-yellow);
+  margin: 0;
+  text-shadow: 0 0 12px rgba(255, 203, 5, 0.5);
+}
+
+.subtitle {
+  color: var(--text-sub);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
 
 button {
-  font-family: 'Fredoka', sans-serif; font-weight: 700; border: none;
-  padding: 14px 20px; font-size: 16px; border-radius: 20px;
-  cursor: pointer; width: 100%; transition: transform 0.1s;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  border: none;
+  padding: 14px 20px;
+  font-size: 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-button:active { transform: scale(0.97); }
 
-.btn-primary { background: linear-gradient(180deg, #ffde00 0%, #e6a100 100%); color: #1b365d; }
-.btn-secondary { background: #334155; color: #fff; margin-top: 10px; }
-.btn-special { background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%); color: #fff; }
-.btn-subtext { display: block; font-size: 11px; opacity: 0.8; font-weight: 400; margin-top: 2px; }
+button:active {
+  transform: scale(0.97);
+}
 
+button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #ffde00 0%, var(--accent-yellow-dark) 100%);
+  color: #1b365d;
+  box-shadow: 0 4px 15px rgba(255, 203, 5, 0.3);
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #ffffff;
+  margin-top: 10px;
+}
+
+.btn-special {
+  background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
+.btn-subtext {
+  display: block;
+  font-size: 11px;
+  opacity: 0.8;
+  font-weight: 400;
+  margin-top: 2px;
+  text-transform: none;
+}
+
+/* SPEICHER-SLOTS */
 .slot-card {
-  background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(255, 203, 5, 0.3);
-  border-radius: 16px; padding: 12px; margin-bottom: 12px; text-align: left; cursor: pointer;
+  background: rgba(15, 23, 42, 0.6);
+  border: 2px solid rgba(255, 203, 5, 0.3);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.slot-info { font-size: 12px; color: var(--text-sub); }
 
-.starter-container { display: flex; gap: 10px; margin-bottom: 15px; }
-.starter-card { flex: 1; background: #1e293b; padding: 10px; border-radius: 14px; border: 2px solid transparent; cursor: pointer; }
-.starter-card.selected { border-color: var(--accent-yellow); background: rgba(255, 203, 5, 0.1); }
-.starter-card img { width: 100%; }
-.starter-name { font-size: 12px; margin-top: 4px; }
+.slot-card:hover {
+  border-color: var(--accent-yellow);
+  transform: translateY(-2px);
+}
 
-/* RADAR HUD STYLES */
-#screen-radar-hud { display: flex; flex-direction: column; height: 100vh; justify-content: space-between; padding: 20px 0; }
+.slot-card h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.slot-info {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+/* STARTER POKÉMON SELECTION */
+.starter-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.starter-card {
+  flex: 1;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.starter-card.selected {
+  border-color: var(--accent-yellow);
+  background: rgba(255, 203, 5, 0.15);
+  box-shadow: 0 0 15px rgba(255, 203, 5, 0.3);
+}
+
+.starter-card img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.starter-name {
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   4. RADAR HUD STYLES (HAUPTSPIEL)
+   ========================================================= */
+#screen-radar-hud {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: space-between;
+  padding: 20px 0;
+}
 
 .btn-scan-main {
-  width: 90%; margin: 0 auto; background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-  color: #fff; font-size: 18px; padding: 16px; border-radius: 30px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  width: 90%;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 18px;
+  padding: 16px;
+  border-radius: 30px;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
 }
 
 .radar-viewport {
-  position: relative; width: 280px; height: 280px; margin: 0 auto;
-  display: flex; justify-content: center; align-items: center;
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .radar-rings {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 2px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+  transition: all 0.3s ease;
 }
 
-.ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(16, 185, 129, 0.4); }
-.ring-1 { inset: 20px; } .ring-2 { inset: 50px; } .ring-3 { inset: 80px; }
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(16, 185, 129, 0.4);
+}
+.ring-1 { inset: 20px; }
+.ring-2 { inset: 50px; }
+.ring-3 { inset: 80px; }
 
 .sweeper {
-  position: absolute; inset: 0; border-radius: 50%;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   background: conic-gradient(from 0deg, rgba(16,185,129,0.4) 0deg, transparent 60deg);
   display: none;
 }
 
-.state-scanning .sweeper { display: block; animation: rotateSweeper 2s linear infinite; }
-@keyframes rotateSweeper { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* RADAR ZUSTÄNDE */
+.state-scanning .sweeper {
+  display: block;
+  animation: rotateSweeper 2s linear infinite;
+}
 
-.state-detected { border-color: var(--accent-warning); background: rgba(245, 158, 11, 0.1); }
-.state-warning { border-color: #f97316; background: rgba(249, 115, 22, 0.2); animation: pulseRadar 0.6s infinite alternate; }
-.state-target { border-color: var(--accent-red); background: rgba(239, 68, 68, 0.3); animation: pulseRadar 0.2s infinite alternate; }
+@keyframes rotateSweeper {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
-@keyframes pulseRadar { from { transform: scale(0.98); } to { transform: scale(1.02); } }
+.state-detected {
+  border-color: var(--accent-warning);
+  background: rgba(245, 158, 11, 0.1);
+}
 
-.radar-center-dot { width: 12px; height: 12px; background: #fff; border-radius: 50%; z-index: 5; box-shadow: 0 0 10px #fff; }
-.radar-status { position: absolute; bottom: -30px; font-size: 14px; font-weight: 700; color: var(--text-sub); }
-.radar-timer { position: absolute; top: -35px; font-size: 24px; font-weight: 700; color: var(--accent-yellow); }
+.state-warning {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.2);
+  animation: pulseRadar 0.6s infinite alternate;
+}
 
-.btn-menu-trigger { width: 60%; margin: 0 auto; background: #334155; color: #fff; border-radius: 25px; }
+.state-target {
+  border-color: var(--accent-red);
+  background: rgba(255, 59, 92, 0.3);
+  animation: pulseRadar 0.2s infinite alternate;
+}
 
-/* BATTLE STYLES */
-.battle-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
-.battle-card-img { width: 110px; border-radius: 12px; margin: 8px 0; }
-.battle-box { background: rgba(15, 23, 42, 0.9); border-radius: 12px; padding: 10px; font-size: 13px; margin: 10px 0; }
-.battle-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.btn-catch { grid-column: span 2; background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); color: #fff; }
+@keyframes pulseRadar {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.02); }
+}
 
-.bar-bg { background: #0f172a; height: 10px; border-radius: 5px; overflow: hidden; width: 80%; margin: 0 auto; }
-.bar-fill { height: 100%; width: 100%; }
-.hp-fill { background: #10b981; } .exp-fill { background: #f59e0b; }
-.bar-text { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.radar-center-dot {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  z-index: 5;
+  box-shadow: 0 0 10px #ffffff;
+}
 
-/* MODALS */
-.modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
-.modal-card { background: #1e293b; border-radius: 24px; padding: 20px; width: 100%; max-width: 360px; border: 1px solid rgba(255,255,255,0.1); }
-.menu-tab-buttons { display: flex; gap: 5px; margin-bottom: 12px; }
-.tab-btn { background: transparent; color: var(--text-sub); padding: 8px; font-size: 12px; }
-.tab-btn.active { background: var(--accent-yellow); color: #1b365d; }
-.mtab-content { min-height: 120px; }
-.pokemon-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 8px; border-radius: 10px; margin-bottom: 6px; }
-.tag-active { font-size: 10px; background: #10b981; color: #fff; padding: 2px 6px; border-radius: 10px; }
+.radar-status {
+  position: absolute;
+  bottom: -35px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-sub);
+  width: 100%;
+}
+
+.radar-timer {
+  position: absolute;
+  top: -40px;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent-yellow);
+  text-shadow: 0 0 10px rgba(255, 203, 5, 0.5);
+}
+
+.btn-menu-trigger {
+  width: 60%;
+  margin: 0 auto;
+  background: #334155;
+  color: #ffffff;
+  border-radius: 25px;
+}
+
+/* =========================================================
+   5. KAMPFSYSTEM STYLES
+   ========================================================= */
+.battle-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.battle-card-img {
+  width: 110px;
+  border-radius: 12px;
+  margin: 8px 0;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+.battle-box {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.battle-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-catch {
+  grid-column: span 2;
+  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
+}
+
+.bar-bg {
+  background: #0f172a;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 80%;
+  margin: 0 auto;
+}
+
+.bar-fill {
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.hp-fill { background: var(--accent-green); }
+.exp-fill { background: var(--accent-warning); }
+
+.bar-text {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+/* =========================================================
+   6. MODAL OVERLAYS & POPUPS
+   ========================================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal-card {
+  background: #1e293b;
+  border-radius: 24px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-glow);
+}
+
+.menu-tab-buttons {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 4px;
+  border-radius: 14px;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--text-sub);
+  padding: 8px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+.tab-btn.active {
+  background: var(--accent-yellow);
+  color: #1b365d;
+  font-weight: 700;
+}
+
+.mtab-content {
+  min-height: 120px;
+}
+
+.pokemon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f172a;
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+.tag-active {
+  font-size: 10px;
+  background: var(--accent-green);
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.evo-pulse {
+  animation: flashGlow 1s infinite alternate;
+}
+
+@keyframes flashGlow {
+  0% { filter: drop-shadow(0 0 8px #fff) brightness(1); }
+  100% { filter: drop-shadow(0 0 25px var(--accent-yellow)) brightness(1.3); }
+}
