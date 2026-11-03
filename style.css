@@ -43,8 +43,7 @@ body, html {
 }
 
 /* =========================================================
-/* =========================================================
-   CINEMATIC INTRO STYLES & VISUAL CARD FIX
+   2. CINEMATIC INTRO STYLES & ANIMATIONEN
    ========================================================= */
 #intro-screen {
   position: fixed;
@@ -75,11 +74,11 @@ body, html {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  perspective: 1000px; /* Erzeugt die echte 3D-Tiefe */
+  perspective: 1000px;
   -webkit-perspective: 1000px;
 }
 
-/* KARTEN STREAM CONTAINER (Jetzt mit fester Dimension) */
+/* KARTEN STREAM CONTAINER */
 .card-stream {
   position: absolute;
   top: 0;
@@ -135,7 +134,7 @@ body, html {
   width: 180%;
   height: 8px;
   background: #ffffff;
-  box-shadow: 0 0 20px #fff, 0 0 40px #ff3b5c, 0 0 80px #00f0ff;
+  box-shadow: 0 0 20px #fff, 0 0 40px var(--accent-red), 0 0 80px var(--accent-cyan);
   transform: rotate(-22deg) scaleX(0);
   transform-origin: left center;
   z-index: 10;
@@ -179,7 +178,7 @@ body, html {
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.1em;
-  background: linear-gradient(135deg, #ffffff 15%, #ff3b5c 60%, #9d4edd 100%);
+  background: linear-gradient(135deg, #ffffff 15%, var(--accent-red) 60%, var(--accent-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 0.9;
@@ -202,7 +201,7 @@ body, html {
   z-index: 5;
 }
 
-/* KEYFRAME ANIMATIONEN */
+/* KEYFRAMES */
 @keyframes performSlash {
   0% { transform: rotate(-22deg) scaleX(0); opacity: 1; }
   50% { transform: rotate(-22deg) scaleX(1); opacity: 1; }
@@ -224,7 +223,6 @@ body, html {
 @keyframes fadeInGlow { to { opacity: 1; } }
 @keyframes fadeInPrompt { to { opacity: 0.7; } }
 @keyframes pulseText { from { opacity: 0.3; transform: scale(0.98); } to { opacity: 0.9; transform: scale(1.02); } }
-
 
 /* =========================================================
    3. HAUPT-GAME CONTAINER & BUTTONS
@@ -374,39 +372,59 @@ button:disabled {
 }
 
 /* =========================================================
-   4. RADAR HUD STYLES (HAUPTSPIEL)
+   4. RADAR HUD STYLES (EXAKTES SCREEN-LAYOUT)
    ========================================================= */
-.radar-container {
+.radar-hud-screen {
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
   align-items: center !important;
+  width: 100% !important;
   height: 100vh !important;
-  padding: 30px 20px !important;
+  padding: 40px 20px 30px 20px !important;
   box-sizing: border-box !important;
+  position: relative;
 }
 
-.top-bar, .bottom-bar {
+.hud-top-bar, .hud-bottom-bar {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   z-index: 10;
 }
 
-.btn-scan-main {
+.btn-scan-primary {
   width: 100%;
   background: linear-gradient(180deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   font-size: 18px;
+  font-weight: 800;
   padding: 16px;
   border-radius: 30px;
+  border: none;
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+.btn-menu-primary {
+  width: 100%;
+  background: #334155 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  padding: 16px !important;
+  border-radius: 25px !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+  text-transform: uppercase;
+}
+
+/* RADAR ANZEIGE IN DER MITTE */
 .radar-viewport {
   position: relative;
-  width: 280px;
-  height: 280px;
-  margin: 0 auto;
+  width: 260px;
+  height: 260px;
+  margin: auto 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -482,8 +500,8 @@ button:disabled {
 
 .radar-status {
   position: absolute;
-  bottom: -35px;
-  font-size: 14px;
+  bottom: -40px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-sub);
   width: 100%;
@@ -491,20 +509,11 @@ button:disabled {
 
 .radar-timer {
   position: absolute;
-  top: -40px;
-  font-size: 26px;
+  top: -45px;
+  font-size: 28px;
   font-weight: 800;
   color: var(--accent-yellow);
   text-shadow: 0 0 10px rgba(255, 203, 5, 0.5);
-}
-
-.btn-menu-trigger {
-  background: #334155 !important;
-  color: #ffffff !important;
-  border-radius: 25px !important;
-  padding: 16px !important;
-  font-size: 16px !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* =========================================================
