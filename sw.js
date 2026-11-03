@@ -1,15 +1,14 @@
-const CACHE_NAME = 'pokemon-rpg-v9'; // Version nochmals hochstufen
+const CACHE_NAME = 'pokemon-rpg-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './freesound_community-flipcard-91468.mp3', // Exakter Dateiname aus GitHub
+  './freesound_community-flipcard-91468.mp3',
   './manifest.json'
 ];
 
-
-// 1. INSTALLATION (Cacht alle Dateien inklusive des neuen MP3-Sounds)
+// 1. INSTALLATION (Cacht den MP3-Sound)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -19,7 +18,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. AKTIVIERUNG (Löscht alte Caches wie v7, v6 etc.)
+// 2. AKTIVIERUNG (Löscht zwingend alle alten Caches)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -35,7 +34,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. FETCH (Lädt Dateien bevorzugt aus dem Cache, offline-ready)
+// 3. FETCH (Lädt Sound & App aus dem aktuellen Cache)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
