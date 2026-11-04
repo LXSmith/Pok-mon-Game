@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
 
   <!-- Externe CSS mit aktuellem Cache-Buster -->
-  <link rel="stylesheet" href="style.css?v=9000">
+  <link rel="stylesheet" href="style.css?v=10000">
 </head>
 <body>
 
@@ -35,7 +35,8 @@
         </div>
       </div>
 
-      <div class="start-prompt">BERÜHREN ZUM STARTEN</div>
+      <!-- Bleibt leer, bis das Intro komplett abgelaufen ist -->
+      <div class="start-prompt"></div>
     </div>
   </div>
 
@@ -44,8 +45,8 @@
   <!-- ========================================== -->
   <div id="game-screen" class="app-viewport hidden">
 
-    <!-- SCREEN 1: HAUPTMENÜ -->
-    <div id="screen-main-menu" class="card-ui screen-panel">
+    <!-- SCREEN 1: HAUPTMENÜ (Jetzt standardmäßig hidden) -->
+    <div id="screen-main-menu" class="card-ui screen-panel hidden">
       <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
         <div class="brand-logo-container">
           <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
@@ -203,6 +204,6 @@
 
   </div>
 
-  <script src="app.js?v=9000"></script>
+  <script src="app.js?v=10000"></script>
 </body>
 </html>
