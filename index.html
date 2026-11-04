@@ -191,7 +191,7 @@
 </head>
 <body>
 
-  <!-- ========================================== -->
+    <!-- ========================================== -->
   <!-- 1. CINEMATIC INTRO SCREEN                  -->
   <!-- ========================================== -->
   <div id="intro-screen">
@@ -202,8 +202,22 @@
       <div class="flash-overlay"></div>
 
       <div class="title-wrapper">
-        <div class="logo-pokemon title-pokemon-anim">Pokémon</div>
-        <div class="logo-move title-move-anim">MOVE</div>
+        <div class="brand-logo-container">
+          <!-- Original Pokémon Schriftzug SVG (mit Intro-Animation) -->
+          <img class="brand-pokemon-svg title-pokemon-anim" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
+          
+          <!-- Dynamic MOVE Badge mit Pokéball-O (mit Intro-Animation) -->
+          <div class="brand-move-badge title-move-anim">
+            <span class="move-letter">M</span>
+            <span class="pokeball-o">
+              <span class="pb-top"></span>
+              <span class="pb-center"></span>
+              <span class="pb-bottom"></span>
+            </span>
+            <span class="move-letter">V</span>
+            <span class="move-letter">E</span>
+          </div>
+        </div>
       </div>
 
       <div class="start-prompt">BERÜHREN ZUM STARTEN</div>
