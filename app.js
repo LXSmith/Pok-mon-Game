@@ -34,11 +34,11 @@ function unlockAudio() {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Unskippable Version)
+   1. CINEMATIC INTRO ENGINE (Unskippable & sauberer Text)
    ========================================================= */
 const IntroManager = {
   active: true,
-  canInteractiveFinish: false, // Erst nach Ablauf des Logos erlaubt
+  canInteractiveFinish: false,
 
   init() {
     const introScreen = document.getElementById('intro-screen');
@@ -49,24 +49,33 @@ const IntroManager = {
       return;
     }
 
-    // Audio-Freischaltung beim ersten Touch (aber KEIN Skip des Intros!)
-    const triggerAudio = () => unlockAudio();
-    container.addEventListener('pointerdown', triggerAudio, { once: true });
-
-    // Klick zum Starten ERST erlauben, wenn das Intro komplett durchgelaufen ist
-    container.addEventListener('click', () => {
-      if (this.canInteractiveFinish) {
-        this.finishIntro();
+    // Touch & Klick-Sperre während der Animation
+    const triggerAudio = (e) => {
+      unlockAudio();
+      if (!this.canInteractiveFinish) {
+        e.stopPropagation();
       }
+    };
+
+    container.addEventListener('touchstart', triggerAudio, { passive: true });
+    container.addEventListener('pointerdown', triggerAudio, { passive: true });
+
+    container.addEventListener('click', (e) => {
+      if (!this.canInteractiveFinish) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      this.finishIntro();
     });
 
-    // 1. Karten-Rush starten (Dauer: 5 Sekunden)
+    // 1. Karten-Rush starten (5 Sekunden)
     this.startCardRush();
 
-    // 2. Slash & Sound nach 5.3 Sekunden
+    // 2. Slash-Sound abspielen (5.3 Sekunden)
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // 3. Nach 7.3 Sekunden (5.3s Slash + 2s Logo-Präsenz): Text einblenden & Klick freischalten
+    // 3. Nach 7.3 Sekunden (Slash + 2s Logo): Einzigen Text setzen & Klick freischalten
     setTimeout(() => {
       this.canInteractiveFinish = true;
       const promptEl = document.querySelector('.start-prompt');
@@ -99,9 +108,7 @@ const IntroManager = {
       gain.gain.setValueAtTime(0.15, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
 
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
+      noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
       noise.start(now);
     } catch(e){}
   },
@@ -129,9 +136,7 @@ const IntroManager = {
       gain.gain.setValueAtTime(0.95, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
 
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
+      noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
       noise.start(now);
     } catch(e){}
   },
@@ -158,7 +163,6 @@ const IntroManager = {
         const cardData = tcgCards[i % tcgCards.length];
         const card = document.createElement('div');
         card.className = 'tcg-card';
-
         card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
 
         const startX = (Math.random() - 0.5) * 80;
@@ -183,7 +187,6 @@ const IntroManager = {
 
         this.playWhooshSound();
         animation.onfinish = () => card.remove();
-
       }, i * (totalDuration / cardCount));
     }
   },
@@ -204,12 +207,10 @@ const IntroManager = {
         if (gameScreen) gameScreen.classList.remove('hidden');
         initApp();
       }, 500);
-    } else {
-      if (gameScreen) gameScreen.classList.remove('hidden');
-      initApp();
     }
   }
 };
+
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
@@ -309,11 +310,21 @@ function onSlotSelected(slotNum) {
   }
 }
 
+/* WICHTIG: Saubere Umschaltung – blendet AUSNAHMSLOS alle Screens aus, bevor nur der Zielscreen gezeigt wird */
 function showScreen(screenId) {
-  ['screen-main-menu', 'screen-slots', 'screen-starter', 'screen-radar-hud', 'screen-battle'].forEach(id => {
+  const allScreens = [
+    'screen-main-menu',
+    'screen-slots',
+    'screen-starter',
+    'screen-radar-hud',
+    'screen-battle'
+  ];
+
+  allScreens.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
+
   const target = document.getElementById(screenId);
   if (target) target.classList.remove('hidden');
 }
