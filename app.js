@@ -705,8 +705,6 @@ function updateBlipPosition() {
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
 
-  const relativeAngle = (absoluteBearing - currentHeading + 360) % 360;
-
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
 
   if (distMeters <= 4) {
@@ -717,11 +715,13 @@ function updateBlipPosition() {
     return;
   }
 
-  const maxRadarRadius = 140;
-  const maxMeterVisual = 20;
-  const pixelDist = Math.min(maxRadarRadius, (distMeters / maxMeterVisual) * maxRadarRadius);
+  const radarRadius = 140; 
+  const maxSearchRange = 50; 
 
-  const rad = relativeAngle * Math.PI / 180;
+  const pixelDist = Math.min(radarRadius, (distMeters / maxSearchRange) * radarRadius);
+
+  // Nutzen des absoluten Peilwinkels (ohne Heading-Abzug, da der Container selbst rotiert)
+  const rad = absoluteBearing * Math.PI / 180;
   const x = 165 + pixelDist * Math.sin(rad);
   const y = 165 - pixelDist * Math.cos(rad);
 
