@@ -1,7 +1,9 @@
-// SERVICE WORKER REGISTRIERUNG
+// SERVICE WORKER LÖSCHUNG (Behebt den Cache-Fehler im normalen Tab)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let registration of registrations) {
+      registration.unregister();
+    }
   });
 }
 
@@ -73,30 +75,86 @@ function calculateDestination(lat, lon, distanceMeters, bearingDegrees) {
 let currentPosition = null;
 let targetPokemonCoords = null;
 let watchPositionId = null;
+let currentHeading = 0; // Kompass-Ausrichtung in Grad
 
-// LEAFLET MAP VARIABLEN
+// LEAFLET MAP LOGIK (REPARIERT)
 let homeMap = null;
 let homeMarker = null;
-let selectedHomeCoords = null;
+let tempHomeCoords = null;
 
-function initGPSLiveTracking() {
-  if ("geolocation" in navigator) {
-    watchPositionId = navigator.geolocation.watchPosition(
-      (pos) => {
-        currentPosition = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude
-        };
-        onGPSPositionUpdated();
-      },
-      (err) => {
-        console.warn("GPS Fehler:", err);
-      },
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
-    );
-  } else {
-    alert("Geolocation wird von deinem Browser leider nicht unterstützt.");
+function openHomeMapModal() {
+  document.getElementById('modal-home-map').classList.remove('hidden');
+
+  // Fallback-Koordinaten falls GPS noch laedt
+  const startLat = (currentSaveData && currentSaveData.homePos) ? currentSaveData.homePos.lat : (currentPosition ? currentPosition.lat : 51.1657);
+  const startLon = (currentSaveData && currentSaveData.homePos) ? currentSaveData.homePos.lon : (currentPosition ? currentPosition.lon : 10.4515);
+
+  tempHomeCoords = { lat: startLat, lon: startLon };
+
+  // Verzoegerung erlaubt dem DOM das Overlay vollständig sichtbar zu rendern
+  setTimeout(() => {
+    const container = document.getElementById('map-container');
+    if (!container) return;
+
+    if (!homeMap) {
+      homeMap = L.map('map-container').setView([startLat, startLon], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(homeMap);
+
+      homeMarker = L.marker([startLat, startLon], { draggable: true }).addTo(homeMap);
+      
+      homeMarker.on('dragend', function () {
+        const position = homeMarker.getLatLng();
+        tempHomeCoords = { lat: position.lat, lon: position.lng };
+      });
+
+      homeMap.on('click', function(e) {
+        homeMarker.setLatLng(e.latlng);
+        tempHomeCoords = { lat: e.latlng.lat, lon: e.latlng.lng };
+      });
+    } else {
+      homeMap.setView([startLat, startLon], 16);
+      homeMarker.setLatLng([startLat, startLon]);
+    }
+
+    // WICHTIG: Erzwingt Karten-Neuberechnung nach DOM-Einblendung
+    homeMap.invalidateSize();
+  }, 300);
+}
+
+function searchAddressOnMap() {
+  const query = document.getElementById('map-search-input').value;
+  if (!query) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        homeMap.setView([lat, lon], 17);
+        homeMarker.setLatLng([lat, lon]);
+        tempHomeCoords = { lat, lon };
+      } else {
+        alert("Adresse leider nicht gefunden!");
+      }
+    })
+    .catch(() => alert("Fehler bei der Adresssuche."));
+}
+
+function saveHomeLocationFromMap() {
+  if (tempHomeCoords) {
+    currentSaveData.homePos = { ...tempHomeCoords };
+    saveCurrentData();
+    alert("🏠 Zuhause-Standort erfolgreich gespeichert!");
+    closeHomeMapModal();
   }
+}
+
+function closeHomeMapModal() {
+  document.getElementById('modal-home-map').classList.add('hidden');
 }
 
 function requestNotificationPermission() {
@@ -317,7 +375,6 @@ let selectedStarter = null;
 
 let isScanning = false;
 let scanTimer = null;
-let scanCountdownSeconds = 0;
 let currentScanType = 'quick';
 
 let isTrainingMode = false;
@@ -340,12 +397,75 @@ let currentSaveData = {
 };
 
 /* =========================================================
-   3. NAVIGATION & SPIELSTAND LOGIK
+   3. NAVIGATION, GPS & KOMPASS INITIALISIERUNG
    ========================================================= */
 function initApp() {
   updateSlotUI();
   initGPSLiveTracking();
+  initCompassTracking();
   showScreen('screen-main-menu');
+}
+
+function initGPSLiveTracking() {
+  if ("geolocation" in navigator) {
+    watchPositionId = navigator.geolocation.watchPosition(
+      (pos) => {
+        currentPosition = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude
+        };
+        if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
+          currentHeading = pos.coords.heading;
+        }
+        onGPSPositionUpdated();
+      },
+      (err) => console.log("GPS Fehler:", err),
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+    );
+  }
+}
+
+// KORRIGIERTE KOMPASS-ERFASSUNG (BEHEBT DAS BLIP-POSITIONIERUNGS-PROBLEM)
+function initCompassTracking() {
+  const handleOrientation = (event) => {
+    let heading = null;
+
+    if (event.webkitCompassHeading) {
+      // iOS Kompass (0 Grad = Norden)
+      heading = event.webkitCompassHeading;
+    } else if (event.alpha !== null) {
+      // Android Kompass (Standard W3C)
+      heading = (360 - event.alpha) % 360;
+    }
+
+    if (heading !== null && !isNaN(heading)) {
+      currentHeading = heading;
+      if (targetPokemonCoords) {
+        updateBlipPosition();
+      }
+    }
+  };
+
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Erfordert spaetere Interaktion unter iOS
+    window.addEventListener('deviceorientation', handleOrientation, true);
+  } else if ('ondeviceorientationabsolute' in window) {
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+  } else if ('ondeviceorientation' in window) {
+    window.addEventListener('deviceorientation', handleOrientation, true);
+  }
+}
+
+function requestCompassPermissionIOS() {
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(response => {
+        if (response === 'granted') {
+          initCompassTracking();
+        }
+      })
+      .catch(console.error);
+  }
 }
 
 function updateSlotUI() {
@@ -422,6 +542,11 @@ function confirmStarter() {
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
   currentSaveData.pokeballs = 10;
+
+  if (currentPosition) {
+    currentSaveData.homePos = { ...currentPosition };
+  }
+
   saveCurrentData();
   loadDashboard();
   showScreen('screen-radar-hud');
@@ -469,80 +594,10 @@ function renderPokemonTeam() {
 }
 
 /* =========================================================
-   3b. LEAFLET MAP & ZUHAUSE LOGIK
-   ========================================================= */
-function openHomeMapModal() {
-  document.getElementById('modal-home-map').classList.remove('hidden');
-
-  const defaultLat = currentPosition ? currentPosition.lat : 51.1657;
-  const defaultLon = currentPosition ? currentPosition.lon : 10.4515;
-
-  setTimeout(() => {
-    if (!homeMap) {
-      homeMap = L.map('map-container').setView([defaultLat, defaultLon], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-      }).addTo(homeMap);
-
-      homeMarker = L.marker([defaultLat, defaultLon], { draggable: true }).addTo(homeMap);
-      selectedHomeCoords = { lat: defaultLat, lon: defaultLon };
-
-      homeMap.on('click', (e) => {
-        selectedHomeCoords = { lat: e.latlng.lat, lon: e.latlng.lng };
-        homeMarker.setLatLng(e.latlng);
-      });
-
-      homeMarker.on('dragend', () => {
-        const position = homeMarker.getLatLng();
-        selectedHomeCoords = { lat: position.lat, lon: position.lng };
-      });
-    } else {
-      homeMap.invalidateSize();
-      homeMap.setView([defaultLat, defaultLon], 15);
-      homeMarker.setLatLng([defaultLat, defaultLon]);
-      selectedHomeCoords = { lat: defaultLat, lon: defaultLon };
-    }
-  }, 200);
-}
-
-function searchAddressOnMap() {
-  const query = document.getElementById('map-search-input').value;
-  if (!query) return;
-
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-        selectedHomeCoords = { lat, lon };
-        homeMap.setView([lat, lon], 16);
-        homeMarker.setLatLng([lat, lon]);
-      } else {
-        alert("Adresse konnte nicht gefunden werden.");
-      }
-    })
-    .catch(() => alert("Fehler bei der Adresssuche."));
-}
-
-function saveHomeLocationFromMap() {
-  if (selectedHomeCoords) {
-    currentSaveData.homePos = { ...selectedHomeCoords };
-    saveCurrentData();
-    alert("🏠 Standort wurde als Zuhause gespeichert!");
-    closeHomeMapModal();
-  }
-}
-
-function closeHomeMapModal() {
-  document.getElementById('modal-home-map').classList.add('hidden');
-}
-
-/* =========================================================
-   4. RADAR, SCAN & GPS LIVE MOVEMENTS
+   4. RADAR, SCAN & EXAKTE ROTIERENDE BLIP-POSITIONSBERECHNUNG
    ========================================================= */
 function openScanModal() {
+  requestCompassPermissionIOS();
   if (isScanning || targetPokemonCoords) {
     cancelScan();
     return;
@@ -561,7 +616,7 @@ function startScanProcess(type) {
       currentSaveData.homePos.lat, currentSaveData.homePos.lon
     );
     if (distToHome < 30) {
-      alert("Scannen in der Nähe deines Zuhause nicht möglich.\n\nTipp: Entferne dich von deinem Standort!");
+      alert("Scannen hier nicht möglich.\n\nTipp: Entferne dich von deinem Zuhause damit der Scanner funktioniert!");
       return;
     }
   }
@@ -570,57 +625,48 @@ function startScanProcess(type) {
   currentScanType = type;
   isScanning = true;
 
-  const scanText = document.getElementById('scan-btn-text');
-  const scanIcon = document.getElementById('scan-icon');
-  if (scanText) scanText.innerText = "ABBRECHEN";
-  if (scanIcon) scanIcon.innerText = "🛑";
-
+  const triggerBtn = document.getElementById('btn-scan-trigger');
   const ringContainer = document.getElementById('radar-ring-container');
-  if (ringContainer) ringContainer.className = "radar-rings state-scanning";
-  document.getElementById('radar-status-text').innerText = "Scanne Umgebung...";
+  const statusText = document.getElementById('radar-status-text');
 
-  let durationMinutes = (type === 'quick') ? (Math.random() * (6 - 3) + 3) : (Math.random() * (30 - 15) + 15);
-  scanCountdownSeconds = Math.round(durationMinutes * 60);
+  triggerBtn.innerHTML = `<span aria-hidden="true">🛑</span><span>SCAN ABBRECHEN</span>`;
+  ringContainer.className = "radar-rings state-scanning";
+  statusText.innerText = "Scanne Umgebung...";
 
-  const timerDisplay = document.getElementById('radar-timer-display');
-  timerDisplay.classList.remove('hidden');
+  let durationMs = 0;
+  if (type === 'quick') {
+    durationMs = (Math.random() * (6 - 3) + 3) * 60 * 1000;
+  } else {
+    durationMs = (Math.random() * (30 - 15) + 15) * 60 * 1000;
+  }
 
-  clearInterval(scanTimer);
-  scanTimer = setInterval(() => {
-    scanCountdownSeconds--;
-    
-    const m = Math.floor(scanCountdownSeconds / 60);
-    const s = scanCountdownSeconds % 60;
-    timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-
-    if (scanCountdownSeconds <= 0) {
-      clearInterval(scanTimer);
-      triggerSignalDetected();
-    }
-  }, 1000);
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(() => {
+    triggerSignalDetected();
+  }, durationMs);
 }
 
 function triggerSignalDetected() {
   isScanning = false;
-  document.getElementById('radar-timer-display').classList.add('hidden');
 
   if (currentPosition) {
     const randomDistance = Math.random() * (20 - 10) + 10;
     const randomBearing = Math.random() * 360;
     targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   } else {
-    targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
+    targetPokemonCoords = { lat: 0, lon: 0 };
   }
 
   const ringContainer = document.getElementById('radar-ring-container');
   const statusText = document.getElementById('radar-status-text');
-  const scanText = document.getElementById('scan-btn-text');
+  const triggerBtn = document.getElementById('btn-scan-trigger');
   const scareBtn = document.getElementById('btn-scare-overlay');
 
-  if (ringContainer) ringContainer.className = "radar-rings state-detected";
-  if (statusText) statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
-  if (scanText) scanText.innerText = "ENTFERNEN";
-  if (scareBtn) scareBtn.classList.remove('hidden');
+  ringContainer.className = "radar-rings state-detected";
+  statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
+  triggerBtn.innerHTML = `<span aria-hidden="true">🛑</span><span>ENTFERNEN</span>`;
+  
+  scareBtn.classList.remove('hidden');
 
   if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
   playBeep(880, 0.4);
@@ -644,6 +690,7 @@ function onGPSPositionUpdated() {
   }
 }
 
+// VOLLSTÄNDIG REPARIERTE MATHE-FORMEL FÜR DAS BLIP-RADAR MIT BLICKRICHTUNG
 function updateBlipPosition() {
   const blip = document.getElementById('pokemon-radar-blip');
   if (!targetPokemonCoords || !currentPosition || !blip) return;
@@ -655,56 +702,52 @@ function updateBlipPosition() {
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
 
-  const bearing = calculateBearing(
+  // 1. Absoluter Winkel vom Spieler zum Ziel (0° = Norden, 90° = Osten)
+  const absoluteBearing = calculateBearing(
     currentPosition.lat, currentPosition.lon,
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
+
+  // 2. Relativer Winkel im Raum bezogen auf die Blickrichtung (0° = Vorne / 12 Uhr)
+  const relativeAngle = (absoluteBearing - currentHeading + 360) % 360;
 
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
 
   if (distMeters <= 4) {
     blip.classList.add('hidden');
-    const scareBtn = document.getElementById('btn-scare-overlay');
-    if (scareBtn) scareBtn.classList.add('hidden');
+    document.getElementById('btn-scare-overlay').classList.add('hidden');
     targetPokemonCoords = null;
     startBattleFromScan();
     return;
   }
 
-  const maxRadarRadius = 140;
-  const maxMeterVisual = 20;
+  const maxRadarRadius = 140; // Pixel-Radius des Radars
+  const maxMeterVisual = 20;  // Maximum 20m auf dem Radarrand
   const pixelDist = Math.min(maxRadarRadius, (distMeters / maxMeterVisual) * maxRadarRadius);
 
-  const angleRad = (bearing - 90) * Math.PI / 180;
-  const x = 165 + pixelDist * Math.cos(angleRad);
-  const y = 165 + pixelDist * Math.sin(angleRad);
+  // MATHEMATISCHER FIX: Trigonometrie fuer 12-Uhr-Ausrichtung angepasst
+  // (Sinus = X-Achse (Ost-West), Cosinus = Y-Achse (Nord-Sued))
+  const rad = relativeAngle * Math.PI / 180;
+  const x = 165 + pixelDist * Math.sin(rad);
+  const y = 165 - pixelDist * Math.cos(rad);
 
   blip.style.left = x + "px";
   blip.style.top = y + "px";
 }
 
 function cancelScan() {
-  clearInterval(scanTimer);
+  clearTimeout(scanTimer);
   targetPokemonCoords = null;
   resetRadarUI();
 }
 
 function resetRadarUI() {
   isScanning = false;
-  const scanText = document.getElementById('scan-btn-text');
-  const scanIcon = document.getElementById('scan-icon');
-  if (scanText) scanText.innerText = "SCAN STARTEN";
-  if (scanIcon) scanIcon.innerText = "📡";
-
-  const ringContainer = document.getElementById('radar-ring-container');
-  if (ringContainer) ringContainer.className = "radar-rings";
-  
+  document.getElementById('btn-scan-trigger').innerHTML = `<span aria-hidden="true">📡</span><span>SCAN STARTEN</span>`;
+  document.getElementById('radar-ring-container').className = "radar-rings";
   document.getElementById('radar-status-text').innerText = "Bereit für Scan...";
-  document.getElementById('radar-timer-display').classList.add('hidden');
   document.getElementById('pokemon-radar-blip').classList.add('hidden');
-  
-  const scareBtn = document.getElementById('btn-scare-overlay');
-  if (scareBtn) scareBtn.classList.add('hidden');
+  document.getElementById('btn-scare-overlay').classList.add('hidden');
 }
 
 /* =========================================================
@@ -735,7 +778,7 @@ function openTrainingSelection() {
           <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
         </div>
       </div>
-      <button class="btn-primary" style="font-size:10px; width:auto; padding:6px 12px;">Wählen</button>
+      <button type="button" class="btn-primary" style="font-size:10px; width:auto; padding:6px 12px;">Wählen</button>
     `;
     container.appendChild(div);
   });
@@ -752,9 +795,7 @@ function startTrainingMatch(partnerMon) {
   isTrainingMode = true;
   trainingPartnerMon = partnerMon;
 
-  currentEnemy = JSON.parse(JSON.stringify(partnerMon));
-  currentEnemy.hp = partnerMon.maxHp;
-
+  currentEnemy = { ...partnerMon, hp: partnerMon.maxHp };
   playerBattlePokemon = currentSaveData.pokemonTeam[0];
   playerEnergy = 0;
   isPlayerTurn = true;
@@ -867,17 +908,16 @@ function scheduleEnemyAttack() {
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
   playBeep(300, 0.25);
 
+  isEnemyAttacking = false;
+
   if (playerBattlePokemon.hp <= 0) {
     setTimeout(() => {
       playerBattlePokemon.hp = playerBattlePokemon.maxHp;
-      isEnemyAttacking = false;
-      isPlayerTurn = true;
       saveCurrentData();
       alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
       showScreen('screen-radar-hud');
     }, 500);
   } else {
-    isEnemyAttacking = false;
     isPlayerTurn = true;
     updateBattleUI();
   }
