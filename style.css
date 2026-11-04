@@ -36,77 +36,90 @@ html, body {
 
 /* BRAND LOGO CONTAINER */
 .brand-logo-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 340px !important;
+  margin: 0 auto !important;
 }
 
 .brand-pokemon-svg {
-  width: 85%;
-  max-width: 280px;
-  height: auto;
-  filter: drop-shadow(0px 6px 10px rgba(0, 0, 0, 0.4));
-  display: block;
+  width: 90% !important;
+  max-width: 290px !important;
+  height: auto !important;
+  filter: drop-shadow(0px 6px 10px rgba(0, 0, 0, 0.4)) !important;
+  display: block !important;
 }
 
 .brand-move-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin-top: -10px;
-  transform: rotate(-3deg) skewX(-4deg);
-  z-index: 2;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-top: -12px !important;
+  transform: rotate(-3deg) skewX(-4deg) !important;
+  z-index: 2 !important;
 }
 
 .brand-move-badge .move-letter {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: #ffcb05;
-  font-style: italic;
-  line-height: 1;
-  -webkit-text-stroke: 2.5px #ff2e55;
-  filter: drop-shadow(2px 3px 0px #4a154b) drop-shadow(0px 4px 8px rgba(0,0,0,0.5));
+  font-family: 'Fredoka', sans-serif !important;
+  font-size: 3.2rem !important;
+  font-weight: 900 !important;
+  color: #ffcb05 !important;
+  font-style: italic !important;
+  line-height: 1 !important;
+  -webkit-text-stroke: 2.5px #ff2e55 !important;
+  filter: drop-shadow(2px 3px 0px #4a154b) drop-shadow(0px 4px 8px rgba(0,0,0,0.5)) !important;
 }
 
+/* GROSSER, PERFEKT ZENTRIERTER POKÉBALL ALS "O" */
 .pokeball-o {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 3px solid #1b365d;
-  background: #ffffff;
-  overflow: hidden;
-  display: inline-block;
-  margin: 0 4px;
-  transform: translateY(2px);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-  flex-shrink: 0;
+  position: relative !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  border: 3.5px solid #1b365d !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  display: inline-block !important;
+  margin: 0 3px !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+  flex-shrink: 0 !important;
 }
 
 .pokeball-o .pb-top {
-  position: absolute; top: 0; left: 0; right: 0; height: 50%; background: #ff0000;
+  position: absolute !important;
+  top: 0 !important; left: 0 !important; right: 0 !important;
+  height: 50% !important;
+  background: #ff0000 !important;
 }
 
 .pokeball-o .pb-center {
-  position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
-  background: #ffffff; border: 2.5px solid #1b365d; border-radius: 50%;
-  transform: translate(-50%, -50%); z-index: 3;
+  position: absolute !important;
+  top: 50% !important; left: 50% !important;
+  width: 13px !important; height: 13px !important;
+  background: #ffffff !important;
+  border: 3px solid #1b365d !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 3 !important;
 }
 
 .pokeball-o .pb-bottom {
-  position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: #1b365d; z-index: 2;
+  position: absolute !important;
+  top: 50% !important; left: 0 !important; right: 0 !important;
+  height: 3.5px !important;
+  background: #1b365d !important;
+  z-index: 2 !important;
 }
 
-/* INTRO SCREEN STYLES */
+/* INTRO SCREEN STYLES & XXL SKALIERUNG */
 #intro-screen {
   position: fixed; inset: 0; z-index: 10000; background-color: #030406;
   opacity: 1; visibility: visible; transition: opacity 0.5s ease; overflow: hidden;
@@ -145,6 +158,31 @@ html, body {
 .flash-overlay { position: absolute; inset: 0; background: #ffffff; opacity: 0; pointer-events: none; z-index: 9; animation: screenFlash 0.35s ease 5.55s forwards; }
 
 .title-wrapper { position: relative; z-index: 5; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+/* INTRO LOGO SKALIERUNG */
+#intro-screen .brand-pokemon-svg {
+  width: 100% !important;
+  max-width: 380px !important;
+}
+
+#intro-screen .brand-move-badge .move-letter {
+  font-size: 4.2rem !important;
+  -webkit-text-stroke: 3.5px #ff2e55 !important;
+}
+
+#intro-screen .pokeball-o {
+  width: 54px !important;
+  height: 54px !important;
+  border-width: 4.5px !important;
+  transform: translateY(-3px) !important;
+  margin: 0 4px !important;
+}
+
+#intro-screen .pokeball-o .pb-center {
+  width: 17px !important;
+  height: 17px !important;
+  border-width: 4px !important;
+}
 
 .title-pokemon-anim { opacity: 0; transform: translateY(-20px); animation: revealTextUpper 0.5s ease 5.65s forwards; }
 .title-move-anim { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); animation: revealMoveTitle 0.65s ease 5.6s forwards; }
