@@ -10,11 +10,106 @@
   <title>Pokémon Real-Life RPG - MOVE</title>
   
   <!-- Schriftart & Manifest -->
-<link rel="stylesheet" href="style.css?v=1000">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- CSS-Datei mit Cache-Buster -->
-  <link rel="stylesheet" href="style.css?v=999">
+  <!-- Externe CSS mit aktuellem Cache-Buster -->
+  <link rel="stylesheet" href="style.css?v=2000">
+
+  <!-- DIREKTER OVERRIDE FÜR RADAR HUD LAYOUT (Behebt iOS Safari Caching) -->
+  <style>
+    #screen-radar-hud.hud-layout {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding-top: calc(env(safe-area-inset-top, 20px) + 20px) !important;
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
+      padding-left: 20px !important;
+      padding-right: 20px !important;
+      box-sizing: border-box !important;
+      background: #38bdf8 !important;
+      z-index: 100 !important;
+    }
+
+    #screen-radar-hud .hud-header {
+      width: 100% !important;
+      text-align: center !important;
+      margin-top: 10px !important;
+    }
+
+    #screen-radar-hud .radar-viewport {
+      position: relative !important;
+      width: 270px !important;
+      height: 270px !important;
+      margin: auto !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      left: 0 !important;
+      transform: none !important;
+    }
+
+    #screen-radar-hud .btn-scan-overlay {
+      position: absolute !important;
+      top: 15px !important;
+      right: -5px !important;
+      z-index: 20 !important;
+      width: auto !important;
+      background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
+      color: #ffffff !important;
+      border: 3px solid #ffffff !important;
+      border-radius: 25px !important;
+      padding: 10px 18px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+
+    #screen-radar-hud .radar-status {
+      position: absolute !important;
+      bottom: -40px !important;
+      left: 0 !important;
+      width: 100% !important;
+      text-align: center !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: #ffffff !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+      background: transparent !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    #screen-radar-hud .hud-footer {
+      width: 100% !important;
+      max-width: 320px !important;
+      margin-bottom: 10px !important;
+    }
+
+    #screen-radar-hud .btn-menu-pill {
+      width: 100% !important;
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+      color: #ffffff !important;
+      font-size: 17px !important;
+      font-weight: 800 !important;
+      padding: 16px !important;
+      border-radius: 30px !important;
+      border: 2px solid rgba(255, 255, 255, 0.3) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+    }
+  </style>
 </head>
 <body>
 
@@ -110,7 +205,7 @@
       </button>
     </div>
 
-    <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD (EXAKT WIE DAS DESIGN-BILD) -->
+    <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
     <div id="screen-radar-hud" class="hud-layout hidden">
       
       <!-- LOGO OBEN -->
@@ -242,6 +337,6 @@
 
   </div>
 
-  <script src="app.js?v=999"></script>
+  <script src="app.js?v=2000"></script>
 </body>
 </html>
