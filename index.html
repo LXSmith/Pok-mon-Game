@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#030406">
+  <meta name="theme-color" content="#38bdf8">
   
   <title>Pokémon Real-Life RPG - MOVE</title>
   
@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- CSS-Datei (mit Cache-Buster v=300) -->
-  <link rel="stylesheet" href="style.css?v=300">
+  <!-- CSS-Datei -->
+  <link rel="stylesheet" href="style.css?v=400">
 </head>
 <body>
 
@@ -28,9 +28,10 @@
       <div class="slash-effect"></div>
       <div class="flash-overlay"></div>
 
+      <!-- EXAKT IDENTISCHES LOGO IM INTRO -->
       <div class="title-wrapper">
-        <div class="title-pokemon">Pokémon</div>
-        <div class="title-move">MOVE</div>
+        <div class="logo-pokemon title-pokemon-anim">Pokémon</div>
+        <div class="logo-move title-move-anim">MOVE</div>
       </div>
 
       <div class="start-prompt">BERÜHREN ZUM STARTEN</div>
@@ -44,8 +45,11 @@
 
     <!-- SCREEN 1: HAUPTMENÜ (Neues Spiel / Fortsetzen) -->
     <div id="screen-main-menu" class="card-ui">
-      <h1 class="logo-title">Pokémon RPG</h1>
-      <p class="subtitle">Real-Life AR Adventure</p>
+      <!-- IDENTISCHES LOGO AUCH HIER -->
+      <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
+        <div class="logo-pokemon">Pokémon</div>
+        <div class="logo-move">MOVE</div>
+      </div>
       
       <div class="menu-actions">
         <button onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
@@ -54,8 +58,8 @@
 
       <!-- Backup System -->
       <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
-      <div class="backup-bar" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <h4 style="color: #aaa; margin: 0 0 10px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
+      <div class="backup-bar" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+        <h4 style="color: #ffffff; margin: 0 0 10px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
         <button onclick="exportSaveGame()" class="btn-secondary" style="font-size: 12px; margin-bottom: 6px; background: #27ae60;">Backup Download</button>
         <button onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Backup Import</button>
       </div>
@@ -63,7 +67,7 @@
 
     <!-- SCREEN 2: SPEICHERSLOT-AUSWAHL -->
     <div id="screen-slots" class="card-ui hidden">
-      <h2 id="slot-screen-title">Wähle einen Speicherplatz</h2>
+      <h2 id="slot-screen-title" style="color:#fff; margin-top:0;">Wähle einen Speicherplatz</h2>
       
       <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)">
         <h3>Slot 1</h3>
@@ -85,8 +89,8 @@
 
     <!-- SCREEN 3: STARTER-AUSWAHL -->
     <div id="screen-starter" class="card-ui hidden">
-      <h2>Wähle dein erstes Pokémon</h2>
-      <p class="subtitle">Prof. Eich schenkt dir deinen ersten Partner!</p>
+      <h2 style="color:#fff; margin-top:0;">Wähle dein erstes Pokémon</h2>
+      <p class="subtitle" style="color:#f0f9ff;">Prof. Eich schenkt dir deinen ersten Partner!</p>
 
       <div class="starter-container">
         <div class="starter-card" onclick="chooseStarter('bisasam', this)">
@@ -111,14 +115,13 @@
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
     <div id="screen-radar-hud" class="radar-hud-screen hidden">
       
-      <!-- OBERE AKTIONSLEISTE -->
-      <div class="hud-top-bar">
-        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-primary">
-          📡 STARTE POKÉMON SCAN
-        </button>
+      <!-- OBEN: EXAKT IDENTISCHES LOGO -->
+      <div class="hud-logo-wrapper">
+        <div class="logo-pokemon">Pokémon</div>
+        <div class="logo-move">MOVE</div>
       </div>
 
-      <!-- RADAR VIEWPORT (MITTE) -->
+      <!-- MITTE: RADAR MIT INLINE SCAN-BUTTON -->
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
           <div class="ring ring-1"></div>
@@ -128,14 +131,22 @@
         </div>
         
         <div class="radar-center-dot"></div>
+        
+        <!-- SCAN-BUTTON DIREKT AUF DEM RADAR -->
+        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-overlay">
+          <span style="font-size: 18px;">📡</span>
+          <span>SCAN STARTEN</span>
+        </button>
+
         <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
         <div id="radar-timer-display" class="radar-timer hidden">20s</div>
       </div>
 
-      <!-- UNTERE MENÜLEISTE -->
+      <!-- UNTERE MENÜLEISTE: GROSSER MENÜ BUTTON -->
       <div class="hud-bottom-bar">
-        <button onclick="openMenuModal()" class="btn-menu-primary">
-          ⚙️ HAUPTMENÜ & TEAM
+        <button onclick="openMenuModal()" class="btn-menu-pill">
+          <span>⚙️</span>
+          <span>MENÜ</span>
         </button>
       </div>
 
@@ -250,7 +261,6 @@
 
   </div>
 
-  <!-- Skript-Einbindung mit Cache-Buster -->
-  <script src="app.js?v=300"></script>
+  <script src="app.js?v=400"></script>
 </body>
 </html>
