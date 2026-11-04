@@ -13,8 +13,11 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- Externe CSS -->
-  <link rel="stylesheet" href="style.css?v=13000">
+  <!-- Leaflet CSS für die OpenStreetMap Karte -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Externe CSS v=14000 -->
+  <link rel="stylesheet" href="style.css?v=14000">
 </head>
 <body>
 
@@ -56,7 +59,7 @@
       <div class="menu-actions">
         <button type="button" onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
         <button type="button" onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
-        <button type="button" onclick="setHomeLocationFromMenu()" class="btn-secondary" style="background:#0284c7; margin-top:10px;">🏠 Ort als Zuhause speichern</button>
+        <button type="button" onclick="openHomeMapModal()" class="btn-secondary" style="background:#0284c7; margin-top:10px;">🏠 Ort als Zuhause festlegen</button>
       </div>
 
       <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
@@ -113,13 +116,13 @@
           <span id="scan-btn-text">SCAN STARTEN</span>
         </button>
 
+        <!-- Aufscheuchen-Button erst bei aktivem Blip sichtbar -->
         <button type="button" id="btn-scare-overlay" onclick="scarePokemon()" class="btn-scare-overlay hidden">
           <span aria-hidden="true">💨</span>
           <span>AUFSCHEUCHEN</span>
         </button>
 
         <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
-        <div id="radar-timer-display" class="radar-timer hidden">--:--</div>
       </div>
 
       <footer class="hud-footer">
@@ -162,6 +165,20 @@
         <button type="button" onclick="startScanProcess('power')" class="btn-special" style="margin-top:8px;">💎 Power Scan (15-30 Min)</button>
         <button type="button" onclick="openTrainingSelection()" class="btn-secondary" style="margin-top:8px; background:#10b981;">🏋️ Training (Zuhause)</button>
         <button type="button" onclick="closeScanModal()" class="btn-secondary" style="margin-top:12px; background:#475569;">Abbrechen</button>
+      </div>
+    </div>
+
+    <!-- MODAL: MAP ZUHAUSE AUSWAHL -->
+    <div id="modal-home-map" class="modal-overlay hidden">
+      <div class="modal-card" style="max-width: 360px; padding: 15px;">
+        <h3 style="margin-top:0;">🏠 Zuhause Standort</h3>
+        <div id="map-container" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 10px; border: 2px solid rgba(255,255,255,0.2);"></div>
+        <div style="display:flex; gap:6px; margin-bottom:10px;">
+          <input type="text" id="map-search-input" placeholder="Ort/Adresse suchen..." style="flex:1; padding:8px 12px; border-radius:10px; border:none; font-family:'Fredoka'; font-size:12px;">
+          <button type="button" onclick="searchAddressOnMap()" class="btn-secondary" style="width:auto; margin:0; padding:8px 12px; font-size:12px;">🔍 Suchen</button>
+        </div>
+        <button type="button" onclick="saveHomeLocationFromMap()" class="btn-primary">Standort Bestätigen</button>
+        <button type="button" onclick="closeHomeMapModal()" class="btn-secondary" style="margin-top:6px;">Abbrechen</button>
       </div>
     </div>
 
@@ -226,6 +243,8 @@
 
   </main>
 
-  <script src="app.js?v=13000"></script>
+  <!-- Leaflet JS für Kartenunterstützung -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js?v=14000"></script>
 </body>
 </html>
