@@ -448,16 +448,62 @@ function initCompassTracking() {
   }
 }
 
-function requestCompassPermissionIOS() {
+// KOMPASS-FREIGABE UND ROTATION (OPTIMIERT FÜR SMARTPHONES)
+function requestCompassPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // iOS 13+ spezifische Freigabe
     DeviceOrientationEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
-          initCompassTracking();
+          window.addEventListener('deviceorientation', handleOrientation, true);
         }
       })
       .catch(console.error);
+  } else {
+    // Android & ältere Geräte
+    if ('ondeviceorientationabsolute' in window) {
+      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    } else if ('ondeviceorientation' in window) {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
   }
+}
+
+function handleOrientation(event) {
+  let heading = null;
+
+  if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
+    // iOS Ausrichtung
+    heading = event.webkitCompassHeading;
+  } else if (event.alpha !== null) {
+    // Android Ausrichtung
+    heading = (360 - event.alpha) % 360;
+  }
+
+  if (heading !== null && !isNaN(heading)) {
+    currentHeading = heading;
+
+    // Dreht das Radar-UI visuell mit der Blickrichtung
+    const ringContainer = document.getElementById('radar-ring-container');
+    if (ringContainer) {
+      ringContainer.style.transform = `rotate(${-currentHeading}deg)`;
+    }
+
+    // Errechnet die Position des roten Blips neu
+    if (targetPokemonCoords) {
+      updateBlipPosition();
+    }
+  }
+}
+
+// Beim Öffnen des Scan-Modals Erlaubnis einholen
+function openScanModal() {
+  requestCompassPermission(); // Sensor aktivieren
+  if (isScanning || targetPokemonCoords) {
+    cancelScan();
+    return;
+  }
+  document.getElementById('modal-scan').classList.remove('hidden');
 }
 
 function updateSlotUI() {
@@ -816,8 +862,72 @@ function startTrainingMatch(partnerMon) {
 }
 
 /* =========================================================
-   5. KAMPFSYSTEM & FANGSYSTEM
+   5. ERWEITERTES KAMPFSYSTEM MIT ANIMATIONEN & SOUNDS
    ========================================================= */
+
+// IMPACT- & PUNCH-GERÄUSCHE
+function playPunchSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+    
+    gain.gain.setValueAtTime(0.8, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch(e){}
+}
+
+function playElementalSound(type) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const t = type.toLowerCase();
+    if (t === 'feuer') {
+      playPunchSound();
+      playBeep(220, 0.3);
+      setTimeout(() => playBeep(110, 0.4), 100);
+    } else if (t === 'wasser') {
+      playBeep(600, 0.1);
+      setTimeout(() => playBeep(800, 0.1), 80);
+      setTimeout(() => playBeep(500, 0.2), 160);
+    } else if (t === 'elektro') {
+      playBeep(1200, 0.05);
+      setTimeout(() => playBeep(400, 0.05), 50);
+      setTimeout(() => playBeep(1500, 0.1), 100);
+    } else {
+      playPunchSound();
+      playBeep(440, 0.2);
+    }
+  } catch(e){}
+}
+
+// TRIGGERT ELEMENTAR-SPEZIALEFFEKT
+function triggerElementalFX(elementType) {
+  const overlay = document.getElementById('elemental-fx-overlay');
+  if (!overlay) return;
+
+  const typeClass = `fx-${elementType.toLowerCase()}`;
+  overlay.className = `fx-fire ${typeClass}`;
+  overlay.classList.remove('hidden');
+
+  playElementalSound(elementType);
+
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    overlay.className = 'hidden';
+  }, 700);
+}
+
 function startBattleFromScan() {
   isTrainingMode = false;
   document.getElementById('btn-catch-pokemon').style.display = 'block';
@@ -863,26 +973,43 @@ function updateBattleUI() {
   specBtn.style.opacity = specBtn.disabled ? "0.4" : "1";
 }
 
+// NORMALER ANGRIFF MIT TACKLE & SHAKE
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
   isPlayerTurn = false;
   isEnemyAttacking = true;
 
-  let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
-  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+  const playerImg = document.getElementById('player-card-img');
+  const enemyImg = document.getElementById('enemy-card-img');
 
-  currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-  playerEnergy = Math.min(3, playerEnergy + 1);
-  updateBattleUI();
+  playerImg.classList.add('anim-tackle-player');
+  playPunchSound();
 
-  document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
-  playBeep(600, 0.1);
+  setTimeout(() => {
+    playerImg.classList.remove('anim-tackle-player');
+    
+    enemyImg.classList.add('anim-hit-shake');
+    
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
+    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
-  if (currentEnemy.hp <= 0) return winBattle();
-  setTimeout(scheduleEnemyAttack, 1000);
+    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+    playerEnergy = Math.min(3, playerEnergy + 1);
+    updateBattleUI();
+
+    document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+
+    setTimeout(() => {
+      enemyImg.classList.remove('anim-hit-shake');
+      if (currentEnemy.hp <= 0) return winBattle();
+      setTimeout(scheduleEnemyAttack, 800);
+    }, 300);
+
+  }, 250);
 }
 
+// SPEZIALANGRIFF MIT ELEMENTAR-EFFEKT
 function executePlayerSpecial() {
   if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -890,44 +1017,70 @@ function executePlayerSpecial() {
   isEnemyAttacking = true;
   playerEnergy = 0;
 
-  let dmg = Math.round(playerBattlePokemon.maxHp * 0.70);
-  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+  const enemyImg = document.getElementById('enemy-card-img');
 
-  currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-  updateBattleUI();
+  triggerElementalFX(playerBattlePokemon.type);
 
-  document.getElementById('battle-warning-box').innerText = `SPEZIALANGRIFF! (-${dmg} KP)`;
-  playBeep(900, 0.35);
+  setTimeout(() => {
+    enemyImg.classList.add('anim-hit-shake');
 
-  if (currentEnemy.hp <= 0) return winBattle();
-  setTimeout(scheduleEnemyAttack, 1000);
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.70);
+    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+
+    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+    updateBattleUI();
+
+    document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${playerBattlePokemon.type.toUpperCase()})! (-${dmg} KP)`;
+
+    setTimeout(() => {
+      enemyImg.classList.remove('anim-hit-shake');
+      if (currentEnemy.hp <= 0) return winBattle();
+      setTimeout(scheduleEnemyAttack, 800);
+    }, 400);
+
+  }, 350);
 }
 
+// GEGNERISCHER GEGENANGRIFF
 function scheduleEnemyAttack() {
   if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
 
   isEnemyAttacking = true;
   isPlayerTurn = false;
 
-  const dmg = Math.round(currentEnemy.maxHp * 0.20);
-  playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
+  const enemyImg = document.getElementById('enemy-card-img');
+  const playerImg = document.getElementById('player-card-img');
 
-  document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
-  playBeep(300, 0.25);
+  enemyImg.classList.add('anim-tackle-enemy');
+  playPunchSound();
 
-  isEnemyAttacking = false;
+  setTimeout(() => {
+    enemyImg.classList.remove('anim-tackle-enemy');
+    playerImg.classList.add('anim-hit-shake');
 
-  if (playerBattlePokemon.hp <= 0) {
+    const dmg = Math.round(currentEnemy.maxHp * 0.20);
+    playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
+
+    document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
+
     setTimeout(() => {
-      playerBattlePokemon.hp = playerBattlePokemon.maxHp;
-      saveCurrentData();
-      alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
-      showScreen('screen-radar-hud');
-    }, 500);
-  } else {
-    isPlayerTurn = true;
-    updateBattleUI();
-  }
+      playerImg.classList.remove('anim-hit-shake');
+      isEnemyAttacking = false;
+
+      if (playerBattlePokemon.hp <= 0) {
+        setTimeout(() => {
+          playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+          saveCurrentData();
+          alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
+          showScreen('screen-radar-hud');
+        }, 500);
+      } else {
+        isPlayerTurn = true;
+        updateBattleUI();
+      }
+    }, 300);
+
+  }, 250);
 }
 
 function attemptCatch() {
