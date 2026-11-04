@@ -16,14 +16,12 @@
   <!-- Leaflet CSS für OpenStreetMap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Externe CSS v=17000 -->
-  <link rel="stylesheet" href="style.css?v=17000">
+  <!-- Externe CSS v=18000 -->
+  <link rel="stylesheet" href="style.css?v=18000">
 </head>
 <body>
 
-  <!-- ========================================== -->
-  <!-- 1. CINEMATIC INTRO SCREEN                  -->
-  <!-- ========================================== -->
+  <!-- CINEMATIC INTRO SCREEN -->
   <section id="intro-screen">
     <div class="intro-container" id="introContainer">
       <div class="card-stream" id="cardStream"></div>
@@ -42,9 +40,7 @@
     </div>
   </section>
 
-  <!-- ========================================== -->
-  <!-- 2. HAUPT-GAME CONTAINER                    -->
-  <!-- ========================================== -->
+  <!-- HAUPT-GAME CONTAINER -->
   <main id="game-screen" class="app-viewport hidden">
 
     <!-- SCREEN 1: HAUPTMENÜ -->
@@ -124,6 +120,11 @@
       </div>
 
       <footer class="hud-footer">
+        <!-- ENTWICKLER TEST-BUTTON (SPRINGT TIMER DIREKT AUF 0) -->
+        <button type="button" id="btn-dev-spawn" onclick="forceDevSpawn()" class="btn-dev-spawn">
+          ⚡ POKÉMON SPAWNEN (TEST)
+        </button>
+        
         <button type="button" onclick="openMenuModal()" class="btn-menu-pill">
           <span aria-hidden="true">⚙️</span>
           <span>MENÜ</span>
@@ -243,6 +244,6 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=17000"></script>
+  <script src="app.js?v=18000"></script>
 </body>
 </html>
