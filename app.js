@@ -1,4 +1,4 @@
-// SERVICE WORKER LÖSCHUNG (Behebt den Cache-Fehler im normalen Tab)
+// SERVICE WORKER LÖSCHUNG FUER DEV-UPDATES
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
     for (let registration of registrations) {
@@ -75,9 +75,9 @@ function calculateDestination(lat, lon, distanceMeters, bearingDegrees) {
 let currentPosition = null;
 let targetPokemonCoords = null;
 let watchPositionId = null;
-let currentHeading = 0; // Kompass-Ausrichtung in Grad
+let currentHeading = 0;
 
-// LEAFLET MAP LOGIK (REPARIERT)
+// LEAFLET MAP LOGIK
 let homeMap = null;
 let homeMarker = null;
 let tempHomeCoords = null;
@@ -85,13 +85,11 @@ let tempHomeCoords = null;
 function openHomeMapModal() {
   document.getElementById('modal-home-map').classList.remove('hidden');
 
-  // Fallback-Koordinaten falls GPS noch laedt
   const startLat = (currentSaveData && currentSaveData.homePos) ? currentSaveData.homePos.lat : (currentPosition ? currentPosition.lat : 51.1657);
   const startLon = (currentSaveData && currentSaveData.homePos) ? currentSaveData.homePos.lon : (currentPosition ? currentPosition.lon : 10.4515);
 
   tempHomeCoords = { lat: startLat, lon: startLon };
 
-  // Verzoegerung erlaubt dem DOM das Overlay vollständig sichtbar zu rendern
   setTimeout(() => {
     const container = document.getElementById('map-container');
     if (!container) return;
@@ -118,8 +116,6 @@ function openHomeMapModal() {
       homeMap.setView([startLat, startLon], 16);
       homeMarker.setLatLng([startLat, startLon]);
     }
-
-    // WICHTIG: Erzwingt Karten-Neuberechnung nach DOM-Einblendung
     homeMap.invalidateSize();
   }, 300);
 }
@@ -425,16 +421,13 @@ function initGPSLiveTracking() {
   }
 }
 
-// KORRIGIERTE KOMPASS-ERFASSUNG (BEHEBT DAS BLIP-POSITIONIERUNGS-PROBLEM)
 function initCompassTracking() {
   const handleOrientation = (event) => {
     let heading = null;
 
     if (event.webkitCompassHeading) {
-      // iOS Kompass (0 Grad = Norden)
       heading = event.webkitCompassHeading;
     } else if (event.alpha !== null) {
-      // Android Kompass (Standard W3C)
       heading = (360 - event.alpha) % 360;
     }
 
@@ -447,7 +440,6 @@ function initCompassTracking() {
   };
 
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // Erfordert spaetere Interaktion unter iOS
     window.addEventListener('deviceorientation', handleOrientation, true);
   } else if ('ondeviceorientationabsolute' in window) {
     window.addEventListener('deviceorientationabsolute', handleOrientation, true);
@@ -610,6 +602,7 @@ function closeScanModal() {
 }
 
 function startScanProcess(type) {
+  /* TEMPORÄR FÜR ENTWICKLUNG DEAKTIVIERT (Zuhause-Sperre)
   if (currentSaveData.homePos && currentPosition) {
     const distToHome = calculateDistance(
       currentPosition.lat, currentPosition.lon,
@@ -620,6 +613,7 @@ function startScanProcess(type) {
       return;
     }
   }
+  */
 
   closeScanModal();
   currentScanType = type;
@@ -646,6 +640,15 @@ function startScanProcess(type) {
   }, durationMs);
 }
 
+// TEST-FUNKTION: ERZWINGT SOFORTIGEN SPAWN UNABHÄNGIG VOM TIMER
+function forceDevSpawn() {
+  clearTimeout(scanTimer);
+  if (!isScanning && !targetPokemonCoords) {
+    currentScanType = 'quick';
+  }
+  triggerSignalDetected();
+}
+
 function triggerSignalDetected() {
   isScanning = false;
 
@@ -654,7 +657,9 @@ function triggerSignalDetected() {
     const randomBearing = Math.random() * 360;
     targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   } else {
-    targetPokemonCoords = { lat: 0, lon: 0 };
+    // Fallback falls GPS in der Testumgebung aus ist
+    targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
+    currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
   const ringContainer = document.getElementById('radar-ring-container');
@@ -690,7 +695,6 @@ function onGPSPositionUpdated() {
   }
 }
 
-// VOLLSTÄNDIG REPARIERTE MATHE-FORMEL FÜR DAS BLIP-RADAR MIT BLICKRICHTUNG
 function updateBlipPosition() {
   const blip = document.getElementById('pokemon-radar-blip');
   if (!targetPokemonCoords || !currentPosition || !blip) return;
@@ -702,13 +706,11 @@ function updateBlipPosition() {
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
 
-  // 1. Absoluter Winkel vom Spieler zum Ziel (0° = Norden, 90° = Osten)
   const absoluteBearing = calculateBearing(
     currentPosition.lat, currentPosition.lon,
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
 
-  // 2. Relativer Winkel im Raum bezogen auf die Blickrichtung (0° = Vorne / 12 Uhr)
   const relativeAngle = (absoluteBearing - currentHeading + 360) % 360;
 
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
@@ -721,12 +723,10 @@ function updateBlipPosition() {
     return;
   }
 
-  const maxRadarRadius = 140; // Pixel-Radius des Radars
-  const maxMeterVisual = 20;  // Maximum 20m auf dem Radarrand
+  const maxRadarRadius = 140;
+  const maxMeterVisual = 20;
   const pixelDist = Math.min(maxRadarRadius, (distMeters / maxMeterVisual) * maxRadarRadius);
 
-  // MATHEMATISCHER FIX: Trigonometrie fuer 12-Uhr-Ausrichtung angepasst
-  // (Sinus = X-Achse (Ost-West), Cosinus = Y-Achse (Nord-Sued))
   const rad = relativeAngle * Math.PI / 180;
   const x = 165 + pixelDist * Math.sin(rad);
   const y = 165 - pixelDist * Math.cos(rad);
