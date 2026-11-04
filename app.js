@@ -19,7 +19,6 @@ function getAudioContext() {
   return audioCtx;
 }
 
-// AUDIO ENTSPERREN BEI ERSTEM TOUCH
 function unlockAudio() {
   const ctx = getAudioContext();
   if (ctx) {
@@ -30,6 +29,61 @@ function unlockAudio() {
       source.connect(ctx.destination);
       source.start(0);
     } catch(e){}
+  }
+}
+
+/* =========================================================
+   GEO-LOCATIONAL MATH & GPS TRACKING
+   ========================================================= */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+  const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+            Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+  const brng = Math.atan2(y, x) * 180 / Math.PI;
+  return (brng + 360) % 360;
+}
+
+function calculateDestination(lat, lon, distanceMeters, bearingDegrees) {
+  const R = 6371000;
+  const d = distanceMeters / R;
+  const brng = bearingDegrees * Math.PI / 180;
+  const lat1 = lat * Math.PI / 180;
+  const lon1 = lon * Math.PI / 180;
+
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brng));
+  const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+
+  return {
+    lat: lat2 * 180 / Math.PI,
+    lon: lon2 * 180 / Math.PI
+  };
+}
+
+let currentPosition = null;
+let homePosition = null;
+let targetPokemonCoords = null;
+let watchPositionId = null;
+
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body: body, icon: 'https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg' });
   }
 }
 
@@ -71,7 +125,6 @@ const IntroManager = {
     this.startCardRush();
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // Nach 7.3s Prompt einblenden und pulsieren lassen
     setTimeout(() => {
       this.canInteractiveFinish = true;
       const promptEl = document.querySelector('.start-prompt');
@@ -192,6 +245,7 @@ const IntroManager = {
     this.active = false;
 
     unlockAudio();
+    requestNotificationPermission();
 
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
@@ -206,7 +260,6 @@ const IntroManager = {
     }
   }
 };
-
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
@@ -240,8 +293,11 @@ let selectedStarter = null;
 
 let isScanning = false;
 let scanTimer = null;
-let scanCountdown = 20;
+let scanCountdownSeconds = 0;
 let currentScanType = 'quick';
+
+let isTrainingMode = false;
+let trainingPartnerMon = null;
 
 let currentEnemy = null;
 let playerBattlePokemon = null;
@@ -255,15 +311,43 @@ let currentSaveData = {
   exp: 0,
   maxExp: 100,
   pokeballs: 10,
-  pokemonTeam: []
+  pokemonTeam: [],
+  homePos: null
 };
 
 /* =========================================================
-   3. NAVIGATION & SPIELSTAND LOGIK
+   3. NAVIGATION & GPS INITIALISIERUNG
    ========================================================= */
 function initApp() {
   updateSlotUI();
+  initGPSLiveTracking();
   showScreen('screen-main-menu');
+}
+
+function initGPSLiveTracking() {
+  if ("geolocation" in navigator) {
+    watchPositionId = navigator.geolocation.watchPosition(
+      (pos) => {
+        currentPosition = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude
+        };
+        onGPSPositionUpdated();
+      },
+      (err) => console.log("GPS Fehler:", err),
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+    );
+  }
+}
+
+function setHomeLocationFromMenu() {
+  if (!currentPosition) {
+    alert("GPS Standort konnte nicht ermittelt werden. Bitte aktiviere GPS!");
+    return;
+  }
+  currentSaveData.homePos = { ...currentPosition };
+  saveCurrentData();
+  alert("🏠 Dein aktueller Standort wurde als Zuhause gespeichert!");
 }
 
 function updateSlotUI() {
@@ -301,7 +385,7 @@ function onSlotSelected(slotNum) {
       alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
     }
   } else {
-    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [] };
+    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [], homePos: null };
     showScreen('screen-starter');
   }
 }
@@ -340,6 +424,7 @@ function confirmStarter() {
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
   currentSaveData.pokeballs = 10;
+
   saveCurrentData();
   loadDashboard();
   showScreen('screen-radar-hud');
@@ -387,10 +472,10 @@ function renderPokemonTeam() {
 }
 
 /* =========================================================
-   4. RADAR- & SCAN-MECHANIK
+   4. RADAR, SCAN & GPS LIVE MOVEMENTS
    ========================================================= */
 function openScanModal() {
-  if (isScanning) {
+  if (isScanning || targetPokemonCoords) {
     cancelScan();
     return;
   }
@@ -402,77 +487,225 @@ function closeScanModal() {
 }
 
 function startScanProcess(type) {
+  if (currentSaveData.homePos && currentPosition) {
+    const distToHome = calculateDistance(
+      currentPosition.lat, currentPosition.lon,
+      currentSaveData.homePos.lat, currentSaveData.homePos.lon
+    );
+    if (distToHome < 30) {
+      alert("Scannen in der Nähe deines Zuhause nicht möglich.\n\nTipp: Entferne dich von deinem Standort!");
+      return;
+    }
+  }
+
   closeScanModal();
   currentScanType = type;
   isScanning = true;
 
-  const triggerBtn = document.getElementById('btn-scan-trigger');
+  const scanText = document.getElementById('scan-btn-text');
+  const scanIcon = document.getElementById('scan-icon');
+  if (scanText) scanText.innerText = "ABBRECHEN";
+  if (scanIcon) scanIcon.innerText = "🛑";
+
   const ringContainer = document.getElementById('radar-ring-container');
-  const statusText = document.getElementById('radar-status-text');
+  if (ringContainer) ringContainer.className = "radar-rings state-scanning";
+  document.getElementById('radar-status-text').innerText = "Scanne Umgebung...";
 
-  triggerBtn.innerText = "🛑 SCAN ABBRECHEN";
-  ringContainer.className = "radar-rings state-scanning";
-  statusText.innerText = "Scanne Umgebung...";
+  let durationMinutes = (type === 'quick') ? (Math.random() * (6 - 3) + 3) : (Math.random() * (30 - 15) + 15);
+  scanCountdownSeconds = Math.round(durationMinutes * 60);
 
-  const searchDelay = Math.floor(Math.random() * 4000) + 3000;
-
-  scanTimer = setTimeout(() => {
-    triggerSignalDetected();
-  }, searchDelay);
-}
-
-function triggerSignalDetected() {
-  const ringContainer = document.getElementById('radar-ring-container');
-  const statusText = document.getElementById('radar-status-text');
   const timerDisplay = document.getElementById('radar-timer-display');
-
-  ringContainer.className = "radar-rings state-detected";
-  statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
   timerDisplay.classList.remove('hidden');
-
-  scanCountdown = 20;
-  timerDisplay.innerText = scanCountdown + "s";
-
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-  playBeep(880, 0.3);
 
   clearInterval(scanTimer);
   scanTimer = setInterval(() => {
-    scanCountdown--;
-    timerDisplay.innerText = scanCountdown + "s";
+    scanCountdownSeconds--;
+    
+    const m = Math.floor(scanCountdownSeconds / 60);
+    const s = scanCountdownSeconds % 60;
+    timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
 
-    if (scanCountdown <= 10 && scanCountdown > 3) {
-      ringContainer.className = "radar-rings state-warning";
-      if (navigator.vibrate) navigator.vibrate(100);
-      playBeep(600, 0.05);
-    } else if (scanCountdown <= 3 && scanCountdown > 0) {
-      ringContainer.className = "radar-rings state-target";
-      if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
-      playBeep(1200, 0.1);
-    } else if (scanCountdown <= 0) {
+    if (scanCountdownSeconds <= 0) {
       clearInterval(scanTimer);
-      startBattleFromScan();
+      triggerSignalDetected();
     }
   }, 1000);
 }
 
-function playBeep(pitch = 440, duration = 0.1) {
-  try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = pitch;
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-  } catch (e) {}
+function triggerSignalDetected() {
+  isScanning = false;
+  document.getElementById('radar-timer-display').classList.add('hidden');
+
+  if (currentPosition) {
+    const randomDistance = Math.random() * (20 - 10) + 10;
+    const randomBearing = Math.random() * 360;
+    targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
+  } else {
+    targetPokemonCoords = { lat: 0, lon: 0 };
+  }
+
+  const ringContainer = document.getElementById('radar-ring-container');
+  const statusText = document.getElementById('radar-status-text');
+  const scanText = document.getElementById('scan-btn-text');
+  const scareBtn = document.getElementById('btn-scare-overlay');
+
+  if (ringContainer) ringContainer.className = "radar-rings state-detected";
+  if (statusText) statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
+  if (scanText) scanText.innerText = "ENTFERNEN";
+  if (scareBtn) scareBtn.classList.remove('hidden');
+
+  if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+  playBeep(880, 0.4);
+  sendNotification("Pokémon MOVE", "⚠️ Ein wildes Pokémon ist in deiner Nähe aufgetaucht!");
+
+  updateBlipPosition();
 }
 
+function scarePokemon() {
+  if (!currentPosition) return;
+  const randomDistance = Math.random() * (20 - 10) + 10;
+  const randomBearing = Math.random() * 360;
+  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
+  playBeep(1000, 0.15);
+  updateBlipPosition();
+}
+
+function onGPSPositionUpdated() {
+  if (targetPokemonCoords && currentPosition) {
+    updateBlipPosition();
+  }
+}
+
+function updateBlipPosition() {
+  const blip = document.getElementById('pokemon-radar-blip');
+  if (!targetPokemonCoords || !currentPosition || !blip) return;
+
+  blip.classList.remove('hidden');
+
+  const distMeters = calculateDistance(
+    currentPosition.lat, currentPosition.lon,
+    targetPokemonCoords.lat, targetPokemonCoords.lon
+  );
+
+  const bearing = calculateBearing(
+    currentPosition.lat, currentPosition.lon,
+    targetPokemonCoords.lat, targetPokemonCoords.lon
+  );
+
+  document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
+
+  if (distMeters <= 4) {
+    blip.classList.add('hidden');
+    const scareBtn = document.getElementById('btn-scare-overlay');
+    if (scareBtn) scareBtn.classList.add('hidden');
+    targetPokemonCoords = null;
+    startBattleFromScan();
+    return;
+  }
+
+  const maxRadarRadius = 140;
+  const maxMeterVisual = 20;
+  const pixelDist = Math.min(maxRadarRadius, (distMeters / maxMeterVisual) * maxRadarRadius);
+
+  const angleRad = (bearing - 90) * Math.PI / 180;
+  const x = 165 + pixelDist * Math.cos(angleRad);
+  const y = 165 + pixelDist * Math.sin(angleRad);
+
+  blip.style.left = x + "px";
+  blip.style.top = y + "px";
+}
+
+function cancelScan() {
+  clearInterval(scanTimer);
+  targetPokemonCoords = null;
+  resetRadarUI();
+}
+
+function resetRadarUI() {
+  isScanning = false;
+  const scanText = document.getElementById('scan-btn-text');
+  const scanIcon = document.getElementById('scan-icon');
+  if (scanText) scanText.innerText = "SCAN STARTEN";
+  if (scanIcon) scanIcon.innerText = "📡";
+
+  const ringContainer = document.getElementById('radar-ring-container');
+  if (ringContainer) ringContainer.className = "radar-rings";
+  
+  document.getElementById('radar-status-text').innerText = "Bereit für Scan...";
+  document.getElementById('radar-timer-display').classList.add('hidden');
+  document.getElementById('pokemon-radar-blip').classList.add('hidden');
+  
+  const scareBtn = document.getElementById('btn-scare-overlay');
+  if (scareBtn) scareBtn.classList.add('hidden');
+}
+
+/* =========================================================
+   4b. ZUHAUSE TRAININGS-MODUS
+   ========================================================= */
+function openTrainingSelection() {
+  closeScanModal();
+
+  if (currentSaveData.pokemonTeam.length < 2) {
+    alert("Du benötigst mindestens 2 Pokémon in deinem Team für ein Training!");
+    return;
+  }
+
+  const container = document.getElementById('training-partner-list');
+  container.innerHTML = "";
+
+  currentSaveData.pokemonTeam.forEach((p, idx) => {
+    if (idx === 0) return;
+
+    const div = document.createElement('div');
+    div.className = "pokemon-row";
+    div.style.cursor = "pointer";
+    div.onclick = () => startTrainingMatch(p);
+    div.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
+        <div style="text-align:left;">
+          <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
+        </div>
+      </div>
+      <button class="btn-primary" style="font-size:10px; width:auto; padding:6px 12px;">Wählen</button>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('modal-training-select').classList.remove('hidden');
+}
+
+function closeTrainingSelection() {
+  document.getElementById('modal-training-select').classList.add('hidden');
+}
+
+function startTrainingMatch(partnerMon) {
+  closeTrainingSelection();
+  isTrainingMode = true;
+  trainingPartnerMon = partnerMon;
+
+  currentEnemy = JSON.parse(JSON.stringify(partnerMon));
+  currentEnemy.hp = partnerMon.maxHp;
+
+  playerBattlePokemon = currentSaveData.pokemonTeam[0];
+  playerEnergy = 0;
+  isPlayerTurn = true;
+  isEnemyAttacking = false;
+
+  showScreen('screen-battle');
+  updateBattleUI();
+
+  document.getElementById('btn-catch-pokemon').style.display = 'none';
+  document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
+}
+
+/* =========================================================
+   5. KAMPFSYSTEM & FANGSYSTEM
+   ========================================================= */
 function startBattleFromScan() {
+  isTrainingMode = false;
+  document.getElementById('btn-catch-pokemon').style.display = 'block';
+
   resetRadarUI();
   showScreen('screen-battle');
 
@@ -489,27 +722,11 @@ function startBattleFromScan() {
   document.getElementById('battle-warning-box').innerText = `Ein wildes ${currentEnemy.name} greift an!`;
 }
 
-function cancelScan() {
-  clearInterval(scanTimer);
-  clearTimeout(scanTimer);
-  resetRadarUI();
-}
-
-function resetRadarUI() {
-  isScanning = false;
-  document.getElementById('btn-scan-trigger').innerText = "📡 STARTE POKÉMON SCAN";
-  document.getElementById('radar-ring-container').className = "radar-rings";
-  document.getElementById('radar-status-text').innerText = "Bereit für Scan...";
-  document.getElementById('radar-timer-display').classList.add('hidden');
-}
-
-/* =========================================================
-   5. KAMPFSYSTEM & FANGSYSTEM
-   ========================================================= */
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
-  document.getElementById('enemy-title').innerText = "WILDES " + currentEnemy.name.toUpperCase();
+  const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
+  document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
   document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
   document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
   document.getElementById('enemy-hp-bar').style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
@@ -582,22 +799,24 @@ function scheduleEnemyAttack() {
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
   playBeep(300, 0.25);
 
-  isEnemyAttacking = false;
-
   if (playerBattlePokemon.hp <= 0) {
     setTimeout(() => {
       playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+      isEnemyAttacking = false;
+      isPlayerTurn = true;
       saveCurrentData();
       alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
       showScreen('screen-radar-hud');
     }, 500);
   } else {
+    isEnemyAttacking = false;
     isPlayerTurn = true;
     updateBattleUI();
   }
 }
 
 function attemptCatch() {
+  if (isTrainingMode) return;
   if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
 
   currentSaveData.pokeballs--;
@@ -638,21 +857,34 @@ function winBattle() {
   } catch(e){}
 
   setTimeout(() => {
-    const earnedExp = 20;
-    addTrainerExp(earnedExp);
-    currentSaveData.pokeballs += 2;
+    if (isTrainingMode) {
+      const earnedExp = 10;
+      addPokemonExp(playerBattlePokemon, earnedExp);
+      if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
+      playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+      saveCurrentData();
 
-    const activeMon = playerBattlePokemon;
-    const leveledUp = addPokemonExp(activeMon, earnedExp);
-    activeMon.hp = activeMon.maxHp;
-    saveCurrentData();
-
-    if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
-      pendingEvoPokemon = activeMon;
-      showEvolutionScreen(activeMon);
-    } else {
-      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
+      document.getElementById('victory-item-text').innerText = `Beide Pokémon haben gelernt!`;
       document.getElementById('victory-screen').classList.remove('hidden');
+    } else {
+      const earnedExp = 20;
+      addTrainerExp(earnedExp);
+      currentSaveData.pokeballs += 2;
+
+      const activeMon = playerBattlePokemon;
+      const leveledUp = addPokemonExp(activeMon, earnedExp);
+      activeMon.hp = activeMon.maxHp;
+      saveCurrentData();
+
+      if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
+        pendingEvoPokemon = activeMon;
+        showEvolutionScreen(activeMon);
+      } else {
+        document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
+        document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
+        document.getElementById('victory-screen').classList.remove('hidden');
+      }
     }
   }, 1000);
 }
@@ -723,6 +955,22 @@ function addTrainerExp(amount) {
     currentSaveData.maxExp = Math.round(currentSaveData.maxExp * 1.5);
     alert(`🎉 LEVEL UP! Du bist jetzt Trainer Level ${currentSaveData.level}!`);
   }
+}
+
+function playBeep(pitch = 440, duration = 0.1) {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = pitch;
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {}
 }
 
 /* =========================================================
