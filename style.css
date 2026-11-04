@@ -307,3 +307,105 @@ button:active { transform: scale(0.97); }
 
 .evo-pulse { animation: flashGlow 1s infinite alternate; }
 @keyframes flashGlow { 0% { filter: drop-shadow(0 0 8px #fff) brightness(1); } 100% { filter: drop-shadow(0 0 20px var(--accent-yellow)) brightness(1.3); } }
+
+/* ========================================== */
+/* BATTLE ANIMATIONEN & SPEZIALEFFEKTE        */
+/* ========================================== */
+
+/* Normaler Tackle-Angriff (Ausholen + Schlag) */
+.anim-tackle-player {
+  animation: tacklePlayer 0.4s ease-in-out;
+}
+
+.anim-tackle-enemy {
+  animation: tackleEnemy 0.4s ease-in-out;
+}
+
+@keyframes tacklePlayer {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(15px) scale(0.95); } /* Ausholen nach hinten */
+  60% { transform: translateY(-35px) scale(1.15); } /* Tackle nach vorne */
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes tackleEnemy {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-15px) scale(0.95); } /* Ausholen */
+  60% { transform: translateY(35px) scale(1.15); } /* Tackle */
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Treffer-Treffer-Feedback (Schaden nehmen) */
+.anim-hit-shake {
+  animation: hitShake 0.3s ease-in-out;
+}
+
+@keyframes hitShake {
+  0%, 100% { transform: translateX(0); filter: brightness(1); }
+  20% { transform: translateX(-10px); filter: brightness(2) drop-shadow(0 0 10px red); }
+  40% { transform: translateX(10px); filter: brightness(0.5); }
+  60% { transform: translateX(-6px); filter: brightness(1.8); }
+  80% { transform: translateX(6px); }
+}
+
+/* OVERLAY FÜR ELEMENTAR-SPEZIALATTACKEN */
+#elemental-fx-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+/* FEUER ATTACKE 🔥 */
+.fx-fire {
+  background: radial-gradient(circle, rgba(255,69,0,0.8) 0%, rgba(255,140,0,0.5) 50%, transparent 80%);
+  animation: fireBurst 0.7s ease-out forwards;
+}
+
+@keyframes fireBurst {
+  0% { transform: scale(0.2); opacity: 0; }
+  50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 25px #ff4500); }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* WASSER ATTACKE 💧 */
+.fx-water {
+  background: radial-gradient(circle, rgba(0,191,255,0.85) 0%, rgba(30,144,255,0.4) 60%, transparent 85%);
+  animation: waterSplash 0.7s ease-out forwards;
+}
+
+@keyframes waterSplash {
+  0% { transform: scale(0.1) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1.4) rotate(180deg); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* PFLANZEN ATTACKE 🍃 */
+.fx-pflanze {
+  background: radial-gradient(circle, rgba(46,204,113,0.85) 0%, rgba(39,174,96,0.4) 60%, transparent 85%);
+  animation: leafStorm 0.7s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
+}
+
+@keyframes leafStorm {
+  0% { transform: scale(0.3) rotate(-45deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(45deg); opacity: 1; filter: drop-shadow(0 0 20px #2ecc71); }
+  100% { transform: scale(1.6) rotate(90deg); opacity: 0; }
+}
+
+/* ELEKTRO ATTACKE ⚡ */
+.fx-elektro {
+  background: rgba(255, 230, 0, 0.6);
+  animation: zapLightning 0.5s steps(4, end) forwards;
+}
+
+@keyframes zapLightning {
+  0%, 100% { opacity: 0; }
+  20%, 60% { opacity: 1; filter: drop-shadow(0 0 30px #ffee00) invert(1); }
+  40%, 80% { opacity: 0.3; }
+}
+
