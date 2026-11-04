@@ -13,10 +13,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- Externe CSS mit aktuellem Cache-Buster -->
-  <link rel="stylesheet" href="style.css?v=2000">
+  <!-- Externe CSS mit neuem Cache-Buster -->
+  <link rel="stylesheet" href="style.css?v=3000">
 
-  <!-- DIREKTER OVERRIDE FÜR RADAR HUD LAYOUT (Behebt iOS Safari Caching) -->
+  <!-- DIREKTER OVERRIDE FÜR RADAR HUD LAYOUT (Behebt iOS Safari Caching & Skalierung) -->
   <style>
     #screen-radar-hud.hud-layout {
       position: fixed !important;
@@ -27,25 +27,51 @@
       flex-direction: column !important;
       justify-content: space-between !important;
       align-items: center !important;
-      padding-top: calc(env(safe-area-inset-top, 20px) + 20px) !important;
+      padding-top: calc(env(safe-area-inset-top, 20px) + 15px) !important;
       padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
-      padding-left: 20px !important;
-      padding-right: 20px !important;
+      padding-left: 15px !important;
+      padding-right: 15px !important;
       box-sizing: border-box !important;
       background: #38bdf8 !important;
       z-index: 100 !important;
     }
 
+    /* GROSSES PRÄSENTES LOGO */
     #screen-radar-hud .hud-header {
       width: 100% !important;
       text-align: center !important;
-      margin-top: 10px !important;
+      margin-top: 5px !important;
     }
 
+    #screen-radar-hud .logo-pokemon {
+      font-size: 3.2rem !important;
+      font-weight: 900 !important;
+      color: #ffcb05 !important;
+      text-shadow: 3.5px 3.5px 0 #2a75bb, -3.5px -3.5px 0 #2a75bb, 3.5px -3.5px 0 #2a75bb, -3.5px 3.5px 0 #2a75bb, 0 6px 15px rgba(0,0,0,0.3) !important;
+      letter-spacing: 2px !important;
+      line-height: 1 !important;
+    }
+
+    #screen-radar-hud .logo-move {
+      font-size: 2.2rem !important;
+      font-weight: 900 !important;
+      font-style: italic !important;
+      background: #ff3b5c !important;
+      color: #ffffff !important;
+      padding: 3px 24px !important;
+      border-radius: 12px !important;
+      display: inline-block !important;
+      margin-top: -6px !important;
+      transform: rotate(-3deg) !important;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25) !important;
+      letter-spacing: 1px !important;
+    }
+
+    /* MAXIMALES RADAR IN DER MITTE (330px X 330px) */
     #screen-radar-hud .radar-viewport {
       position: relative !important;
-      width: 270px !important;
-      height: 270px !important;
+      width: 330px !important;
+      height: 330px !important;
       margin: auto !important;
       display: flex !important;
       justify-content: center !important;
@@ -54,43 +80,48 @@
       transform: none !important;
     }
 
+    #screen-radar-hud .ring-1 { inset: 35px !important; }
+    #screen-radar-hud .ring-2 { inset: 80px !important; }
+    #screen-radar-hud .ring-3 { inset: 125px !important; }
+
     #screen-radar-hud .btn-scan-overlay {
       position: absolute !important;
-      top: 15px !important;
-      right: -5px !important;
+      top: 22px !important;
+      right: -8px !important;
       z-index: 20 !important;
       width: auto !important;
       background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
       color: #ffffff !important;
-      border: 3px solid #ffffff !important;
-      border-radius: 25px !important;
-      padding: 10px 18px !important;
-      font-size: 13px !important;
+      border: 3.5px solid #ffffff !important;
+      border-radius: 30px !important;
+      padding: 12px 22px !important;
+      font-size: 15px !important;
       font-weight: 800 !important;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
       display: flex !important;
       align-items: center !important;
-      gap: 6px !important;
+      gap: 8px !important;
     }
 
     #screen-radar-hud .radar-status {
       position: absolute !important;
-      bottom: -40px !important;
+      bottom: -45px !important;
       left: 0 !important;
       width: 100% !important;
       text-align: center !important;
-      font-size: 15px !important;
-      font-weight: 700 !important;
+      font-size: 17px !important;
+      font-weight: 800 !important;
       color: #ffffff !important;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5) !important;
       background: transparent !important;
       padding: 0 !important;
       border: none !important;
     }
 
+    /* GROSSER PROMINENTER MENÜ BUTTON UNTEN */
     #screen-radar-hud .hud-footer {
       width: 100% !important;
-      max-width: 320px !important;
+      max-width: 350px !important;
       margin-bottom: 10px !important;
     }
 
@@ -98,16 +129,16 @@
       width: 100% !important;
       background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
       color: #ffffff !important;
-      font-size: 17px !important;
+      font-size: 20px !important;
       font-weight: 800 !important;
-      padding: 16px !important;
-      border-radius: 30px !important;
-      border: 2px solid rgba(255, 255, 255, 0.3) !important;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+      padding: 18px !important;
+      border-radius: 35px !important;
+      border: 2.5px solid rgba(255, 255, 255, 0.35) !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      gap: 8px !important;
+      gap: 10px !important;
     }
   </style>
 </head>
@@ -337,6 +368,6 @@
 
   </div>
 
-  <script src="app.js?v=2000"></script>
+  <script src="app.js?v=3000"></script>
 </body>
 </html>
