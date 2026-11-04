@@ -183,6 +183,7 @@ const IntroManager = {
 
     const triggerAudio = (e) => {
       unlockAudio();
+      requestCompassPermission(); // Sensor direkt beim ersten Touch im Intro anfordern
       if (!this.canInteractiveFinish) {
         e.stopPropagation();
       }
@@ -323,6 +324,7 @@ const IntroManager = {
     this.active = false;
 
     unlockAudio();
+    requestCompassPermission();
     requestNotificationPermission();
 
     const introEl = document.getElementById('intro-screen');
@@ -398,7 +400,7 @@ let currentSaveData = {
 function initApp() {
   updateSlotUI();
   initGPSLiveTracking();
-  initCompassTracking();
+  requestCompassPermission();
   showScreen('screen-main-menu');
 }
 
@@ -421,37 +423,9 @@ function initGPSLiveTracking() {
   }
 }
 
-function initCompassTracking() {
-  const handleOrientation = (event) => {
-    let heading = null;
-
-    if (event.webkitCompassHeading) {
-      heading = event.webkitCompassHeading;
-    } else if (event.alpha !== null) {
-      heading = (360 - event.alpha) % 360;
-    }
-
-    if (heading !== null && !isNaN(heading)) {
-      currentHeading = heading;
-      if (targetPokemonCoords) {
-        updateBlipPosition();
-      }
-    }
-  };
-
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    window.addEventListener('deviceorientation', handleOrientation, true);
-  } else if ('ondeviceorientationabsolute' in window) {
-    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-  } else if ('ondeviceorientation' in window) {
-    window.addEventListener('deviceorientation', handleOrientation, true);
-  }
-}
-
-// KOMPASS-FREIGABE UND ROTATION (OPTIMIERT FÜR SMARTPHONES)
+// KOMPASS-FREIGABE UND ROTATION (ROBUST FÜR MOBILE BROWSER)
 function requestCompassPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // iOS 13+ spezifische Freigabe
     DeviceOrientationEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
@@ -460,7 +434,6 @@ function requestCompassPermission() {
       })
       .catch(console.error);
   } else {
-    // Android & ältere Geräte
     if ('ondeviceorientationabsolute' in window) {
       window.addEventListener('deviceorientationabsolute', handleOrientation, true);
     } else if ('ondeviceorientation' in window) {
@@ -473,32 +446,27 @@ function handleOrientation(event) {
   let heading = null;
 
   if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-    // iOS Ausrichtung
     heading = event.webkitCompassHeading;
   } else if (event.alpha !== null) {
-    // Android Ausrichtung
     heading = (360 - event.alpha) % 360;
   }
 
   if (heading !== null && !isNaN(heading)) {
     currentHeading = heading;
 
-    // Dreht das Radar-UI visuell mit der Blickrichtung
     const ringContainer = document.getElementById('radar-ring-container');
     if (ringContainer) {
       ringContainer.style.transform = `rotate(${-currentHeading}deg)`;
     }
 
-    // Errechnet die Position des roten Blips neu
     if (targetPokemonCoords) {
       updateBlipPosition();
     }
   }
 }
 
-// Beim Öffnen des Scan-Modals Erlaubnis einholen
 function openScanModal() {
-  requestCompassPermission(); // Sensor aktivieren
+  requestCompassPermission();
   if (isScanning || targetPokemonCoords) {
     cancelScan();
     return;
@@ -522,6 +490,7 @@ function updateSlotUI() {
 }
 
 function selectFlow(mode) {
+  requestCompassPermission();
   selectedFlowMode = mode;
   document.getElementById('slot-screen-title').innerText = 
     (mode === 'new') ? "Neues Spiel: Wähle Slot" : "Spiel Laden: Wähle Slot";
@@ -634,33 +603,11 @@ function renderPokemonTeam() {
 /* =========================================================
    4. RADAR, SCAN & EXAKTE ROTIERENDE BLIP-POSITIONSBERECHNUNG
    ========================================================= */
-function openScanModal() {
-  requestCompassPermissionIOS();
-  if (isScanning || targetPokemonCoords) {
-    cancelScan();
-    return;
-  }
-  document.getElementById('modal-scan').classList.remove('hidden');
-}
-
 function closeScanModal() {
   document.getElementById('modal-scan').classList.add('hidden');
 }
 
 function startScanProcess(type) {
-  /* TEMPORÄR FÜR ENTWICKLUNG DEAKTIVIERT (Zuhause-Sperre)
-  if (currentSaveData.homePos && currentPosition) {
-    const distToHome = calculateDistance(
-      currentPosition.lat, currentPosition.lon,
-      currentSaveData.homePos.lat, currentSaveData.homePos.lon
-    );
-    if (distToHome < 30) {
-      alert("Scannen hier nicht möglich.\n\nTipp: Entferne dich von deinem Zuhause damit der Scanner funktioniert!");
-      return;
-    }
-  }
-  */
-
   closeScanModal();
   currentScanType = type;
   isScanning = true;
@@ -686,21 +633,16 @@ function startScanProcess(type) {
   }, durationMs);
 }
 
-// REPARIERTER TEST-BUTTON: SPAWNT EIN POKÉMON DIREKT AUF DEM RADAR
 function forceDevSpawn() {
-  // Falls noch kein Scan aktiv ist, Scan-Status erzwingen
   isScanning = false;
   currentScanType = 'quick';
 
-  // Falls GPS/Position noch nicht bereit ist, Fallback-Koordinaten setzen
   if (!currentPosition) {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
-  // Signal sofort auslösen
   triggerSignalDetected();
 }
-
 
 function triggerSignalDetected() {
   isScanning = false;
@@ -710,7 +652,6 @@ function triggerSignalDetected() {
     const randomBearing = Math.random() * 360;
     targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   } else {
-    // Fallback falls GPS in der Testumgebung aus ist
     targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
@@ -864,8 +805,6 @@ function startTrainingMatch(partnerMon) {
 /* =========================================================
    5. ERWEITERTES KAMPFSYSTEM MIT ANIMATIONEN & SOUNDS
    ========================================================= */
-
-// IMPACT- & PUNCH-GERÄUSCHE
 function playPunchSound() {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -911,16 +850,22 @@ function playElementalSound(type) {
   } catch(e){}
 }
 
-// TRIGGERT ELEMENTAR-SPEZIALEFFEKT
+// PRÄZISE SPEZIALATTACKEN-OVERLAY ANZEIGE
 function triggerElementalFX(elementType) {
   const overlay = document.getElementById('elemental-fx-overlay');
   if (!overlay) return;
 
-  const typeClass = `fx-${elementType.toLowerCase()}`;
-  overlay.className = `fx-fire ${typeClass}`;
+  const rawType = elementType ? elementType.toLowerCase() : 'feuer';
+  let fxClass = 'fx-feuer';
+
+  if (rawType === 'wasser') fxClass = 'fx-wasser';
+  else if (rawType === 'pflanze') fxClass = 'fx-pflanze';
+  else if (rawType === 'elektro') fxClass = 'fx-elektro';
+
+  overlay.className = fxClass;
   overlay.classList.remove('hidden');
 
-  playElementalSound(elementType);
+  playElementalSound(rawType);
 
   setTimeout(() => {
     overlay.classList.add('hidden');
@@ -973,7 +918,6 @@ function updateBattleUI() {
   specBtn.style.opacity = specBtn.disabled ? "0.4" : "1";
 }
 
-// NORMALER ANGRIFF MIT TACKLE & SHAKE
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -1009,7 +953,6 @@ function executePlayerAttack() {
   }, 250);
 }
 
-// SPEZIALANGRIFF MIT ELEMENTAR-EFFEKT
 function executePlayerSpecial() {
   if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -1041,7 +984,6 @@ function executePlayerSpecial() {
   }, 350);
 }
 
-// GEGNERISCHER GEGENANGRIFF
 function scheduleEnemyAttack() {
   if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
 
