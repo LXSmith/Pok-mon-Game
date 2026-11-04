@@ -646,7 +646,8 @@ function triggerSignalDetected() {
   isScanning = false;
 
   if (currentPosition) {
-    const randomDistance = Math.random() * (20 - 10) + 10;
+    // TEST-MODUS: Spawnt Pokémon im Bereich von 0.5m bis 3m
+    const randomDistance = Math.random() * (3 - 0.5) + 0.5;
     const randomBearing = Math.random() * 360;
     targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   } else {
@@ -671,6 +672,17 @@ function triggerSignalDetected() {
 
   updateBlipPosition();
 }
+
+function scarePokemon() {
+  if (!currentPosition) return;
+  // Auch beim Aufscheuchen landet es direkt in deiner Nähe (0.5m bis 3m)
+  const randomDistance = Math.random() * (3 - 0.5) + 0.5;
+  const randomBearing = Math.random() * 360;
+  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
+  playBeep(1000, 0.15);
+  updateBlipPosition();
+}
+
 
 function scarePokemon() {
   if (!currentPosition) return;
