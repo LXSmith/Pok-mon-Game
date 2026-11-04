@@ -34,31 +34,99 @@ html, body {
   display: none !important;
 }
 
-/* LOGO STYLES */
-.logo-pokemon {
+/* =========================================================
+   PRO BRAND LOGO SYSTEM (SVG + Dynamic Pokéball-O Badge)
+   ========================================================= */
+.brand-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* Original Pokémon Schriftzug SVG */
+.brand-pokemon-svg {
+  width: 85%;
+  max-width: 280px;
+  height: auto;
+  filter: drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.4));
+  display: block;
+}
+
+/* Dynamisches MOVE Badge (Dunkelviolett mit roter Füllung) */
+.brand-move-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: linear-gradient(180deg, #ff2e55 0%, #d90429 100%);
+  border: 4px solid #4a154b;
+  border-radius: 12px;
+  padding: 4px 18px;
+  margin-top: -12px;
+  transform: rotate(-3deg) skewX(-4deg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  z-index: 2;
+}
+
+/* Gelbe Buchstaben im MOVE Banner */
+.brand-move-badge .move-letter {
+  font-family: 'Fredoka', sans-serif;
   font-size: 2.2rem;
   font-weight: 900;
   color: #ffcb05;
-  text-shadow: 2.5px 2.5px 0 #2a75bb, -2.5px -2.5px 0 #2a75bb, 2.5px -2.5px 0 #2a75bb, -2.5px 2.5px 0 #2a75bb, 0 4px 10px rgba(0,0,0,0.3);
-  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #1b365d, -1px -1px 0 #1b365d;
   line-height: 1;
-}
-
-.logo-move {
-  font-size: 1.5rem;
-  font-weight: 900;
   font-style: italic;
-  background: #ff3b5c;
-  color: #ffffff;
-  padding: 2px 16px;
-  border-radius: 8px;
-  display: inline-block;
-  margin-top: -4px;
-  transform: rotate(-3deg);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* INTRO SCREEN */
+/* DER POKÉBALL ALS O */
+.pokeball-o {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid #1b365d;
+  background: #ffffff;
+  overflow: hidden;
+  display: inline-block;
+  margin: 0 2px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
+}
+
+.pokeball-o .pb-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: #ff0000;
+}
+
+.pokeball-o .pb-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 10px; height: 10px;
+  background: #ffffff;
+  border: 2.5px solid #1b365d;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+.pokeball-o .pb-bottom {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 2.5px;
+  background: #1b365d;
+  z-index: 2;
+}
+
+/* INTRO SCREEN STYLES & XXL LOGO SKALIERUNG */
 #intro-screen {
   position: fixed;
   inset: 0;
@@ -127,14 +195,42 @@ html, body {
 .title-wrapper {
   position: relative; z-index: 5; text-align: center;
   display: flex; flex-direction: column; align-items: center;
+  width: 100%;
+}
+
+/* INTRO LOGO ANIMATIONEN & XL DIMENSIONEN */
+#intro-screen .brand-pokemon-svg {
+  width: 100% !important;
+  max-width: 360px !important;
+}
+
+#intro-screen .brand-move-badge {
+  padding: 6px 26px !important;
+  margin-top: -16px !important;
+}
+
+#intro-screen .brand-move-badge .move-letter {
+  font-size: 3.2rem !important;
+}
+
+#intro-screen .pokeball-o {
+  width: 38px !important;
+  height: 38px !important;
+  border-width: 3.5px !important;
+}
+
+#intro-screen .pokeball-o .pb-center {
+  width: 14px !important;
+  height: 14px !important;
+  border-width: 3.5px !important;
 }
 
 .title-pokemon-anim { opacity: 0; transform: translateY(-20px); animation: revealTextUpper 0.5s ease 5.65s forwards; }
 .title-move-anim { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); animation: revealMoveTitle 0.65s ease 5.6s forwards; }
 
 .start-prompt {
-  margin-top: 60px; font-size: 0.8rem; font-weight: 600;
-  letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.7);
+  margin-top: 60px; font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 0.25em; color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase; opacity: 0;
   animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards;
   z-index: 5;
@@ -211,7 +307,7 @@ button:active { transform: scale(0.97); }
 .backup-bar { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); }
 
 /* =========================================================
-   ZENTRIERTES RADAR HUD (EXAKT WIE ENTWURF)
+   ZENTRIERTES RADAR HUD (MAXIMALES DESIGN)
    ========================================================= */
 .hud-layout {
   position: absolute;
@@ -222,24 +318,25 @@ button:active { transform: scale(0.97); }
   flex-direction: column !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding-top: calc(env(safe-area-inset-top) + 20px) !important;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 30px) !important;
-  padding-left: 20px !important;
-  padding-right: 20px !important;
+  padding-top: calc(env(safe-area-inset-top, 20px) + 15px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
   box-sizing: border-box !important;
   z-index: 10;
 }
 
 .hud-header {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 5px;
+  width: 100%;
 }
 
-/* MITTIGES RADAR */
+/* MITTIGES RADAR (330px X 330px) */
 .radar-viewport {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 330px;
+  height: 330px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -260,9 +357,9 @@ button:active { transform: scale(0.97); }
   border-radius: 50%;
   border: 1px dashed rgba(255, 255, 255, 0.7);
 }
-.ring-1 { inset: 30px; }
-.ring-2 { inset: 70px; }
-.ring-3 { inset: 110px; }
+.ring-1 { inset: 35px; }
+.ring-2 { inset: 80px; }
+.ring-3 { inset: 125px; }
 
 .sweeper {
   position: absolute; inset: 0; border-radius: 50%;
@@ -285,32 +382,32 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 12px #ffffff;
 }
 
-/* OVALER SCAN BUTTON DIEKT DARAUF */
+/* OVALER SCAN BUTTON DIREKT DARAUF */
 .btn-scan-overlay {
   position: absolute;
-  top: 20px;
-  right: -10px;
+  top: 22px;
+  right: -8px;
   z-index: 20;
   width: auto !important;
   background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
   color: #ffffff !important;
-  border: 3px solid #ffffff !important;
-  border-radius: 25px !important;
-  padding: 10px 18px !important;
-  font-size: 14px !important;
+  border: 3.5px solid #ffffff !important;
+  border-radius: 30px !important;
+  padding: 12px 22px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 
 .radar-status {
   position: absolute;
-  bottom: -40px;
-  font-size: 15px; font-weight: 700;
+  bottom: -45px;
+  font-size: 17px; font-weight: 800;
   color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
   width: 100%;
 }
 
@@ -325,26 +422,27 @@ button:active { transform: scale(0.97); }
 /* MENÜ BUTTON UNTEN */
 .hud-footer {
   width: 100%;
-  max-width: 320px;
+  max-width: 350px;
+  margin-bottom: 10px;
 }
 
 .btn-menu-pill {
   width: 100% !important;
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
   color: #ffffff !important;
-  font-size: 18px !important;
+  font-size: 20px !important;
   font-weight: 800 !important;
-  padding: 16px !important;
-  border-radius: 30px !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+  padding: 18px !important;
+  border-radius: 35px !important;
+  border: 2.5px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 10px !important;
 }
 
-/* MODALS */
+/* MODALS & KAMPF */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(15, 23, 42, 0.92);
