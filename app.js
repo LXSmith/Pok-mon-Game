@@ -34,7 +34,7 @@ function unlockAudio() {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Unskippable & sauberer Text)
+   1. CINEMATIC INTRO ENGINE
    ========================================================= */
 const IntroManager = {
   active: true,
@@ -49,7 +49,6 @@ const IntroManager = {
       return;
     }
 
-    // Touch & Klick-Sperre während der Animation
     const triggerAudio = (e) => {
       unlockAudio();
       if (!this.canInteractiveFinish) {
@@ -69,13 +68,10 @@ const IntroManager = {
       this.finishIntro();
     });
 
-    // 1. Karten-Rush starten (5 Sekunden)
     this.startCardRush();
-
-    // 2. Slash-Sound abspielen (5.3 Sekunden)
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // 3. Nach 7.3 Sekunden (Slash + 2s Logo): Einzigen Text setzen & Klick freischalten
+    // Nach 7.3s Prompt einblenden und pulsieren lassen
     setTimeout(() => {
       this.canInteractiveFinish = true;
       const promptEl = document.querySelector('.start-prompt');
@@ -310,7 +306,6 @@ function onSlotSelected(slotNum) {
   }
 }
 
-/* WICHTIG: Saubere Umschaltung – blendet AUSNAHMSLOS alle Screens aus, bevor nur der Zielscreen gezeigt wird */
 function showScreen(screenId) {
   const allScreens = [
     'screen-main-menu',
