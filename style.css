@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap');
 
 :root {
@@ -19,11 +20,6 @@
   -webkit-touch-callout: none;
 }
 
-input, button {
-  user-select: auto !important;
-  -webkit-user-select: auto !important;
-}
-
 html, body {
   width: 100vw;
   height: 100dvh;
@@ -35,8 +31,12 @@ html, body {
   overflow: hidden;
 }
 
+/* Strikte Ausblendung für alle Modal- & Button-Elemente */
 .hidden {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* BRAND LOGO CONTAINER */
@@ -74,7 +74,7 @@ html, body {
   z-index: 2 !important;
 }
 
-/* INTRO SCREEN STYLES & ANIMATIONEN */
+/* INTRO SCREEN */
 #intro-screen {
   position: fixed; inset: 0; z-index: 10000; background-color: #030406;
   opacity: 1; visibility: visible; transition: opacity 0.5s ease; overflow: hidden;
@@ -182,7 +182,7 @@ button:active { transform: scale(0.97); }
 .slot-info { font-size: 12px; color: var(--text-sub); }
 
 .starter-container { display: flex; gap: 8px; margin-bottom: 10px; }
-.starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; }
+.starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; }
 .starter-card.selected { border-color: var(--accent-yellow); background: rgba(255, 203, 5, 0.2); }
 .starter-card img { width: 100%; border-radius: 6px; }
 .starter-name { font-size: 11px; margin-top: 4px; font-weight: 700; color: #fff; }
@@ -227,7 +227,7 @@ button:active { transform: scale(0.97); }
   border: 3px solid #ffffff;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  z-index: 25;
+  z-index: 8;
   box-shadow: 0 0 15px #ff3b5c;
   animation: pulseBlip 0.8s ease-in-out infinite alternate;
 }
@@ -260,7 +260,6 @@ button:active { transform: scale(0.97); }
 }
 
 .radar-status { position: absolute; bottom: -45px; font-size: 17px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); width: 100%; }
-.radar-timer { position: absolute; top: -45px; font-size: 28px; font-weight: 800; color: var(--accent-yellow); text-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
 .hud-footer { width: 100%; max-width: 350px; margin-bottom: 10px; }
 
@@ -272,7 +271,10 @@ button:active { transform: scale(0.97); }
 }
 
 /* MODALS */
-.modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.modal-overlay { 
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(10px); 
+  z-index: 99999 !important; display: flex; justify-content: center; align-items: center; padding: 20px; 
+}
 .modal-card { background: #1e293b; border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff; }
 
 .menu-tab-buttons { display: flex; gap: 4px; margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 4px; border-radius: 12px; }
