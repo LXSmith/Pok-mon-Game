@@ -34,9 +34,7 @@ html, body {
   display: none !important;
 }
 
-/* =========================================================
-   PRO BRAND LOGO SYSTEM (SVG + Dynamic Pokéball-O Badge)
-   ========================================================= */
+/* BRAND LOGO CONTAINER */
 .brand-logo-container {
   display: flex;
   flex-direction: column;
@@ -48,127 +46,85 @@ html, body {
   margin: 0 auto;
 }
 
-/* Original Pokémon Schriftzug SVG */
 .brand-pokemon-svg {
   width: 85%;
   max-width: 280px;
   height: auto;
-  filter: drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0px 6px 10px rgba(0, 0, 0, 0.4));
   display: block;
 }
 
-/* Dynamisches MOVE Badge (Dunkelviolett mit roter Füllung) */
 .brand-move-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  background: linear-gradient(180deg, #ff2e55 0%, #d90429 100%);
-  border: 4px solid #4a154b;
-  border-radius: 12px;
-  padding: 4px 18px;
-  margin-top: -12px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-top: -10px;
   transform: rotate(-3deg) skewX(-4deg);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
   z-index: 2;
 }
 
-/* Gelbe Buchstaben im MOVE Banner */
 .brand-move-badge .move-letter {
   font-family: 'Fredoka', sans-serif;
-  font-size: 2.2rem;
+  font-size: 2.8rem;
   font-weight: 900;
   color: #ffcb05;
-  text-shadow: 2px 2px 0 #1b365d, -1px -1px 0 #1b365d;
-  line-height: 1;
   font-style: italic;
+  line-height: 1;
+  -webkit-text-stroke: 2.5px #ff2e55;
+  filter: drop-shadow(2px 3px 0px #4a154b) drop-shadow(0px 4px 8px rgba(0,0,0,0.5));
 }
 
-/* DER POKÉBALL ALS O */
 .pokeball-o {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2.5px solid #1b365d;
+  border: 3px solid #1b365d;
   background: #ffffff;
   overflow: hidden;
   display: inline-block;
-  margin: 0 2px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.3);
-  transform: translateY(-1px);
+  margin: 0 4px;
+  transform: translateY(2px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  flex-shrink: 0;
 }
 
 .pokeball-o .pb-top {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50%;
-  background: #ff0000;
+  position: absolute; top: 0; left: 0; right: 0; height: 50%; background: #ff0000;
 }
 
 .pokeball-o .pb-center {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 10px; height: 10px;
-  background: #ffffff;
-  border: 2.5px solid #1b365d;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+  position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+  background: #ffffff; border: 2.5px solid #1b365d; border-radius: 50%;
+  transform: translate(-50%, -50%); z-index: 3;
 }
 
 .pokeball-o .pb-bottom {
-  position: absolute;
-  top: 50%; left: 0; right: 0;
-  height: 2.5px;
-  background: #1b365d;
-  z-index: 2;
+  position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: #1b365d; z-index: 2;
 }
 
-/* INTRO SCREEN STYLES & XXL LOGO SKALIERUNG */
+/* INTRO SCREEN STYLES */
 #intro-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background-color: #030406;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.5s ease;
-  overflow: hidden;
+  position: fixed; inset: 0; z-index: 10000; background-color: #030406;
+  opacity: 1; visibility: visible; transition: opacity 0.5s ease; overflow: hidden;
 }
 
-#intro-screen.fade-out {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
+#intro-screen.fade-out { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
 .intro-container {
-  position: relative;
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  cursor: pointer;
-  perspective: 1000px;
+  position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; cursor: pointer; perspective: 1000px;
 }
 
-.card-stream {
-  position: absolute; inset: 0;
-  pointer-events: none; z-index: 2;
-  transform-style: preserve-3d;
-}
+.card-stream { position: absolute; inset: 0; pointer-events: none; z-index: 2; transform-style: preserve-3d; }
 
 .tcg-card {
-  position: absolute; top: 50%; left: 50%;
-  width: 140px; height: 196px;
-  margin-top: -98px; margin-left: -70px;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
-  backface-visibility: hidden;
-  will-change: transform, opacity;
-  background: #111827;
-  overflow: hidden;
+  position: absolute; top: 50%; left: 50%; width: 140px; height: 196px; margin-top: -98px; margin-left: -70px;
+  border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9); backface-visibility: hidden; will-change: transform, opacity;
+  background: #111827; overflow: hidden;
 }
 
 .tcg-card img { width: 100%; height: 100%; object-fit: cover; }
@@ -176,64 +132,26 @@ html, body {
 .bg-glow {
   position: absolute; width: 500px; height: 500px;
   background: radial-gradient(circle, rgba(255, 59, 92, 0.3) 0%, rgba(157, 78, 221, 0.15) 50%, rgba(0, 0, 0, 0) 70%);
-  border-radius: 50%; opacity: 0;
-  animation: fadeInGlow 1.2s ease 5.3s forwards;
+  border-radius: 50%; opacity: 0; animation: fadeInGlow 1.2s ease 5.3s forwards;
 }
 
 .slash-effect {
   position: absolute; width: 180%; height: 8px; background: #ffffff;
   box-shadow: 0 0 20px #fff, 0 0 40px var(--accent-red), 0 0 80px var(--accent-cyan);
-  transform: rotate(-22deg) scaleX(0); transform-origin: left center;
-  z-index: 10; animation: performSlash 0.42s cubic-bezier(0.11, 0, 0.5, 0) 5.3s forwards;
+  transform: rotate(-22deg) scaleX(0); transform-origin: left center; z-index: 10;
+  animation: performSlash 0.42s cubic-bezier(0.11, 0, 0.5, 0) 5.3s forwards;
 }
 
-.flash-overlay {
-  position: absolute; inset: 0; background: #ffffff; opacity: 0;
-  pointer-events: none; z-index: 9; animation: screenFlash 0.35s ease 5.55s forwards;
-}
+.flash-overlay { position: absolute; inset: 0; background: #ffffff; opacity: 0; pointer-events: none; z-index: 9; animation: screenFlash 0.35s ease 5.55s forwards; }
 
-.title-wrapper {
-  position: relative; z-index: 5; text-align: center;
-  display: flex; flex-direction: column; align-items: center;
-  width: 100%;
-}
-
-/* INTRO LOGO ANIMATIONEN & XL DIMENSIONEN */
-#intro-screen .brand-pokemon-svg {
-  width: 100% !important;
-  max-width: 360px !important;
-}
-
-#intro-screen .brand-move-badge {
-  padding: 6px 26px !important;
-  margin-top: -16px !important;
-}
-
-#intro-screen .brand-move-badge .move-letter {
-  font-size: 3.2rem !important;
-}
-
-#intro-screen .pokeball-o {
-  width: 38px !important;
-  height: 38px !important;
-  border-width: 3.5px !important;
-}
-
-#intro-screen .pokeball-o .pb-center {
-  width: 14px !important;
-  height: 14px !important;
-  border-width: 3.5px !important;
-}
+.title-wrapper { position: relative; z-index: 5; text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; }
 
 .title-pokemon-anim { opacity: 0; transform: translateY(-20px); animation: revealTextUpper 0.5s ease 5.65s forwards; }
 .title-move-anim { opacity: 0; clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); animation: revealMoveTitle 0.65s ease 5.6s forwards; }
 
 .start-prompt {
-  margin-top: 60px; font-size: 0.85rem; font-weight: 700;
-  letter-spacing: 0.25em; color: rgba(255, 255, 255, 0.8);
-  text-transform: uppercase; opacity: 0;
-  animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards;
-  z-index: 5;
+  margin-top: 60px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.25em; color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase; opacity: 0; animation: pulseText 1.8s ease-in-out 6.4s infinite alternate, fadeInPrompt 0.5s ease 6.4s forwards; z-index: 5;
 }
 
 @keyframes performSlash { 0% { transform: rotate(-22deg) scaleX(0); opacity: 1; } 50% { transform: rotate(-22deg) scaleX(1); opacity: 1; } 100% { transform: rotate(-22deg) scaleX(1) translateY(60px); opacity: 0; } }
@@ -245,47 +163,19 @@ html, body {
 @keyframes pulseText { from { opacity: 0.3; } to { opacity: 0.9; } }
 
 /* APP VIEWPORT CONTAINER */
-.app-viewport {
-  width: 100vw;
-  height: 100dvh;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.app-viewport { width: 100vw; height: 100dvh; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-/* PANELS / MODALS */
-.screen-panel {
-  width: 90%;
-  max-width: 360px;
-  margin: 0 auto;
-}
+/* PANELS & CARDS */
+.screen-panel { width: 90%; max-width: 360px; margin: 0 auto; }
 
 .card-ui {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 35px rgba(0,0,0,0.3);
-  text-align: center;
+  background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 24px; padding: 24px; box-shadow: 0 10px 35px rgba(0,0,0,0.3); text-align: center;
 }
 
-/* BUTTONS */
 button {
-  -webkit-appearance: none;
-  appearance: none;
-  font-family: 'Fredoka', sans-serif;
-  font-weight: 700;
-  border: none;
-  padding: 14px 20px;
-  font-size: 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  width: 100%;
-  text-transform: uppercase;
+  -webkit-appearance: none; appearance: none; font-family: 'Fredoka', sans-serif; font-weight: 700; border: none;
+  padding: 14px 20px; font-size: 15px; border-radius: 20px; cursor: pointer; width: 100%; text-transform: uppercase;
 }
 
 button:active { transform: scale(0.97); }
@@ -306,67 +196,31 @@ button:active { transform: scale(0.97); }
 
 .backup-bar { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); }
 
-/* =========================================================
-   ZENTRIERTES RADAR HUD (MAXIMALES DESIGN)
-   ========================================================= */
+/* RADAR HUD */
 .hud-layout {
-  position: absolute;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  padding-top: calc(env(safe-area-inset-top, 20px) + 15px) !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
-  padding-left: 15px !important;
-  padding-right: 15px !important;
-  box-sizing: border-box !important;
-  z-index: 10;
+  position: absolute; inset: 0; width: 100vw; height: 100dvh; display: flex !important; flex-direction: column !important;
+  justify-content: space-between !important; align-items: center !important;
+  padding-top: calc(env(safe-area-inset-top, 20px) + 15px) !important; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
+  padding-left: 15px !important; padding-right: 15px !important; box-sizing: border-box !important; z-index: 10;
 }
 
-.hud-header {
-  text-align: center;
-  margin-top: 5px;
-  width: 100%;
-}
+.hud-header { text-align: center; margin-top: 5px; width: 100%; }
 
-/* MITTIGES RADAR (330px X 330px) */
 .radar-viewport {
-  position: relative;
-  width: 330px;
-  height: 330px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: auto 0;
+  position: relative; width: 330px; height: 330px; display: flex; justify-content: center; align-items: center; margin: auto 0;
 }
 
 .radar-rings {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 3px solid #10b981;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0.08) 75%);
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+  position: absolute; inset: 0; border-radius: 50%; border: 3px solid #10b981;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0.08) 75%); box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
 }
 
-.ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px dashed rgba(255, 255, 255, 0.7);
-}
+.ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, 0.7); }
 .ring-1 { inset: 35px; }
 .ring-2 { inset: 80px; }
 .ring-3 { inset: 125px; }
 
-.sweeper {
-  position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(16,185,129,0.5) 0deg, transparent 60deg);
-  display: none;
-}
-
+.sweeper { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(16,185,129,0.5) 0deg, transparent 60deg); display: none; }
 .state-scanning .sweeper { display: block; animation: rotateSweeper 2s linear infinite; }
 @keyframes rotateSweeper { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -376,85 +230,30 @@ button:active { transform: scale(0.97); }
 
 @keyframes pulseRadar { from { transform: scale(0.98); } to { transform: scale(1.02); } }
 
-.radar-center-dot {
-  width: 14px; height: 14px;
-  background: #ffffff; border-radius: 50%; z-index: 5;
-  box-shadow: 0 0 12px #ffffff;
-}
+.radar-center-dot { width: 14px; height: 14px; background: #ffffff; border-radius: 50%; z-index: 5; box-shadow: 0 0 12px #ffffff; }
 
-/* OVALER SCAN BUTTON DIREKT DARAUF */
 .btn-scan-overlay {
-  position: absolute;
-  top: 22px;
-  right: -8px;
-  z-index: 20;
-  width: auto !important;
-  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
-  color: #ffffff !important;
-  border: 3.5px solid #ffffff !important;
-  border-radius: 30px !important;
-  padding: 12px 22px !important;
-  font-size: 15px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+  position: absolute; top: 22px; right: -8px; z-index: 20; width: auto !important;
+  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important; border: 3.5px solid #ffffff !important;
+  border-radius: 30px !important; padding: 12px 22px !important; font-size: 15px !important; font-weight: 800 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important; display: flex !important; align-items: center !important; gap: 8px !important;
 }
 
-.radar-status {
-  position: absolute;
-  bottom: -45px;
-  font-size: 17px; font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  width: 100%;
-}
+.radar-status { position: absolute; bottom: -45px; font-size: 17px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); width: 100%; }
+.radar-timer { position: absolute; top: -45px; font-size: 28px; font-weight: 800; color: var(--accent-yellow); text-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-.radar-timer {
-  position: absolute;
-  top: -45px;
-  font-size: 28px; font-weight: 800;
-  color: var(--accent-yellow);
-  text-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-/* MENÜ BUTTON UNTEN */
-.hud-footer {
-  width: 100%;
-  max-width: 350px;
-  margin-bottom: 10px;
-}
+.hud-footer { width: 100%; max-width: 350px; margin-bottom: 10px; }
 
 .btn-menu-pill {
-  width: 100% !important;
-  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
-  color: #ffffff !important;
-  font-size: 20px !important;
-  font-weight: 800 !important;
-  padding: 18px !important;
-  border-radius: 35px !important;
-  border: 2.5px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 10px !important;
+  width: 100% !important; background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important; color: #ffffff !important;
+  font-size: 20px !important; font-weight: 800 !important; padding: 18px !important; border-radius: 35px !important;
+  border: 2.5px solid rgba(255, 255, 255, 0.35) !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important;
 }
 
-/* MODALS & KAMPF */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(10px);
-  z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px;
-}
-
-.modal-card {
-  background: #1e293b; border-radius: 20px; padding: 20px;
-  width: 100%; max-width: 340px; border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
-}
+/* MODALS */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.modal-card { background: #1e293b; border-radius: 20px; padding: 20px; width: 100%; max-width: 340px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff; }
 
 .menu-tab-buttons { display: flex; gap: 4px; margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 4px; border-radius: 12px; }
 .tab-btn { flex: 1; background: transparent; color: var(--text-sub); padding: 6px; font-size: 11px; border-radius: 8px; }
