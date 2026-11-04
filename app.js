@@ -34,10 +34,11 @@ function unlockAudio() {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE
+   1. CINEMATIC INTRO ENGINE (Unskippable Version)
    ========================================================= */
 const IntroManager = {
   active: true,
+  canInteractiveFinish: false, // Erst nach Ablauf des Logos erlaubt
 
   init() {
     const introScreen = document.getElementById('intro-screen');
@@ -48,29 +49,32 @@ const IntroManager = {
       return;
     }
 
-    // Audio sofort beim allerersten Touch/Klick entsperren
-    const startAppFlow = () => {
-      unlockAudio();
-      window.removeEventListener('touchstart', startAppFlow);
-      window.removeEventListener('pointerdown', startAppFlow);
-      window.removeEventListener('click', startAppFlow);
-    };
+    // Audio-Freischaltung beim ersten Touch (aber KEIN Skip des Intros!)
+    const triggerAudio = () => unlockAudio();
+    container.addEventListener('pointerdown', triggerAudio, { once: true });
 
-    window.addEventListener('touchstart', startAppFlow, { once: true });
-    window.addEventListener('pointerdown', startAppFlow, { once: true });
-    window.addEventListener('click', startAppFlow, { once: true });
+    // Klick zum Starten ERST erlauben, wenn das Intro komplett durchgelaufen ist
+    container.addEventListener('click', () => {
+      if (this.canInteractiveFinish) {
+        this.finishIntro();
+      }
+    });
 
-    // Klick auf Intro überspringt es
-    container.addEventListener('click', () => this.finishIntro(), { once: true });
-
-    // Start der Animationen & Sounds
+    // 1. Karten-Rush starten (Dauer: 5 Sekunden)
     this.startCardRush();
+
+    // 2. Slash & Sound nach 5.3 Sekunden
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // Erst nach 8 Sekunden oder Klick ins Hauptspiel
+    // 3. Nach 7.3 Sekunden (5.3s Slash + 2s Logo-Präsenz): Text einblenden & Klick freischalten
     setTimeout(() => {
-      if (this.active) this.finishIntro();
-    }, 8000);
+      this.canInteractiveFinish = true;
+      const promptEl = document.querySelector('.start-prompt');
+      if (promptEl) {
+        promptEl.innerText = "TIPPE AUF DEN BILDSCHIRM";
+        promptEl.classList.add('show-prompt');
+      }
+    }, 7300);
   },
 
   playWhooshSound() {
@@ -194,7 +198,7 @@ const IntroManager = {
     const gameScreen = document.getElementById('game-screen');
 
     if (introEl) {
-      introEl.classList.add('fade-out'); // Smooth 0.5s Ausblenden
+      introEl.classList.add('fade-out');
       setTimeout(() => {
         introEl.style.display = 'none';
         if (gameScreen) gameScreen.classList.remove('hidden');
