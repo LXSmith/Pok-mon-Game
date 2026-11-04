@@ -19,6 +19,12 @@
   -webkit-touch-callout: none;
 }
 
+/* File Input für iOS/Android Interaktion erlauben */
+input[type="file"] {
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
+
 html, body {
   width: 100vw;
   height: 100dvh;
@@ -30,7 +36,6 @@ html, body {
   overflow: hidden;
 }
 
-/* Erwirkt das Ausblenden aller inaktiven Screens */
 .hidden {
   display: none !important;
 }
@@ -179,7 +184,7 @@ button:active { transform: scale(0.97); }
 .slot-info { font-size: 12px; color: var(--text-sub); }
 
 .starter-container { display: flex; gap: 8px; margin-bottom: 10px; }
-.starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; }
+.starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; }
 .starter-card.selected { border-color: var(--accent-yellow); background: rgba(255, 203, 5, 0.2); }
 .starter-card img { width: 100%; border-radius: 6px; }
 .starter-name { font-size: 11px; margin-top: 4px; font-weight: 700; color: #fff; }
@@ -203,6 +208,7 @@ button:active { transform: scale(0.97); }
 .radar-rings {
   position: absolute; inset: 0; border-radius: 50%; border: 3px solid #10b981;
   background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0.08) 75%); box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
+  overflow: hidden;
 }
 
 .ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, 0.7); }
@@ -213,6 +219,25 @@ button:active { transform: scale(0.97); }
 .sweeper { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(16,185,129,0.5) 0deg, transparent 60deg); display: none; }
 .state-scanning .sweeper { display: block; animation: rotateSweeper 2s linear infinite; }
 @keyframes rotateSweeper { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ROT PULSIERENDER POKÉMON BLIP AUF DEM RADAR */
+.radar-blip {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #ff3b5c;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  box-shadow: 0 0 15px #ff3b5c;
+  animation: pulseBlip 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulseBlip {
+  from { transform: translate(-50%, -50%) scale(0.85); box-shadow: 0 0 8px #ff3b5c; }
+  to { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 20px #ff3b5c, 0 0 30px #ff0000; }
+}
 
 .state-detected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); }
 .state-warning { border-color: #f97316; background: rgba(249, 115, 22, 0.3); animation: pulseRadar 0.6s infinite alternate; }
@@ -227,6 +252,13 @@ button:active { transform: scale(0.97); }
   background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important; color: #ffffff !important; border: 3.5px solid #ffffff !important;
   border-radius: 30px !important; padding: 12px 22px !important; font-size: 15px !important; font-weight: 800 !important;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important; display: flex !important; align-items: center !important; gap: 8px !important;
+}
+
+.btn-scare-overlay {
+  position: absolute; top: 22px; left: -8px; z-index: 20; width: auto !important;
+  background: linear-gradient(180deg, #e67e22 0%, #d35400 100%) !important; color: #ffffff !important; border: 3.5px solid #ffffff !important;
+  border-radius: 30px !important; padding: 12px 18px !important; font-size: 14px !important; font-weight: 800 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important; display: flex !important; align-items: center !important; gap: 6px !important;
 }
 
 .radar-status { position: absolute; bottom: -45px; font-size: 17px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); width: 100%; }
