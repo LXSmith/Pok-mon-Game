@@ -640,14 +640,21 @@ function startScanProcess(type) {
   }, durationMs);
 }
 
-// TEST-FUNKTION: ERZWINGT SOFORTIGEN SPAWN UNABHÄNGIG VOM TIMER
+// REPARIERTER TEST-BUTTON: SPAWNT EIN POKÉMON DIREKT AUF DEM RADAR
 function forceDevSpawn() {
-  clearTimeout(scanTimer);
-  if (!isScanning && !targetPokemonCoords) {
-    currentScanType = 'quick';
+  // Falls noch kein Scan aktiv ist, Scan-Status erzwingen
+  isScanning = false;
+  currentScanType = 'quick';
+
+  // Falls GPS/Position noch nicht bereit ist, Fallback-Koordinaten setzen
+  if (!currentPosition) {
+    currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
+
+  // Signal sofort auslösen
   triggerSignalDetected();
 }
+
 
 function triggerSignalDetected() {
   isScanning = false;
