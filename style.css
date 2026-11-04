@@ -2,7 +2,7 @@
 
 :root {
   --bg-sky: #38bdf8;
-  --card-bg: rgba(15, 23, 42, 0.9);
+  --card-bg: rgba(15, 23, 42, 0.92);
   --accent-yellow: #ffcb05;
   --accent-yellow-dark: #e6a100;
   --accent-green: #10b981;
@@ -20,8 +20,7 @@
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
   height: 100dvh;
   margin: 0;
   padding: 0;
@@ -40,7 +39,7 @@ html, body {
   font-size: 2.2rem;
   font-weight: 900;
   color: #ffcb05;
-  text-shadow: 2px 2px 0 #2a75bb, -2px -2px 0 #2a75bb, 2px -2px 0 #2a75bb, -2px 2px 0 #2a75bb, 0 4px 8px rgba(0,0,0,0.3);
+  text-shadow: 2.5px 2.5px 0 #2a75bb, -2.5px -2.5px 0 #2a75bb, 2.5px -2.5px 0 #2a75bb, -2.5px 2.5px 0 #2a75bb, 0 4px 10px rgba(0,0,0,0.3);
   letter-spacing: 1px;
   line-height: 1;
 }
@@ -51,7 +50,7 @@ html, body {
   font-style: italic;
   background: #ff3b5c;
   color: #ffffff;
-  padding: 2px 14px;
+  padding: 2px 16px;
   border-radius: 8px;
   display: inline-block;
   margin-top: -4px;
@@ -160,10 +159,10 @@ html, body {
   align-items: center;
 }
 
-/* MENU & SLOTS CARD PANEL */
+/* PANELS / MODALS */
 .screen-panel {
   width: 90%;
-  max-width: 380px;
+  max-width: 360px;
   margin: 0 auto;
 }
 
@@ -172,20 +171,20 @@ html, body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.3);
   text-align: center;
 }
 
-/* BUTTON BASICS */
+/* BUTTONS */
 button {
   -webkit-appearance: none;
   appearance: none;
   font-family: 'Fredoka', sans-serif;
   font-weight: 700;
   border: none;
-  padding: 12px 18px;
+  padding: 14px 20px;
   font-size: 15px;
   border-radius: 20px;
   cursor: pointer;
@@ -199,10 +198,9 @@ button:active { transform: scale(0.97); }
 .btn-secondary { background: #334155; color: #ffffff; margin-top: 8px; }
 .btn-special { background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%); color: #ffffff; }
 
-/* SPEICHER SLOTS */
-.slot-card { background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(255, 203, 5, 0.4); border-radius: 12px; padding: 10px; margin-bottom: 8px; text-align: left; }
-.slot-card h3 { margin: 0; font-size: 14px; color: #fff; }
-.slot-info { font-size: 11px; color: var(--text-sub); }
+.slot-card { background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(255, 203, 5, 0.4); border-radius: 12px; padding: 12px; margin-bottom: 10px; text-align: left; }
+.slot-card h3 { margin: 0; font-size: 15px; color: #fff; }
+.slot-info { font-size: 12px; color: var(--text-sub); }
 
 .starter-container { display: flex; gap: 8px; margin-bottom: 10px; }
 .starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; }
@@ -213,7 +211,7 @@ button:active { transform: scale(0.97); }
 .backup-bar { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); }
 
 /* =========================================================
-   3. RADAR HUD SCREEN (EXAKT WIE AUF DEM TARGET-BILD)
+   ZENTRIERTES RADAR HUD (EXAKT WIE ENTWURF)
    ========================================================= */
 .hud-layout {
   position: absolute;
@@ -224,23 +222,28 @@ button:active { transform: scale(0.97); }
   flex-direction: column !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: env(safe-area-inset-top, 40px) 20px env(safe-area-inset-bottom, 30px) 20px !important;
+  padding-top: calc(env(safe-area-inset-top) + 20px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 30px) !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
   box-sizing: border-box !important;
   z-index: 10;
 }
 
 .hud-header {
-  margin-top: 10px;
   text-align: center;
+  margin-top: 10px;
 }
 
+/* MITTIGES RADAR */
 .radar-viewport {
   position: relative;
-  width: 260px;
-  height: 260px;
+  width: 280px;
+  height: 280px;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: auto 0;
 }
 
 .radar-rings {
@@ -248,8 +251,8 @@ button:active { transform: scale(0.97); }
   inset: 0;
   border-radius: 50%;
   border: 3px solid #10b981;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0.1) 75%);
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0.08) 75%);
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
 }
 
 .ring {
@@ -257,9 +260,9 @@ button:active { transform: scale(0.97); }
   border-radius: 50%;
   border: 1px dashed rgba(255, 255, 255, 0.7);
 }
-.ring-1 { inset: 25px; }
-.ring-2 { inset: 60px; }
-.ring-3 { inset: 95px; }
+.ring-1 { inset: 30px; }
+.ring-2 { inset: 70px; }
+.ring-3 { inset: 110px; }
 
 .sweeper {
   position: absolute; inset: 0; border-radius: 50%;
@@ -282,18 +285,19 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 12px #ffffff;
 }
 
-/* OVALER SCAN-BUTTON AUF DEM RADAR */
+/* OVALER SCAN BUTTON DIEKT DARAUF */
 .btn-scan-overlay {
   position: absolute;
-  top: 15px; right: -10px;
+  top: 20px;
+  right: -10px;
   z-index: 20;
   width: auto !important;
   background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
   color: #ffffff !important;
   border: 3px solid #ffffff !important;
   border-radius: 25px !important;
-  padding: 8px 16px !important;
-  font-size: 13px !important;
+  padding: 10px 18px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
   display: flex !important;
@@ -303,8 +307,8 @@ button:active { transform: scale(0.97); }
 
 .radar-status {
   position: absolute;
-  bottom: -35px;
-  font-size: 14px; font-weight: 700;
+  bottom: -40px;
+  font-size: 15px; font-weight: 700;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   width: 100%;
@@ -312,36 +316,55 @@ button:active { transform: scale(0.97); }
 
 .radar-timer {
   position: absolute;
-  top: -40px;
-  font-size: 26px; font-weight: 800;
+  top: -45px;
+  font-size: 28px; font-weight: 800;
   color: var(--accent-yellow);
   text-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
-/* GROSSER MENÜ BUTTON UNTEN */
+/* MENÜ BUTTON UNTEN */
 .hud-footer {
   width: 100%;
   max-width: 320px;
-  margin-bottom: 10px;
 }
 
 .btn-menu-pill {
   width: 100% !important;
   background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
   color: #ffffff !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
   font-weight: 800 !important;
-  padding: 15px !important;
+  padding: 16px !important;
   border-radius: 30px !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
 }
 
-/* BATTLE & MODALS */
+/* MODALS */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(10px);
+  z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px;
+}
+
+.modal-card {
+  background: #1e293b; border-radius: 20px; padding: 20px;
+  width: 100%; max-width: 340px; border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
+}
+
+.menu-tab-buttons { display: flex; gap: 4px; margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 4px; border-radius: 12px; }
+.tab-btn { flex: 1; background: transparent; color: var(--text-sub); padding: 6px; font-size: 11px; border-radius: 8px; }
+.tab-btn.active { background: var(--accent-yellow); color: #1b365d; font-weight: 700; }
+.mtab-content { min-height: 100px; }
+.pokemon-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 10px; border-radius: 10px; margin-bottom: 4px; }
+.tag-active { font-size: 9px; background: var(--accent-green); color: #ffffff; padding: 2px 5px; border-radius: 8px; font-weight: 700; }
+
 .battle-title { font-weight: 700; font-size: 13px; margin-bottom: 2px; color: #fff; }
 .battle-card-img { width: 90px; border-radius: 10px; margin: 4px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
 .battle-box { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 8px; font-size: 12px; font-weight: 700; margin: 6px 0; color: #fff; }
@@ -353,26 +376,6 @@ button:active { transform: scale(0.97); }
 .hp-fill { background: var(--accent-green); }
 .exp-fill { background: #f59e0b; }
 .bar-text { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
-
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(10px);
-  z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px;
-}
-
-.modal-card {
-  background: #1e293b; border-radius: 20px; padding: 18px;
-  width: 100%; max-width: 340px; border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
-}
-
-.menu-tab-buttons { display: flex; gap: 4px; margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 4px; border-radius: 12px; }
-.tab-btn { flex: 1; background: transparent; color: var(--text-sub); padding: 6px; font-size: 11px; border-radius: 8px; }
-.tab-btn.active { background: var(--accent-yellow); color: #1b365d; font-weight: 700; }
-.mtab-content { min-height: 100px; }
-.pokemon-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 10px; border-radius: 10px; margin-bottom: 4px; }
-.tag-active { font-size: 9px; background: var(--accent-green); color: #ffffff; padding: 2px 5px; border-radius: 8px; font-weight: 700; }
 
 .evo-pulse { animation: flashGlow 1s infinite alternate; }
 @keyframes flashGlow { 0% { filter: drop-shadow(0 0 8px #fff) brightness(1); } 100% { filter: drop-shadow(0 0 20px var(--accent-yellow)) brightness(1.3); } }
