@@ -164,6 +164,29 @@
       justify-content: center !important;
       gap: 10px !important;
     }
+        /* TIPPE AUF DEN BILDSCHIRM PROMPT */
+    #intro-screen .start-prompt {
+      margin-top: 60px !important;
+      font-size: 0.9rem !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.25em !important;
+      color: #ffffff !important;
+      text-transform: uppercase !important;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 10 !important;
+    }
+
+    #intro-screen .start-prompt.show-prompt {
+      animation: pulseText 1.5s ease-in-out infinite alternate !important;
+      opacity: 1 !important;
+    }
+
+    @keyframes pulseText {
+      from { opacity: 0.4; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1.03); }
+    }
+
   </style>
 </head>
 <body>
