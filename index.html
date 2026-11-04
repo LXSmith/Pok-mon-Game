@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#38bdf8">
@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- CSS-Datei -->
-  <link rel="stylesheet" href="style.css?v=400">
+  <!-- CSS-Datei mit Cache-Buster -->
+  <link rel="stylesheet" href="style.css?v=999">
 </head>
 <body>
 
@@ -28,7 +28,6 @@
       <div class="slash-effect"></div>
       <div class="flash-overlay"></div>
 
-      <!-- EXAKT IDENTISCHES LOGO IM INTRO -->
       <div class="title-wrapper">
         <div class="logo-pokemon title-pokemon-anim">Pokémon</div>
         <div class="logo-move title-move-anim">MOVE</div>
@@ -41,12 +40,11 @@
   <!-- ========================================== -->
   <!-- 2. HAUPT-GAME CONTAINER                    -->
   <!-- ========================================== -->
-  <div id="game-screen" class="container hidden">
+  <div id="game-screen" class="app-viewport hidden">
 
     <!-- SCREEN 1: HAUPTMENÜ (Neues Spiel / Fortsetzen) -->
-    <div id="screen-main-menu" class="card-ui">
-      <!-- IDENTISCHES LOGO AUCH HIER -->
-      <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
+    <div id="screen-main-menu" class="card-ui screen-panel">
+      <div class="hud-logo-wrapper" style="margin-bottom: 15px;">
         <div class="logo-pokemon">Pokémon</div>
         <div class="logo-move">MOVE</div>
       </div>
@@ -58,16 +56,16 @@
 
       <!-- Backup System -->
       <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
-      <div class="backup-bar" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-        <h4 style="color: #ffffff; margin: 0 0 10px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
+      <div class="backup-bar">
+        <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
         <button onclick="exportSaveGame()" class="btn-secondary" style="font-size: 12px; margin-bottom: 6px; background: #27ae60;">Backup Download</button>
         <button onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Backup Import</button>
       </div>
     </div>
 
     <!-- SCREEN 2: SPEICHERSLOT-AUSWAHL -->
-    <div id="screen-slots" class="card-ui hidden">
-      <h2 id="slot-screen-title" style="color:#fff; margin-top:0;">Wähle einen Speicherplatz</h2>
+    <div id="screen-slots" class="card-ui screen-panel hidden">
+      <h2 id="slot-screen-title" style="color:#fff; margin-top:0; font-size: 18px;">Wähle Speicherplatz</h2>
       
       <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)">
         <h3>Slot 1</h3>
@@ -88,9 +86,9 @@
     </div>
 
     <!-- SCREEN 3: STARTER-AUSWAHL -->
-    <div id="screen-starter" class="card-ui hidden">
-      <h2 style="color:#fff; margin-top:0;">Wähle dein erstes Pokémon</h2>
-      <p class="subtitle" style="color:#f0f9ff;">Prof. Eich schenkt dir deinen ersten Partner!</p>
+    <div id="screen-starter" class="card-ui screen-panel hidden">
+      <h2 style="color:#fff; margin-top:0; font-size: 18px;">Dein Erstes Pokémon</h2>
+      <p class="subtitle" style="color:#f0f9ff; font-size:12px;">Wähle deinen Partner!</p>
 
       <div class="starter-container">
         <div class="starter-card" onclick="chooseStarter('bisasam', this)">
@@ -107,21 +105,21 @@
         </div>
       </div>
 
-      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:20px;">
-        Pokémon Wählen & Starten
+      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">
+        Pokémon Wählen
       </button>
     </div>
 
-    <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
-    <div id="screen-radar-hud" class="radar-hud-screen hidden">
+    <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD (EXAKT WIE DAS DESIGN-BILD) -->
+    <div id="screen-radar-hud" class="hud-layout hidden">
       
-      <!-- OBEN: EXAKT IDENTISCHES LOGO -->
-      <div class="hud-logo-wrapper">
+      <!-- LOGO OBEN -->
+      <div class="hud-header">
         <div class="logo-pokemon">Pokémon</div>
         <div class="logo-move">MOVE</div>
       </div>
 
-      <!-- MITTE: RADAR MIT INLINE SCAN-BUTTON -->
+      <!-- RADAR MITTIG -->
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
           <div class="ring ring-1"></div>
@@ -132,9 +130,8 @@
         
         <div class="radar-center-dot"></div>
         
-        <!-- SCAN-BUTTON DIREKT AUF DEM RADAR -->
         <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-overlay">
-          <span style="font-size: 18px;">📡</span>
+          <span>📡</span>
           <span>SCAN STARTEN</span>
         </button>
 
@@ -142,8 +139,8 @@
         <div id="radar-timer-display" class="radar-timer hidden">20s</div>
       </div>
 
-      <!-- UNTERE MENÜLEISTE: GROSSER MENÜ BUTTON -->
-      <div class="hud-bottom-bar">
+      <!-- MENÜ BUTTON UNTEN -->
+      <div class="hud-footer">
         <button onclick="openMenuModal()" class="btn-menu-pill">
           <span>⚙️</span>
           <span>MENÜ</span>
@@ -153,7 +150,7 @@
     </div>
 
     <!-- SCREEN 5: KAMPFSYSTEM -->
-    <div id="screen-battle" class="card-ui hidden">
+    <div id="screen-battle" class="card-ui screen-panel hidden">
       <div class="battle-header">
         <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
         <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
@@ -168,7 +165,7 @@
         <div id="player-title" class="battle-title">Dein Pokémon</div>
         <div class="bar-bg"><div id="player-hp-bar" class="bar-fill hp-fill"></div></div>
         <div id="player-hp-text" class="bar-text">50 / 50 KP</div>
-        <div class="energy-display" style="font-size:13px; margin-top:4px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
+        <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
       </div>
 
       <div class="battle-controls">
@@ -178,89 +175,73 @@
       </div>
     </div>
 
-    <!-- OVERLAY 1: SCAN-AUSWAHL MODAL -->
+    <!-- OVERLAYS / MODALS -->
     <div id="modal-scan" class="modal-overlay hidden">
       <div class="modal-card">
-        <h3>Wähle deine Scan-Art</h3>
+        <h3>Wähle Scan-Art</h3>
         <p class="subtitle">Aktives Pokémon: <strong id="scan-active-mon">--</strong></p>
-        
-        <button onclick="startScanProcess('quick')" class="btn-primary">
-          ⚡ Schneller Scan
-          <span class="btn-subtext">Findet schnell gewöhnliche Pokémon</span>
-        </button>
-
-        <button onclick="startScanProcess('power')" class="btn-special" style="margin-top:12px;">
-          💎 Power Scan
-          <span class="btn-subtext">Seltener Signal, aber viel stärkere Pokémon</span>
-        </button>
-
-        <button onclick="closeScanModal()" class="btn-secondary" style="margin-top:15px;">Abbrechen</button>
+        <button onclick="startScanProcess('quick')" class="btn-primary">⚡ Schneller Scan</button>
+        <button onclick="startScanProcess('power')" class="btn-special" style="margin-top:10px;">💎 Power Scan</button>
+        <button onclick="closeScanModal()" class="btn-secondary" style="margin-top:10px;">Abbrechen</button>
       </div>
     </div>
 
-    <!-- OVERLAY 2: MENÜ OVERLAY -->
     <div id="modal-menu" class="modal-overlay hidden">
       <div class="modal-card">
         <h3>Hauptmenü</h3>
-        
         <div class="menu-tab-buttons">
           <button onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team</button>
           <button onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
           <button onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
         </div>
 
-        <!-- TAB: POKEMON TEAM -->
         <div id="mtab-content-pokemon" class="mtab-content">
           <div id="pokemon-team-list"></div>
         </div>
 
-        <!-- TAB: BEUTEL / ITEMS -->
         <div id="mtab-content-items" class="mtab-content hidden">
-          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:12px; border-radius:12px;">
+          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:10px; border-radius:12px;">
             <span>🔴 Pokébälle</span>
-            <strong id="menu-item-pokeballs" style="font-size:18px; color:var(--accent-yellow);">10</strong>
+            <strong id="menu-item-pokeballs" style="font-size:16px; color:var(--accent-yellow);">10</strong>
           </div>
         </div>
 
-        <!-- TAB: EXP & STATS -->
         <div id="mtab-content-exp" class="mtab-content hidden">
           <div class="trainer-card-inner" style="text-align:left;">
             <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 5px 0;">Level 1</h4>
             <div class="bar-bg" style="width:100%;"><div id="menu-trainer-exp-bar" class="bar-fill exp-fill"></div></div>
             <div id="menu-trainer-exp-text" class="bar-text" style="text-align:right;">0 / 100 EXP</div>
-            <div class="stat-line" style="margin-top:15px; font-size:13px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
+            <div class="stat-line" style="margin-top:10px; font-size:12px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
 
-        <button onclick="exitToMainMenu()" class="btn-primary" style="margin-top:20px; background:#e74c3c; border-color:#c0392b;">💾 Speichern & Hauptmenü</button>
-        <button onclick="closeMenuModal()" class="btn-secondary" style="margin-top:10px;">Schließen</button>
+        <button onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
+        <button onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
       </div>
     </div>
 
-    <!-- OVERLAY 3: ENTWICKLUNGS-SCREEN -->
     <div id="evo-screen" class="modal-overlay hidden">
       <div class="modal-card">
         <h2 id="evo-title" style="color:var(--accent-yellow);">Was? ...</h2>
-        <p id="evo-subtitle" style="color:#aaa; font-size:14px;">Dein Pokémon entwickelt sich!</p>
+        <p id="evo-subtitle" style="color:#aaa; font-size:13px;">Dein Pokémon entwickelt sich!</p>
         <img id="evo-card-img" class="battle-card-img evo-pulse" src="" alt="Evo Card">
-        <div id="evo-chance-info" class="evo-chance-text" style="font-size:16px; font-weight:bold; color:#3498db; margin:10px 0;">Chance: 35%</div>
+        <div id="evo-chance-info" style="font-size:15px; font-weight:bold; color:#3498db; margin:10px 0;">Chance: 35%</div>
         <button id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary">🎲 JETZT WÜRFELN!</button>
       </div>
     </div>
 
-    <!-- OVERLAY 4: SIEGES-SCREEN -->
     <div id="victory-screen" class="modal-overlay hidden">
       <div class="modal-card">
-        <div class="victory-title" style="font-size:28px; font-weight:900; color:var(--accent-yellow); margin-bottom:10px;">🏆 SIEG!</div>
+        <div style="font-size:24px; font-weight:900; color:var(--accent-yellow); margin-bottom:5px;">🏆 SIEG!</div>
         <p id="victory-subtitle" style="color:#aaa; margin:0 0 10px 0;">Kampf erfolgreich!</p>
-        <div id="victory-exp-text" class="reward-text" style="font-size:20px; font-weight:bold; color:#10b981;">+20 EXP</div>
-        <div id="victory-item-text" class="reward-subtext" style="font-size:14px; color:var(--accent-yellow); margin-top:5px;">+2 Pokébälle</div>
-        <button onclick="closeVictoryOverlay()" class="btn-primary" style="margin-top:20px;">Weiter</button>
+        <div id="victory-exp-text" style="font-size:18px; font-weight:bold; color:#10b981;">+20 EXP</div>
+        <div id="victory-item-text" style="font-size:13px; color:var(--accent-yellow); margin-top:4px;">+2 Pokébälle</div>
+        <button onclick="closeVictoryOverlay()" class="btn-primary" style="margin-top:15px;">Weiter</button>
       </div>
     </div>
 
   </div>
 
-  <script src="app.js?v=400"></script>
+  <script src="app.js?v=999"></script>
 </body>
 </html>
