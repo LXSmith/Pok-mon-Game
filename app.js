@@ -423,7 +423,7 @@ function initGPSLiveTracking() {
   }
 }
 
-// KOMPASS-FREIGABE UND ROTATION (ROBUST FÜR MOBILE BROWSER)
+// KOMPASS-FREIGABE UND ROTATION
 function requestCompassPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
     DeviceOrientationEvent.requestPermission()
@@ -454,13 +454,11 @@ function handleOrientation(event) {
   if (heading !== null && !isNaN(heading)) {
     currentHeading = heading;
 
+    // Ausschließlich das Radar-UI per CSS drehen!
+    // Der Blip darf HIER NICHT neu berechnet werden, um doppelte Drehung zu vermeiden.
     const ringContainer = document.getElementById('radar-ring-container');
     if (ringContainer) {
       ringContainer.style.transform = `rotate(${-currentHeading}deg)`;
-    }
-
-    if (targetPokemonCoords) {
-      updateBlipPosition();
     }
   }
 }
@@ -601,7 +599,7 @@ function renderPokemonTeam() {
 }
 
 /* =========================================================
-   4. RADAR, SCAN & EXAKTE ROTIERENDE BLIP-POSITIONSBERECHNUNG
+   4. RADAR, SCAN & EXAKTE BLIP-POSITIONSBERECHNUNG
    ========================================================= */
 function closeScanModal() {
   document.getElementById('modal-scan').classList.add('hidden');
@@ -720,7 +718,7 @@ function updateBlipPosition() {
 
   const pixelDist = Math.min(radarRadius, (distMeters / maxSearchRange) * radarRadius);
 
-  // Nutzen des absoluten Peilwinkels (ohne Heading-Abzug, da der Container selbst rotiert)
+  // Exakte Trigonometrie für die unrotierte Nord-Scheibe (Mittelpunkt 165px / 165px)
   const rad = absoluteBearing * Math.PI / 180;
   const x = 165 + pixelDist * Math.sin(rad);
   const y = 165 - pixelDist * Math.cos(rad);
@@ -850,7 +848,6 @@ function playElementalSound(type) {
   } catch(e){}
 }
 
-// PRÄZISE SPEZIALATTACKEN-OVERLAY ANZEIGE
 function triggerElementalFX(elementType) {
   const overlay = document.getElementById('elemental-fx-overlay');
   if (!overlay) return;
@@ -1120,14 +1117,14 @@ function addPokemonExp(pokemon, amount) {
   return didLevelUp;
 }
 
-function showEvolutionScreen(pokemon) {
+showEvolutionScreen = function(pokemon) {
   const evoData = EVOLUTION_CHAINS[pokemon.name];
   document.getElementById('evo-title').innerText = `Was? ${pokemon.name} ist bereit!`;
   document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
   document.getElementById('evo-card-img').src = pokemon.cardUrl;
   document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
   document.getElementById('evo-screen').classList.remove('hidden');
-}
+};
 
 function rollEvolution() {
   if (!pendingEvoPokemon) return;
