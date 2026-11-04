@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#38bdf8">
@@ -13,15 +13,15 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- Externe CSS mit aktuellem Cache-Buster v=12000 -->
-  <link rel="stylesheet" href="style.css?v=12000">
+  <!-- Externe CSS -->
+  <link rel="stylesheet" href="style.css?v=13000">
 </head>
 <body>
 
   <!-- ========================================== -->
   <!-- 1. CINEMATIC INTRO SCREEN                  -->
   <!-- ========================================== -->
-  <div id="intro-screen">
+  <section id="intro-screen">
     <div class="intro-container" id="introContainer">
       <div class="card-stream" id="cardStream"></div>
       <div class="bg-glow"></div>
@@ -37,15 +37,15 @@
 
       <div class="start-prompt"></div>
     </div>
-  </div>
+  </section>
 
   <!-- ========================================== -->
   <!-- 2. HAUPT-GAME CONTAINER                    -->
   <!-- ========================================== -->
-  <div id="game-screen" class="app-viewport hidden">
+  <main id="game-screen" class="app-viewport hidden">
 
     <!-- SCREEN 1: HAUPTMENÜ -->
-    <div id="screen-main-menu" class="card-ui screen-panel hidden">
+    <section id="screen-main-menu" class="card-ui screen-panel hidden">
       <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
         <div class="brand-logo-container">
           <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
@@ -54,29 +54,30 @@
       </div>
       
       <div class="menu-actions">
-        <button onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
-        <button onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
+        <button type="button" onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
+        <button type="button" onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
+        <button type="button" onclick="setHomeLocationFromMenu()" class="btn-secondary" style="background:#0284c7; margin-top:10px;">🏠 Ort als Zuhause speichern</button>
       </div>
 
       <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
       <div class="backup-bar">
         <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
-        <button onclick="exportSaveGame()" class="btn-secondary" style="font-size: 12px; margin-bottom: 6px; background: #27ae60;">Backup Download</button>
-        <button onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Backup Import</button>
+        <button type="button" onclick="exportSaveGame()" class="btn-secondary" style="font-size: 12px; margin-bottom: 6px; background: #27ae60;">Backup Download</button>
+        <button type="button" onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Backup Import</button>
       </div>
-    </div>
+    </section>
 
     <!-- SCREEN 2: SPEICHERSLOTS -->
-    <div id="screen-slots" class="card-ui screen-panel hidden">
+    <section id="screen-slots" class="card-ui screen-panel hidden">
       <h2 id="slot-screen-title" style="color:#fff; margin-top:0; font-size: 18px;">Wähle Speicherplatz</h2>
       <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)"><h3>Slot 1</h3><div id="slot-1-info" class="slot-info">Leer</div></div>
       <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)"><h3>Slot 2</h3><div id="slot-2-info" class="slot-info">Leer</div></div>
       <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)"><h3>Slot 3</h3><div id="slot-3-info" class="slot-info">Leer</div></div>
-      <button onclick="showScreen('screen-main-menu')" class="btn-secondary">Zurück</button>
-    </div>
+      <button type="button" onclick="showScreen('screen-main-menu')" class="btn-secondary">Zurück</button>
+    </section>
 
     <!-- SCREEN 3: STARTER -->
-    <div id="screen-starter" class="card-ui screen-panel hidden">
+    <section id="screen-starter" class="card-ui screen-panel hidden">
       <h2 style="color:#fff; margin-top:0; font-size: 18px;">Dein Erstes Pokémon</h2>
       <p class="subtitle" style="color:#f0f9ff; font-size:12px;">Wähle deinen Partner!</p>
       <div class="starter-container">
@@ -84,17 +85,17 @@
         <div class="starter-card" onclick="chooseStarter('glumanda', this)"><img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda"><div class="starter-name">Glumanda</div></div>
         <div class="starter-card" onclick="chooseStarter('schiggy', this)"><img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy"><div class="starter-name">Schiggy</div></div>
       </div>
-      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">Pokémon Wählen</button>
-    </div>
+      <button type="button" id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">Pokémon Wählen</button>
+    </section>
 
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
-    <div id="screen-radar-hud" class="hud-layout hidden">
-      <div class="hud-header">
+    <section id="screen-radar-hud" class="hud-layout hidden">
+      <header class="hud-header">
         <div class="brand-logo-container">
           <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
           <div class="brand-move-badge">MOVE</div>
         </div>
-      </div>
+      </header>
 
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
@@ -102,26 +103,35 @@
           <div class="ring ring-2"></div>
           <div class="ring ring-3"></div>
           <div id="radar-sweeper" class="sweeper"></div>
+          <!-- Rot pulsierender Pokémon-Punkt auf dem Radar -->
+          <div id="pokemon-radar-blip" class="radar-blip hidden"></div>
         </div>
         <div class="radar-center-dot"></div>
-        <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-overlay">
-          <span>📡</span>
-          <span>SCAN STARTEN</span>
+        
+        <button type="button" id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-overlay">
+          <span id="scan-icon" aria-hidden="true">📡</span>
+          <span id="scan-btn-text">SCAN STARTEN</span>
         </button>
+
+        <button type="button" id="btn-scare-overlay" onclick="scarePokemon()" class="btn-scare-overlay hidden">
+          <span aria-hidden="true">💨</span>
+          <span>AUFSCHEUCHEN</span>
+        </button>
+
         <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
-        <div id="radar-timer-display" class="radar-timer hidden">20s</div>
+        <div id="radar-timer-display" class="radar-timer hidden">--:--</div>
       </div>
 
-      <div class="hud-footer">
-        <button onclick="openMenuModal()" class="btn-menu-pill">
-          <span>⚙️</span>
+      <footer class="hud-footer">
+        <button type="button" onclick="openMenuModal()" class="btn-menu-pill">
+          <span aria-hidden="true">⚙️</span>
           <span>MENÜ</span>
         </button>
-      </div>
-    </div>
+      </footer>
+    </section>
 
     <!-- SCREEN 5: BATTLE -->
-    <div id="screen-battle" class="card-ui screen-panel hidden">
+    <section id="screen-battle" class="card-ui screen-panel hidden">
       <div class="battle-header">
         <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
         <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
@@ -137,30 +147,42 @@
         <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
       </div>
       <div class="battle-controls">
-        <button onclick="executePlayerAttack()" class="btn-secondary">⚔️ Angriff</button>
-        <button id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-secondary btn-special">🔥 Spezial</button>
-        <button id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-primary btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
+        <button type="button" onclick="executePlayerAttack()" class="btn-secondary">⚔️ Angriff</button>
+        <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-secondary btn-special">🔥 Spezial</button>
+        <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-primary btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
       </div>
-    </div>
+    </section>
 
-    <!-- MODALS -->
+    <!-- MODAL 1: SCAN & TRAINING WAHL -->
     <div id="modal-scan" class="modal-overlay hidden">
       <div class="modal-card">
-        <h3>Wähle Scan-Art</h3>
+        <h3>Wähle Modus</h3>
         <p class="subtitle">Aktives Pokémon: <strong id="scan-active-mon">--</strong></p>
-        <button onclick="startScanProcess('quick')" class="btn-primary">⚡ Schneller Scan</button>
-        <button onclick="startScanProcess('power')" class="btn-special" style="margin-top:10px;">💎 Power Scan</button>
-        <button onclick="closeScanModal()" class="btn-secondary" style="margin-top:10px;">Abbrechen</button>
+        <button type="button" onclick="startScanProcess('quick')" class="btn-primary">⚡ Schneller Scan (3-6 Min)</button>
+        <button type="button" onclick="startScanProcess('power')" class="btn-special" style="margin-top:8px;">💎 Power Scan (15-30 Min)</button>
+        <button type="button" onclick="openTrainingSelection()" class="btn-secondary" style="margin-top:8px; background:#10b981;">🏋️ Training (Zuhause)</button>
+        <button type="button" onclick="closeScanModal()" class="btn-secondary" style="margin-top:12px; background:#475569;">Abbrechen</button>
       </div>
     </div>
 
+    <!-- MODAL 1b: TRAININGSPARTNER WAHL -->
+    <div id="modal-training-select" class="modal-overlay hidden">
+      <div class="modal-card">
+        <h3>Trainingspartner wählen</h3>
+        <p class="subtitle">Dein aktives Pokémon kämpft gegen dein gewähltes Team-Mitglied (beide erhalten 50% EXP).</p>
+        <div id="training-partner-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
+        <button type="button" onclick="closeTrainingSelection()" class="btn-secondary">Abbrechen</button>
+      </div>
+    </div>
+
+    <!-- MODAL 2: HAUPTMENÜ OVERLAY -->
     <div id="modal-menu" class="modal-overlay hidden">
       <div class="modal-card">
         <h3>Hauptmenü</h3>
         <div class="menu-tab-buttons">
-          <button onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team</button>
-          <button onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
-          <button onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
+          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team</button>
+          <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
+          <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
         </div>
         <div id="mtab-content-pokemon" class="mtab-content"><div id="pokemon-team-list"></div></div>
         <div id="mtab-content-items" class="mtab-content hidden">
@@ -176,18 +198,19 @@
             <div class="stat-line" style="margin-top:10px; font-size:12px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
-        <button onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
-        <button onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
+        <button type="button" onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
+        <button type="button" onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
       </div>
     </div>
 
+    <!-- EVOLUTION & VICTORY MODALS -->
     <div id="evo-screen" class="modal-overlay hidden">
       <div class="modal-card">
         <h2 id="evo-title" style="color:var(--accent-yellow);">Was? ...</h2>
         <p id="evo-subtitle" style="color:#aaa; font-size:13px;">Dein Pokémon entwickelt sich!</p>
         <img id="evo-card-img" class="battle-card-img evo-pulse" src="" alt="Evo Card">
         <div id="evo-chance-info" style="font-size:15px; font-weight:bold; color:#3498db; margin:10px 0;">Chance: 35%</div>
-        <button id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary">🎲 JETZT WÜRFELN!</button>
+        <button type="button" id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary">🎲 JETZT WÜRFELN!</button>
       </div>
     </div>
 
@@ -197,12 +220,12 @@
         <p id="victory-subtitle" style="color:#aaa; margin:0 0 10px 0;">Kampf erfolgreich!</p>
         <div id="victory-exp-text" style="font-size:18px; font-weight:bold; color:#10b981;">+20 EXP</div>
         <div id="victory-item-text" style="font-size:13px; color:var(--accent-yellow); margin-top:4px;">+2 Pokébälle</div>
-        <button onclick="closeVictoryOverlay()" class="btn-primary" style="margin-top:15px;">Weiter</button>
+        <button type="button" onclick="closeVictoryOverlay()" class="btn-primary" style="margin-top:15px;">Weiter</button>
       </div>
     </div>
 
-  </div>
+  </main>
 
-  <script src="app.js?v=12000"></script>
+  <script src="app.js?v=13000"></script>
 </body>
 </html>
