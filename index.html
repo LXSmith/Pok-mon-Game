@@ -13,116 +13,114 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800;900&display=swap">
   <link rel="manifest" href="manifest.json">
 
-  <!-- Externe CSS mit neuem Cache-Buster -->
-  <link rel="stylesheet" href="style.css?v=5000">
+  <!-- Externe CSS mit aktuellem Cache-Buster -->
+  <link rel="stylesheet" href="style.css?v=6000">
 
-  <!-- BRAND LOGO SYSTEM & OVERRIDES -->
+  <!-- BRAND LOGO OVERRIDES & FIXED CENTERING -->
   <style>
-    /* BRAND LOGO SYSTEM (SVG + Dynamic Pokéball-O) */
+    /* LOGO BRAND CONTAINER */
     .brand-logo-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative !important;
+      width: 100% !important;
+      max-width: 320px !important;
+      margin: 0 auto !important;
     }
 
     .brand-pokemon-svg {
-      width: 85%;
-      max-width: 280px;
-      height: auto;
-      filter: drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.4));
-      display: block;
+      width: 85% !important;
+      max-width: 280px !important;
+      height: auto !important;
+      filter: drop-shadow(0px 6px 10px rgba(0, 0, 0, 0.4)) !important;
+      display: block !important;
     }
 
+    /* MOVE TEXT MIT ROTER/VIOLETTER KONTUR (WIE REFERENZBILD) */
     .brand-move-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      background: linear-gradient(180deg, #ff2e55 0%, #d90429 100%);
-      border: 4px solid #4a154b;
-      border-radius: 12px;
-      padding: 4px 18px;
-      margin-top: -12px;
-      transform: rotate(-3deg) skewX(-4deg);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
-      z-index: 2;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      margin-top: -10px !important;
+      transform: rotate(-3deg) skewX(-4deg) !important;
+      z-index: 2 !important;
     }
 
     .brand-move-badge .move-letter {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: #ffcb05;
-      text-shadow: 2px 2px 0 #1b365d, -1px -1px 0 #1b365d;
-      line-height: 1;
-      font-style: italic;
+      font-family: 'Fredoka', sans-serif !important;
+      font-size: 2.8rem !important;
+      font-weight: 900 !important;
+      color: #ffcb05 !important;
+      font-style: italic !important;
+      line-height: 1 !important;
+      /* Exakte doppelte Kontur aus dem Referenzbild */
+      -webkit-text-stroke: 2.5px #ff2e55 !important;
+      filter: drop-shadow(2px 3px 0px #4a154b) drop-shadow(0px 4px 8px rgba(0,0,0,0.5)) !important;
     }
 
+    /* PERFECT CENTERING DES POKÉBALL O */
     .pokeball-o {
-      position: relative;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2.5px solid #1b365d;
-      background: #ffffff;
-      overflow: hidden;
-      display: inline-block;
-      margin: 0 2px;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.3);
-      transform: translateY(-1px);
+      position: relative !important;
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      border: 3px solid #1b365d !important;
+      background: #ffffff !important;
+      overflow: hidden !important;
+      display: inline-block !important;
+      margin: 0 4px !important;
+      transform: translateY(2px) !important;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.4) !important;
+      flex-shrink: 0 !important;
     }
 
     .pokeball-o .pb-top {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 50%;
-      background: #ff0000;
+      position: absolute !important;
+      top: 0 !important; left: 0 !important; right: 0 !important;
+      height: 50% !important;
+      background: #ff0000 !important;
     }
 
     .pokeball-o .pb-center {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 10px; height: 10px;
-      background: #ffffff;
-      border: 2.5px solid #1b365d;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 3;
-      box-shadow: 0 0 2px rgba(0,0,0,0.5);
+      position: absolute !important;
+      top: 50% !important; left: 50% !important;
+      width: 10px !important; height: 10px !important;
+      background: #ffffff !important;
+      border: 2.5px solid #1b365d !important;
+      border-radius: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 3 !important;
     }
 
     .pokeball-o .pb-bottom {
-      position: absolute;
-      top: 50%; left: 0; right: 0;
-      height: 2.5px;
-      background: #1b365d;
-      z-index: 2;
+      position: absolute !important;
+      top: 50% !important; left: 0 !important; right: 0 !important;
+      height: 3px !important;
+      background: #1b365d !important;
+      z-index: 2 !important;
     }
 
-    /* INTRO XXL LOGO DIMENSIONEN */
+    /* INTRO XXL SKALIERUNG */
     #intro-screen .brand-pokemon-svg {
       width: 100% !important;
       max-width: 360px !important;
     }
 
-    #intro-screen .brand-move-badge {
-      padding: 6px 26px !important;
-      margin-top: -16px !important;
-    }
-
     #intro-screen .brand-move-badge .move-letter {
-      font-size: 3.2rem !important;
+      font-size: 3.8rem !important;
+      -webkit-text-stroke: 3.5px #ff2e55 !important;
     }
 
     #intro-screen .pokeball-o {
-      width: 38px !important;
-      height: 38px !important;
-      border-width: 3.5px !important;
+      width: 42px !important;
+      height: 42px !important;
+      border-width: 4px !important;
+      transform: translateY(3px) !important;
     }
 
     #intro-screen .pokeball-o .pb-center {
@@ -131,41 +129,23 @@
       border-width: 3.5px !important;
     }
 
-    /* RADAR HUD LAYOUT OVERRIDES */
+    /* HUD OVERRIDES */
     #screen-radar-hud.hud-layout {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100dvh !important;
-      display: flex !important;
-      flex-direction: column !important;
-      justify-content: space-between !important;
-      align-items: center !important;
+      position: fixed !important; inset: 0 !important;
+      width: 100vw !important; height: 100dvh !important;
+      display: flex !important; flex-direction: column !important;
+      justify-content: space-between !important; align-items: center !important;
       padding-top: calc(env(safe-area-inset-top, 20px) + 15px) !important;
       padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important;
-      padding-left: 15px !important;
-      padding-right: 15px !important;
-      box-sizing: border-box !important;
-      background: #38bdf8 !important;
-      z-index: 100 !important;
+      padding-left: 15px !important; padding-right: 15px !important;
+      box-sizing: border-box !important; background: #38bdf8 !important; z-index: 100 !important;
     }
 
-    #screen-radar-hud .hud-header {
-      width: 100% !important;
-      text-align: center !important;
-      margin-top: 5px !important;
-    }
+    #screen-radar-hud .hud-header { width: 100% !important; text-align: center !important; margin-top: 5px !important; }
 
     #screen-radar-hud .radar-viewport {
-      position: relative !important;
-      width: 330px !important;
-      height: 330px !important;
-      margin: auto !important;
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      left: 0 !important;
-      transform: none !important;
+      position: relative !important; width: 330px !important; height: 330px !important;
+      margin: auto !important; display: flex !important; justify-content: center !important; align-items: center !important;
     }
 
     #screen-radar-hud .ring-1 { inset: 35px !important; }
@@ -173,83 +153,35 @@
     #screen-radar-hud .ring-3 { inset: 125px !important; }
 
     #screen-radar-hud .btn-scan-overlay {
-      position: absolute !important;
-      top: 22px !important;
-      right: -8px !important;
-      z-index: 20 !important;
-      width: auto !important;
+      position: absolute !important; top: 22px !important; right: -8px !important; z-index: 20 !important;
       background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%) !important;
-      color: #ffffff !important;
-      border: 3.5px solid #ffffff !important;
-      border-radius: 30px !important;
-      padding: 12px 22px !important;
-      font-size: 15px !important;
-      font-weight: 800 !important;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
+      color: #ffffff !important; border: 3.5px solid #ffffff !important; border-radius: 30px !important;
+      padding: 12px 22px !important; font-size: 15px !important; font-weight: 800 !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important; display: flex !important; align-items: center !important; gap: 8px !important;
     }
 
     #screen-radar-hud .radar-status {
-      position: absolute !important;
-      bottom: -45px !important;
-      left: 0 !important;
-      width: 100% !important;
-      text-align: center !important;
-      font-size: 17px !important;
-      font-weight: 800 !important;
-      color: #ffffff !important;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.5) !important;
-      background: transparent !important;
-      padding: 0 !important;
-      border: none !important;
+      position: absolute !important; bottom: -45px !important; left: 0 !important; width: 100% !important;
+      text-align: center !important; font-size: 17px !important; font-weight: 800 !important; color: #ffffff !important;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5) !important; background: transparent !important;
     }
 
-    #screen-radar-hud .hud-footer {
-      width: 100% !important;
-      max-width: 350px !important;
-      margin-bottom: 10px !important;
-    }
+    #screen-radar-hud .hud-footer { width: 100% !important; max-width: 350px !important; margin-bottom: 10px !important; }
 
     #screen-radar-hud .btn-menu-pill {
-      width: 100% !important;
-      background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
-      color: #ffffff !important;
-      font-size: 20px !important;
-      font-weight: 800 !important;
-      padding: 18px !important;
-      border-radius: 35px !important;
-      border: 2.5px solid rgba(255, 255, 255, 0.35) !important;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 10px !important;
+      width: 100% !important; background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+      color: #ffffff !important; font-size: 20px !important; font-weight: 800 !important; padding: 18px !important;
+      border-radius: 35px !important; border: 2.5px solid rgba(255, 255, 255, 0.35) !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important;
     }
 
-    /* TIPPE AUF DEN BILDSCHIRM PROMPT */
     #intro-screen .start-prompt {
-      margin-top: 60px !important;
-      font-size: 0.9rem !important;
-      font-weight: 800 !important;
-      letter-spacing: 0.25em !important;
-      color: #ffffff !important;
-      text-transform: uppercase !important;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      z-index: 10 !important;
+      margin-top: 60px !important; font-size: 0.9rem !important; font-weight: 800 !important; letter-spacing: 0.25em !important;
+      color: #ffffff !important; text-transform: uppercase !important; opacity: 0; transition: opacity 0.5s ease; z-index: 10 !important;
     }
 
-    #intro-screen .start-prompt.show-prompt {
-      animation: pulseText 1.5s ease-in-out infinite alternate !important;
-      opacity: 1 !important;
-    }
-
-    @keyframes pulseText {
-      from { opacity: 0.4; transform: scale(0.97); }
-      to { opacity: 1; transform: scale(1.03); }
-    }
+    #intro-screen .start-prompt.show-prompt { animation: pulseText 1.5s ease-in-out infinite alternate !important; opacity: 1 !important; }
+    @keyframes pulseText { from { opacity: 0.4; transform: scale(0.97); } to { opacity: 1; transform: scale(1.03); } }
   </style>
 </head>
 <body>
@@ -289,9 +221,9 @@
   <!-- ========================================== -->
   <div id="game-screen" class="app-viewport hidden">
 
-    <!-- SCREEN 1: HAUPTMENÜ (Neues Spiel / Fortsetzen) -->
+    <!-- SCREEN 1: HAUPTMENÜ -->
     <div id="screen-main-menu" class="card-ui screen-panel">
-      <div class="hud-logo-wrapper" style="margin-bottom: 15px;">
+      <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
         <div class="brand-logo-container">
           <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
           <div class="brand-move-badge">
@@ -312,7 +244,6 @@
         <button onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
       </div>
 
-      <!-- Backup System -->
       <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
       <div class="backup-bar">
         <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
@@ -321,57 +252,29 @@
       </div>
     </div>
 
-    <!-- SCREEN 2: SPEICHERSLOT-AUSWAHL -->
+    <!-- SCREEN 2: SPEICHERSLOTS -->
     <div id="screen-slots" class="card-ui screen-panel hidden">
       <h2 id="slot-screen-title" style="color:#fff; margin-top:0; font-size: 18px;">Wähle Speicherplatz</h2>
-      
-      <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)">
-        <h3>Slot 1</h3>
-        <div id="slot-1-info" class="slot-info">Leer</div>
-      </div>
-
-      <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)">
-        <h3>Slot 2</h3>
-        <div id="slot-2-info" class="slot-info">Leer</div>
-      </div>
-
-      <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)">
-        <h3>Slot 3</h3>
-        <div id="slot-3-info" class="slot-info">Leer</div>
-      </div>
-
+      <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)"><h3>Slot 1</h3><div id="slot-1-info" class="slot-info">Leer</div></div>
+      <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)"><h3>Slot 2</h3><div id="slot-2-info" class="slot-info">Leer</div></div>
+      <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)"><h3>Slot 3</h3><div id="slot-3-info" class="slot-info">Leer</div></div>
       <button onclick="showScreen('screen-main-menu')" class="btn-secondary">Zurück</button>
     </div>
 
-    <!-- SCREEN 3: STARTER-AUSWAHL -->
+    <!-- SCREEN 3: STARTER -->
     <div id="screen-starter" class="card-ui screen-panel hidden">
       <h2 style="color:#fff; margin-top:0; font-size: 18px;">Dein Erstes Pokémon</h2>
       <p class="subtitle" style="color:#f0f9ff; font-size:12px;">Wähle deinen Partner!</p>
-
       <div class="starter-container">
-        <div class="starter-card" onclick="chooseStarter('bisasam', this)">
-          <img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam">
-          <div class="starter-name">Bisasam</div>
-        </div>
-        <div class="starter-card" onclick="chooseStarter('glumanda', this)">
-          <img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda">
-          <div class="starter-name">Glumanda</div>
-        </div>
-        <div class="starter-card" onclick="chooseStarter('schiggy', this)">
-          <img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy">
-          <div class="starter-name">Schiggy</div>
-        </div>
+        <div class="starter-card" onclick="chooseStarter('bisasam', this)"><img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam"><div class="starter-name">Bisasam</div></div>
+        <div class="starter-card" onclick="chooseStarter('glumanda', this)"><img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda"><div class="starter-name">Glumanda</div></div>
+        <div class="starter-card" onclick="chooseStarter('schiggy', this)"><img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy"><div class="starter-name">Schiggy</div></div>
       </div>
-
-      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">
-        Pokémon Wählen
-      </button>
+      <button id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">Pokémon Wählen</button>
     </div>
 
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
     <div id="screen-radar-hud" class="hud-layout hidden">
-      
-      <!-- LOGO OBEN -->
       <div class="hud-header">
         <div class="brand-logo-container">
           <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
@@ -388,7 +291,6 @@
         </div>
       </div>
 
-      <!-- RADAR MITTIG -->
       <div class="radar-viewport">
         <div id="radar-ring-container" class="radar-rings">
           <div class="ring ring-1"></div>
@@ -396,29 +298,24 @@
           <div class="ring ring-3"></div>
           <div id="radar-sweeper" class="sweeper"></div>
         </div>
-        
         <div class="radar-center-dot"></div>
-        
         <button id="btn-scan-trigger" onclick="openScanModal()" class="btn-scan-overlay">
           <span>📡</span>
           <span>SCAN STARTEN</span>
         </button>
-
         <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
         <div id="radar-timer-display" class="radar-timer hidden">20s</div>
       </div>
 
-      <!-- MENÜ BUTTON UNTEN -->
       <div class="hud-footer">
         <button onclick="openMenuModal()" class="btn-menu-pill">
           <span>⚙️</span>
           <span>MENÜ</span>
         </button>
       </div>
-
     </div>
 
-    <!-- SCREEN 5: KAMPFSYSTEM -->
+    <!-- SCREEN 5: BATTLE -->
     <div id="screen-battle" class="card-ui screen-panel hidden">
       <div class="battle-header">
         <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
@@ -426,9 +323,7 @@
         <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
         <img id="enemy-card-img" class="battle-card-img" src="" alt="Gegner">
       </div>
-
       <div id="battle-warning-box" class="battle-box">Kampf beginnt!</div>
-
       <div class="battle-footer">
         <img id="player-card-img" class="battle-card-img" src="" alt="Spieler">
         <div id="player-title" class="battle-title">Dein Pokémon</div>
@@ -436,7 +331,6 @@
         <div id="player-hp-text" class="bar-text">50 / 50 KP</div>
         <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
       </div>
-
       <div class="battle-controls">
         <button onclick="executePlayerAttack()" class="btn-secondary">⚔️ Angriff</button>
         <button id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-secondary btn-special">🔥 Spezial</button>
@@ -444,7 +338,7 @@
       </div>
     </div>
 
-    <!-- OVERLAYS / MODALS -->
+    <!-- MODALS -->
     <div id="modal-scan" class="modal-overlay hidden">
       <div class="modal-card">
         <h3>Wähle Scan-Art</h3>
@@ -463,18 +357,12 @@
           <button onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
           <button onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
         </div>
-
-        <div id="mtab-content-pokemon" class="mtab-content">
-          <div id="pokemon-team-list"></div>
-        </div>
-
+        <div id="mtab-content-pokemon" class="mtab-content"><div id="pokemon-team-list"></div></div>
         <div id="mtab-content-items" class="mtab-content hidden">
           <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:10px; border-radius:12px;">
-            <span>🔴 Pokébälle</span>
-            <strong id="menu-item-pokeballs" style="font-size:16px; color:var(--accent-yellow);">10</strong>
+            <span>🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:16px; color:var(--accent-yellow);">10</strong>
           </div>
         </div>
-
         <div id="mtab-content-exp" class="mtab-content hidden">
           <div class="trainer-card-inner" style="text-align:left;">
             <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 5px 0;">Level 1</h4>
@@ -483,7 +371,6 @@
             <div class="stat-line" style="margin-top:10px; font-size:12px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
-
         <button onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
         <button onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
       </div>
@@ -511,6 +398,6 @@
 
   </div>
 
-  <script src="app.js?v=5000"></script>
+  <script src="app.js?v=6000"></script>
 </body>
 </html>
