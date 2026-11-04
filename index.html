@@ -106,7 +106,6 @@
           <div class="ring ring-2"></div>
           <div class="ring ring-3"></div>
           <div id="radar-sweeper" class="sweeper"></div>
-          <!-- Rot pulsierender Pokémon-Punkt auf dem Radar -->
           <div id="pokemon-radar-blip" class="radar-blip hidden"></div>
         </div>
         <div class="radar-center-dot"></div>
@@ -116,13 +115,13 @@
           <span id="scan-btn-text">SCAN STARTEN</span>
         </button>
 
-        <!-- Aufscheuchen-Button erst bei aktivem Blip sichtbar -->
         <button type="button" id="btn-scare-overlay" onclick="scarePokemon()" class="btn-scare-overlay hidden">
           <span aria-hidden="true">💨</span>
           <span>AUFSCHEUCHEN</span>
         </button>
 
         <div id="radar-status-text" class="radar-status">Bereit für Scan...</div>
+        <div id="radar-timer-display" class="radar-timer hidden">--:--</div>
       </div>
 
       <footer class="hud-footer">
