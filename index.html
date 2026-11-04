@@ -14,10 +14,35 @@
   <link rel="manifest" href="manifest.json">
 
   <!-- Externe CSS mit neuem Cache-Buster -->
-  <link rel="stylesheet" href="style.css?v=3000">
+  <link rel="stylesheet" href="style.css?v=4000">
 
-  <!-- DIREKTER OVERRIDE FÜR RADAR HUD LAYOUT (Behebt iOS Safari Caching & Skalierung) -->
+  <!-- DIREKTER OVERRIDE FÜR XXL-INTRO-LOGO & RADAR HUD LAYOUT -->
   <style>
+    /* XXL LOGO EFFEKT NURFÜR DAS INTRO */
+    #intro-screen .title-pokemon-anim {
+      font-size: 4.2rem !important;
+      font-weight: 900 !important;
+      letter-spacing: 3px !important;
+      text-shadow: 4px 4px 0 #2a75bb, -4px -4px 0 #2a75bb, 4px -4px 0 #2a75bb, -4px 4px 0 #2a75bb, 0 10px 25px rgba(0,0,0,0.7) !important;
+      opacity: 0;
+      transform: translateY(-30px);
+      animation: revealTextUpper 0.5s ease 5.65s forwards;
+    }
+
+    #intro-screen .title-move-anim {
+      font-size: 3.4rem !important;
+      font-weight: 900 !important;
+      font-style: italic !important;
+      padding: 6px 36px !important;
+      border-radius: 16px !important;
+      margin-top: -8px !important;
+      box-shadow: 0 10px 30px rgba(255, 59, 92, 0.5) !important;
+      opacity: 0;
+      clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+      animation: revealMoveTitle 0.65s ease 5.6s forwards;
+    }
+
+    /* GROSSES PRÄSENTES LOGO IM MAIN HUD */
     #screen-radar-hud.hud-layout {
       position: fixed !important;
       inset: 0 !important;
@@ -36,7 +61,6 @@
       z-index: 100 !important;
     }
 
-    /* GROSSES PRÄSENTES LOGO */
     #screen-radar-hud .hud-header {
       width: 100% !important;
       text-align: center !important;
@@ -368,6 +392,6 @@
 
   </div>
 
-  <script src="app.js?v=3000"></script>
+  <script src="app.js?v=4000"></script>
 </body>
 </html>
