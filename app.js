@@ -385,6 +385,9 @@ let isEnemyAttacking = false;
 let isPlayerTurn = true;
 let pendingEvoPokemon = null;
 
+let dodgeTimer = null;
+let isDodgeWindowActive = false;
+
 let currentSaveData = {
   level: 1,
   exp: 0,
@@ -630,7 +633,6 @@ function forceDevSpawn() {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
-  // Pokémon spawnt direkt auf deinen eigenen GPS-Koordinaten (0m Entfernung)
   targetPokemonCoords = { 
     lat: currentPosition.lat, 
     lon: currentPosition.lon 
@@ -792,6 +794,11 @@ function startTrainingMatch(partnerMon) {
   isTrainingMode = true;
   trainingPartnerMon = partnerMon;
 
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+  const dodgeBtn = document.getElementById('btn-dodge-action');
+  if (dodgeBtn) dodgeBtn.classList.add('hidden');
+
   currentEnemy = { ...partnerMon, hp: partnerMon.maxHp };
   playerBattlePokemon = currentSaveData.pokemonTeam[0];
   playerEnergy = 0;
@@ -879,7 +886,11 @@ function triggerElementalFX(elementType) {
 function startBattleFromScan() {
   isTrainingMode = false;
   
-  // HUD-Elemente sichtbar machen
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+  const dodgeBtn = document.getElementById('btn-dodge-action');
+  if (dodgeBtn) dodgeBtn.classList.add('hidden');
+
   const catchBtn = document.getElementById('btn-catch-pokemon');
   if (catchBtn) catchBtn.style.display = 'block';
 
@@ -906,7 +917,6 @@ function startBattleFromScan() {
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) warnBox.innerText = `Ein wildes ${currentEnemy.name} greift an!`;
 }
-
 
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
@@ -935,9 +945,14 @@ function updateBattleUI() {
     specBtn.disabled = !(playerEnergy >= 3 && isPlayerTurn && !isEnemyAttacking);
     specBtn.style.opacity = specBtn.disabled ? "0.4" : "1";
   }
+
+  if (!isDodgeWindowActive) {
+    const dodgeBtn = document.getElementById('btn-dodge-action');
+    if (dodgeBtn) dodgeBtn.classList.add('hidden');
+  }
 }
 
-/* KORRIGIERTE ANGRIFFS-ANIMATION (PLAYER TACKLE & ENEMY HIT SHAKE) */
+/* KORRIGIERTE ANGRIFFS-ANIMATION MIT 15% GEGNER-AUSWEICHEN */
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -946,34 +961,65 @@ function executePlayerAttack() {
 
   const playerImg = document.getElementById('player-card-img');
   const enemyImg = document.getElementById('enemy-card-img');
-  
-  // 1. Dein Pokémon führt den Tackle nach vorne aus
+
+  const enemyDodges = Math.random() <= 0.15;
+
   if (playerImg) playerImg.classList.add('anim-player-tackle');
   playPunchSound();
 
-  let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
-  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+  if (enemyDodges) {
+    setTimeout(() => {
+      if (enemyImg) enemyImg.classList.add('anim-dodge-right');
+      CatchEngine.showFeedback("DANEBEN!");
+      playBeep(900, 0.15);
+    }, 150);
 
-  // 2. Einschlag nach 150ms
-  setTimeout(() => {
-    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-    playerEnergy = Math.min(3, playerEnergy + 1);
-    updateBattleUI();
+    setTimeout(() => {
+      if (playerImg) playerImg.classList.remove('anim-player-tackle');
+      if (enemyImg) enemyImg.classList.remove('anim-dodge-right');
 
-    document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+      triggerElementalFX(currentEnemy.type);
+      const specDmg = Math.round(currentEnemy.maxHp * 0.60);
+      playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
 
-    // Gegner wackelt und blitzt rot auf
-    if (enemyImg) enemyImg.classList.add('anim-hit-shake');
-  }, 150);
+      document.getElementById('battle-warning-box').innerText = `🔥 GEGNER WEICHT AUS & KONTERT MIT SPEZIAL! (-${specDmg} KP)`;
 
-  // 3. Animationen zurücksetzen und Zug beenden
-  setTimeout(() => {
-    if (playerImg) playerImg.classList.remove('anim-player-tackle');
-    if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
-    
-    if (currentEnemy.hp <= 0) return winBattle();
-    setTimeout(scheduleEnemyAttack, 600);
-  }, 500);
+      setTimeout(() => {
+        isEnemyAttacking = false;
+        if (playerBattlePokemon.hp <= 0) {
+          playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+          saveCurrentData();
+          alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
+          showScreen('screen-radar-hud');
+        } else {
+          isPlayerTurn = true;
+          updateBattleUI();
+        }
+      }, 700);
+
+    }, 550);
+
+  } else {
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.30);
+    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+
+    setTimeout(() => {
+      currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+      playerEnergy = Math.min(3, playerEnergy + 1);
+      updateBattleUI();
+
+      document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+      if (enemyImg) enemyImg.classList.add('anim-hit-shake');
+    }, 150);
+
+    setTimeout(() => {
+      if (playerImg) playerImg.classList.remove('anim-player-tackle');
+      if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
+
+      if (currentEnemy.hp <= 0) return winBattle();
+      setTimeout(scheduleEnemyAttack, 600);
+    }, 500);
+  }
 }
 
 function executePlayerSpecial() {
@@ -987,7 +1033,7 @@ function executePlayerSpecial() {
   triggerElementalFX(playerBattlePokemon.type);
 
   setTimeout(() => {
-    let dmg = Math.round(playerBattlePokemon.maxHp * 0.70);
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.60);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
@@ -1006,14 +1052,65 @@ function executePlayerSpecial() {
   }, 350);
 }
 
+/* GEGNER-ANGRIFF MIT 25% CHANCE AUF SPIELER-AUSWEICHEN (1 SEKUNDE FENSTER) */
 function scheduleEnemyAttack() {
   if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
 
   isEnemyAttacking = true;
   isPlayerTurn = false;
 
+  const dodgeBtn = document.getElementById('btn-dodge-action');
+  const shouldOfferDodge = Math.random() <= 0.25;
+
+  if (shouldOfferDodge && dodgeBtn) {
+    isDodgeWindowActive = true;
+    dodgeBtn.classList.remove('hidden');
+
+    dodgeTimer = setTimeout(() => {
+      if (isDodgeWindowActive) {
+        isDodgeWindowActive = false;
+        dodgeBtn.classList.add('hidden');
+        executeEnemyDamage();
+      }
+    }, 1000);
+
+  } else {
+    executeEnemyDamage();
+  }
+}
+
+/* SPIELER TIPPET RECHTZEITIG AUF AUSWEICHEN */
+function onPlayerDodgeClick() {
+  if (!isDodgeWindowActive) return;
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+
+  const dodgeBtn = document.getElementById('btn-dodge-action');
+  if (dodgeBtn) dodgeBtn.classList.add('hidden');
+
+  const playerImg = document.getElementById('player-card-img');
+  if (playerImg) playerImg.classList.add('anim-dodge-left');
+
+  playBeep(1200, 0.2);
+  CatchEngine.showFeedback("DANEBEN!");
+
+  playerEnergy = 3;
+  updateBattleUI();
+
+  document.getElementById('battle-warning-box').innerText = `⚡ PERFEKT AUSGEWICHEN! Spezial bereit!`;
+
+  setTimeout(() => {
+    if (playerImg) playerImg.classList.remove('anim-dodge-left');
+    isEnemyAttacking = false;
+    isPlayerTurn = true;
+    updateBattleUI();
+  }, 600);
+}
+
+/* FÜHRT NORMALE GEGNER-SCHADENSBERECHNUNG AUS */
+function executeEnemyDamage() {
   playPunchSound();
-  const dmg = Math.round(currentEnemy.maxHp * 0.20);
+  let dmg = Math.round(currentEnemy.maxHp * 0.30);
   playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
 
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
@@ -1059,6 +1156,9 @@ const CatchEngine = {
 
   startCatchSession() {
     this.active = true;
+    clearTimeout(dodgeTimer);
+    isDodgeWindowActive = false;
+    
     const ring = document.getElementById('target-ring-outer');
     if (ring) ring.classList.remove('hidden');
 
@@ -1086,19 +1186,16 @@ const CatchEngine = {
     }
   },
 
-    resetBall() {
+  resetBall() {
     const b = this.ball;
 
-    // Ermittelt die Position deiner Karte (z. B. Bisasam)
     const playerImg = document.getElementById('player-card-img');
     const playerRect = playerImg ? playerImg.getBoundingClientRect() : null;
 
     if (playerRect && playerRect.width > 0) {
-      // Platziert den Ball rechts neben dein Pokémon
       b.x = playerRect.right + 45;
       b.y = playerRect.top + (playerRect.height / 2);
     } else {
-      // Fallback: Rechts im unteren Spielfeldbereich
       b.x = window.innerWidth * 0.82;
       b.y = window.innerHeight - 200;
     }
@@ -1134,11 +1231,9 @@ const CatchEngine = {
       this.ball.isSpinning = false;
       this.ball.spinSpeed = 0;
 
-      // Startet die Zieh-Bewegung genau dort, wo der Ball liegt
       this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
       this.updateBallElement();
     };
-
 
     const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
@@ -1174,7 +1269,7 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-        const onEnd = (e) => {
+    const onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       this.ball.isDragging = false;
 
@@ -1184,18 +1279,14 @@ const CatchEngine = {
         const dt = (last.time - first.time) / 1000;
 
         if (dt > 0.01) {
-          // X- und Y-Geschwindigkeiten basierend auf Wischeschwung
           const vx = (last.x - first.x) / dt * 0.45;
           const vy = (last.y - first.y) / dt * 0.55;
 
-          // Werfen erst ab Mindest-Schwung nach oben (vy ist negativ bei Aufwärtswischen)
           if (vy < -120) {
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
             
-            // 3D-TIEFEN-IMPULS: Starkes Wischen erzeugt mehr Tiefengeschwindigkeit!
-            // Je schneller gewischt wird, desto schneller schrumpft und fliegt der Ball nach hinten.
             const swipeSpeed = Math.hypot(vx, vy);
             this.ball.vz = - (swipeSpeed * 0.0018); 
           } else {
@@ -1206,7 +1297,6 @@ const CatchEngine = {
         this.resetBall();
       }
     };
-
 
     el.addEventListener('touchstart', onStart, { passive: false });
     window.addEventListener('touchmove', onMove, { passive: false });
@@ -1227,7 +1317,7 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-    updatePhysics() {
+  updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
@@ -1235,18 +1325,13 @@ const CatchEngine = {
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
       const targetY = enemyRect.top + enemyRect.height / 2;
 
-      // 1. Raum-Bewegung (X, Y und Z-Tiefe)
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
-      
-      // Gravitation zieht die Wurfparabel nach unten
       b.vy += 580 * 0.016;
 
-      // Z-Skalierung schrumpft kontinuierlich basierend auf der Tiefengeschwindigkeit vz
       b.z += b.vz * 0.016;
-      b.z = Math.max(0.12, b.z); // Verhindert negatives Skalieren
+      b.z = Math.max(0.12, b.z);
 
-      // Curveball-Drall zieht den Ball seitlich
       if (b.isSpinning) {
         b.vx += (b.spinSpeed * 4.2) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
@@ -1254,9 +1339,6 @@ const CatchEngine = {
 
       this.updateBallElement();
 
-      // 2. PRÄZISE TREFFERPRÜFUNG IM 3D-FENSTER:
-      // Ein Treffer ist NUR möglich, wenn der Ball exakt auf Höhe des Pokémon ist (z zwingt Wurf-Reichweite!)
-      // Passt die Ballgröße (z-Wert) zur Tiefe der Karte (ca. 0.45 - 0.55)?
       const isAtTargetDepth = (b.z <= 0.52 && b.z >= 0.38);
       const isNearTargetY = Math.abs(b.y - targetY) < 45;
 
@@ -1271,8 +1353,6 @@ const CatchEngine = {
         }
       }
 
-      // 3. VORBEIFLUG / ZU STARKER WURF:
-      // Wenn der Ball hinter die Karte fliegt (z < 0.35) ohne getroffen zu haben, fliegt er weiter nach hinten weg!
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
         this.showFeedback("ZU STARK / DANEBEN!");
@@ -1461,8 +1541,10 @@ function attemptCatch() {
   CatchEngine.startCatchSession();
 }
 
-
 function winBattle() {
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+  
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
   try {
     playBeep(523.25, 0.15);
