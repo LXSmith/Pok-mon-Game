@@ -1021,7 +1021,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO INTERAKTIVES CATCH-SYSTEM (CATCH ENGINE)
+   POKÉMON GO INTERAKTIVES CATCH-SYSTEM (DIREKT IM KAMPF)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1031,11 +1031,11 @@ const CatchEngine = {
   ringTimer: null,
   eventsBound: false,
   
-  // Swipe Tracking
+  // Drag Tracking
   startX: 0, startY: 0, startTime: 0,
   lastX: 0, lastY: 0,
   spinHistory: [],
-  
+
   initEvents() {
     if (this.eventsBound) return;
     const ball = document.getElementById('catch-throw-ball');
@@ -1045,12 +1045,18 @@ const CatchEngine = {
       if (!this.active) return;
       const pt = e.touches ? e.touches[0] : e;
       this.isDragging = true;
+      
       this.startX = pt.clientX;
       this.startY = pt.clientY;
       this.lastX = pt.clientX;
       this.lastY = pt.clientY;
       this.startTime = performance.now();
       this.spinHistory = [];
+
+      ball.classList.add('dragging');
+      ball.style.left = pt.clientX + 'px';
+      ball.style.top = pt.clientY + 'px';
+      ball.style.transform = 'translate(-50%, -50%) scale(1.1)';
     };
 
     const moveDrag = (e) => {
@@ -1060,7 +1066,7 @@ const CatchEngine = {
       const dx = pt.clientX - this.lastX;
       const dy = pt.clientY - this.lastY;
       this.spinHistory.push({ dx, dy, time: performance.now() });
-      if (this.spinHistory.length > 12) this.spinHistory.shift();
+      if (this.spinHistory.length > 10) this.spinHistory.shift();
 
       this.detectCurveSpin();
 
@@ -1074,14 +1080,17 @@ const CatchEngine = {
     const endDrag = (e) => {
       if (!this.active || !this.isDragging) return;
       this.isDragging = false;
+      ball.classList.remove('dragging');
+
       const pt = e.changedTouches ? e.changedTouches[0] : e;
       const duration = (performance.now() - this.startTime) / 1000;
       
       const deltaX = pt.clientX - this.startX;
       const deltaY = pt.clientY - this.startY;
 
-      if (deltaY < -40 && duration < 0.8) {
-        this.performThrow(deltaX, deltaY, duration);
+      // Schwungvoller Wisch nach oben
+      if (deltaY < -30 && duration < 0.9) {
+        this.performThrow(deltaX, deltaY, duration, pt.clientX, pt.clientY);
       } else {
         this.resetBallPosition();
       }
@@ -1104,8 +1113,11 @@ const CatchEngine = {
     this.isSpinning = false;
     this.ringScale = 1.0;
 
-    const arena = document.getElementById('catch-arena');
-    if (arena) arena.classList.remove('hidden');
+    const ball = document.getElementById('catch-throw-ball');
+    const ring = document.getElementById('target-ring-outer');
+
+    if (ball) ball.classList.remove('hidden');
+    if (ring) ring.classList.remove('hidden');
 
     this.resetBallPosition();
     this.startRingShrink();
@@ -1117,18 +1129,18 @@ const CatchEngine = {
     const innerRing = document.getElementById('target-ring-inner');
     
     this.ringTimer = setInterval(() => {
-      this.ringScale -= 0.025;
-      if (this.ringScale <= 0.2) this.ringScale = 1.0;
+      this.ringScale -= 0.03;
+      if (this.ringScale <= 0.25) this.ringScale = 1.0;
       
       if (innerRing) {
         innerRing.style.transform = `scale(${this.ringScale})`;
-        innerRing.style.borderColor = this.ringScale < 0.35 ? '#ff2e55' : (this.ringScale < 0.65 ? '#ffcb05' : '#10b981');
+        innerRing.style.borderColor = this.ringScale < 0.4 ? '#ff2e55' : (this.ringScale < 0.7 ? '#ffcb05' : '#10b981');
       }
     }, 30);
   },
 
   detectCurveSpin() {
-    if (this.spinHistory.length < 6) return;
+    if (this.spinHistory.length < 5) return;
     let angleChange = 0;
     for (let i = 1; i < this.spinHistory.length; i++) {
       const a1 = Math.atan2(this.spinHistory[i-1].dy, this.spinHistory[i-1].dx);
@@ -1136,7 +1148,7 @@ const CatchEngine = {
       angleChange += (a2 - a1);
     }
     
-    if (Math.abs(angleChange) > 2.5 && !this.isSpinning) {
+    if (Math.abs(angleChange) > 2.0 && !this.isSpinning) {
       this.isSpinning = true;
       const ball = document.getElementById('catch-throw-ball');
       if (ball) ball.classList.add('spinning');
@@ -1146,31 +1158,39 @@ const CatchEngine = {
   resetBallPosition() {
     const ball = document.getElementById('catch-throw-ball');
     if (!ball) return;
+    
+    // Ball unten zentrieren
     ball.className = 'catch-throw-ball';
-    ball.style.left = '50%';
-    ball.style.top = 'auto';
-    ball.style.bottom = '25px';
-    ball.style.transform = 'translate(-50%, 0) scale(1)';
+    ball.style.left = (window.innerWidth / 2) + 'px';
+    ball.style.top = (window.innerHeight - 110) + 'px';
+    ball.style.transform = 'translate(-50%, -50%) scale(1)';
     this.isSpinning = false;
   },
 
-  performThrow(deltaX, deltaY, duration) {
+  performThrow(deltaX, deltaY, duration, releaseX, releaseY) {
     clearInterval(this.ringTimer);
     const ball = document.getElementById('catch-throw-ball');
     if (!ball) return;
     
-    const velocityY = Math.min(1.8, Math.abs(deltaY) / (duration * 200));
-    const targetY = Math.max(120, window.innerHeight * 0.18 - (velocityY * 30));
-    let targetX = window.innerWidth / 2 + (deltaX * 0.6);
+    // Zielkoordinaten der gegnerischen Karte ermitteln
+    const enemyImg = document.getElementById('enemy-card-img');
+    const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 50, top: 100, width: 100, height: 100 };
+    const targetCenterX = enemyRect.left + enemyRect.width / 2;
+    const targetCenterY = enemyRect.top + enemyRect.height / 2;
+
+    // Flugvektor berechnen
+    const velocityScale = Math.min(1.5, 300 / (duration * 1000));
+    const targetX = releaseX + (deltaX * 0.8 * velocityScale);
+    const targetY = releaseY + (deltaY * 1.1 * velocityScale);
 
     const isCurve = this.isSpinning;
-    const curveOffset = isCurve ? (deltaX >= 0 ? 80 : -80) : 0;
+    const curveOffset = isCurve ? (deltaX >= 0 ? 110 : -110) : 0;
 
-    const startLeft = parseFloat(ball.style.left) || window.innerWidth / 2;
-    const startTop = parseFloat(ball.style.top) || (window.innerHeight - 80);
+    const startLeft = releaseX;
+    const startTop = releaseY;
 
     const startTime = performance.now();
-    const throwDuration = 450;
+    const throwDuration = 420;
 
     const animateThrow = (now) => {
       const elapsed = now - startTime;
@@ -1178,7 +1198,7 @@ const CatchEngine = {
 
       const currentX = startLeft + (targetX - startLeft) * progress + (Math.sin(progress * Math.PI) * curveOffset);
       const currentTop = startTop + (targetY - startTop) * progress;
-      const currentScale = 1 - (progress * 0.45);
+      const currentScale = 1 - (progress * 0.55);
 
       ball.style.left = currentX + 'px';
       ball.style.top = currentTop + 'px';
@@ -1187,30 +1207,26 @@ const CatchEngine = {
       if (progress < 1) {
         requestAnimationFrame(animateThrow);
       } else {
-        this.evaluateHit(targetX, targetY, isCurve);
+        this.evaluateHit(currentX, currentTop, targetCenterX, targetCenterY, enemyRect, isCurve);
       }
     };
 
     requestAnimationFrame(animateThrow);
   },
 
-  evaluateHit(ballX, ballY, isCurve) {
-    const targetRing = document.getElementById('target-ring-outer');
-    if (!targetRing) return;
-    const rect = targetRing.getBoundingClientRect();
-    const ringCenterX = rect.left + rect.width / 2;
-    const ringCenterY = rect.top + rect.height / 2;
-
-    const dist = Math.hypot(ballX - ringCenterX, ballY - ringCenterY);
-    const hitRadius = rect.width / 2;
+  evaluateHit(ballX, ballY, targetX, targetY, enemyRect, isCurve) {
+    // Trefferzone entspricht dem Radius der Gegnerkarte (mit großzügiger Toleranz)
+    const hitRadius = (enemyRect.width / 2) + 25; 
+    const dist = Math.hypot(ballX - targetX, ballY - targetY);
 
     if (dist <= hitRadius) {
+      // TREFFER
       let throwBonus = 1.0;
       let feedbackText = "GUT!";
 
       const ratio = dist / hitRadius;
       if (ratio < 0.35) {
-        throwBonus = 1.75;
+        throwBonus = 1.8;
         feedbackText = "FABELHAFT!";
       } else if (ratio < 0.65) {
         throwBonus = 1.4;
@@ -1220,18 +1236,19 @@ const CatchEngine = {
       }
 
       if (isCurve) {
-        throwBonus *= 1.7;
+        throwBonus *= 1.6;
         feedbackText += " (CURVE)";
       }
 
       this.showFeedback(feedbackText);
       this.triggerCatchSequence(throwBonus);
     } else {
+      // DANEBEN GEWORFEN
       this.showFeedback("DANEBEN!");
       setTimeout(() => {
         this.resetBallPosition();
         this.startRingShrink();
-      }, 900);
+      }, 800);
     }
   },
 
@@ -1240,40 +1257,47 @@ const CatchEngine = {
     if (!fb) return;
     fb.innerText = text;
     fb.classList.remove('hidden');
-    setTimeout(() => fb.classList.add('hidden'), 1200);
+    setTimeout(() => fb.classList.add('hidden'), 1100);
   },
 
   triggerCatchSequence(throwBonus) {
     const ball = document.getElementById('catch-throw-ball');
     const enemyImg = document.getElementById('enemy-card-img');
-    if (!ball || !enemyImg) return;
+    const ring = document.getElementById('target-ring-outer');
     
-    enemyImg.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-    enemyImg.style.transform = 'scale(0.1) rotate(360deg)';
-    enemyImg.style.opacity = '0';
+    if (ring) ring.classList.add('hidden');
+
+    // Pokémon in den Ball saugen
+    if (enemyImg) {
+      enemyImg.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+      enemyImg.style.transform = 'scale(0.05) rotate(360deg)';
+      enemyImg.style.opacity = '0';
+    }
 
     setTimeout(() => {
-      ball.classList.add('wobble');
+      if (ball) ball.classList.add('wobble');
       playBeep(600, 0.15);
 
-      const baseChance = 1.0 - ((currentEnemy.hp / currentEnemy.maxHp) * 0.6);
-      const finalChance = Math.min(0.95, baseChance * throwBonus);
+      const baseChance = 1.0 - ((currentEnemy.hp / currentEnemy.maxHp) * 0.55);
+      const finalChance = Math.min(0.98, baseChance * throwBonus);
 
       let wobbles = 0;
       const wobbleInterval = setInterval(() => {
         wobbles++;
-        playBeep(500 + (wobbles * 100), 0.12);
+        playBeep(500 + (wobbles * 120), 0.12);
 
         if (wobbles >= 3) {
           clearInterval(wobbleInterval);
-          ball.classList.remove('wobble');
+          if (ball) ball.classList.remove('wobble');
 
           if (Math.random() <= finalChance) {
+            // ERFOLGREICH GEFANGEN
             playBeep(1200, 0.4);
-            const arena = document.getElementById('catch-arena');
-            if (arena) arena.classList.add('hidden');
-            enemyImg.style.transform = 'scale(1)';
-            enemyImg.style.opacity = '1';
+            if (ball) ball.classList.add('hidden');
+            if (enemyImg) {
+              enemyImg.style.transform = 'scale(1)';
+              enemyImg.style.opacity = '1';
+            }
 
             currentSaveData.pokemonTeam.push({
               name: currentEnemy.name,
@@ -1290,22 +1314,24 @@ const CatchEngine = {
             alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen!`);
             showScreen('screen-radar-hud');
           } else {
+            // AUSGEBROCHEN
             playBeep(300, 0.3);
-            ball.classList.remove('wobble');
-            enemyImg.style.transform = 'scale(1)';
-            enemyImg.style.opacity = '1';
+            if (ball) ball.classList.add('hidden');
+            if (enemyImg) {
+              enemyImg.style.transform = 'scale(1)';
+              enemyImg.style.opacity = '1';
+            }
+            
             const warningBox = document.getElementById('battle-warning-box');
             if (warningBox) warningBox.innerText = `${currentEnemy.name} ist aus dem Ball ausgebrochen!`;
 
             setTimeout(() => {
-              const arena = document.getElementById('catch-arena');
-              if (arena) arena.classList.add('hidden');
               scheduleEnemyAttack();
-            }, 800);
+            }, 700);
           }
         }
-      }, 700);
-    }, 450);
+      }, 650);
+    }, 400);
   }
 };
 
@@ -1316,6 +1342,7 @@ function attemptCatch() {
   currentSaveData.pokeballs--;
   updateBattleUI();
 
+  // Starte die Wurf-Session direkt im Kampf-Screen
   CatchEngine.startCatchSession();
 }
 
