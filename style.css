@@ -413,20 +413,21 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* EIGENES POKÉMON (SAUBER IM VORDERGRUND ÜBER DEM UNTEREN HUD) */
+/* EIGENES POKÉMON (DEUTLICH GRÖSSER FÜR TIEFE) */
 .player-sprite-wrapper {
   position: relative;
   z-index: 6;
-  transform: translateY(0px) scale(1.15);
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+  transform: translateY(20px) scale(1.65); /* Von 1.15 auf 1.65 vergrößert */
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
   pointer-events: none;
 }
 
 .player-sprite-img {
-  width: 120px;
-  height: 150px;
+  width: 140px;
+  height: 175px;
   object-fit: contain;
 }
+
 
 /* PERFEKT ZENTRIERTER UND RUNDER 3D-POKÉBALL */
 .catch-throw-ball,
