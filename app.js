@@ -878,8 +878,16 @@ function triggerElementalFX(elementType) {
 
 function startBattleFromScan() {
   isTrainingMode = false;
+  
+  // HUD-Elemente sichtbar machen
   const catchBtn = document.getElementById('btn-catch-pokemon');
   if (catchBtn) catchBtn.style.display = 'block';
+
+  const bottomHud = document.querySelector('.arena-bottom-hud');
+  if (bottomHud) {
+    bottomHud.classList.remove('hidden');
+    bottomHud.style.display = 'block';
+  }
 
   resetRadarUI();
   showScreen('screen-battle');
@@ -894,8 +902,11 @@ function startBattleFromScan() {
   isEnemyAttacking = false;
 
   updateBattleUI();
-  document.getElementById('battle-warning-box').innerText = `Ein wildes ${currentEnemy.name} greift an!`;
+  
+  const warnBox = document.getElementById('battle-warning-box');
+  if (warnBox) warnBox.innerText = `Ein wildes ${currentEnemy.name} greift an!`;
 }
+
 
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
