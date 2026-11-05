@@ -377,26 +377,16 @@ button:active { transform: scale(0.97); }
   box-sizing: border-box;
 }
 
-.enemy-target-wrapper,
-.player-sprite-wrapper {
-  position: absolute !important;
-  bottom: 130px !important; /* Erhöht den Abstand zum unteren Rand deutlich */
-  left: 50% !important;
-  transform: translateX(-50%) scale(1.2) !important; /* Etwas sichere Skalierung für Mobilgeräte */
+/* GEGNER POSITION */
+.enemy-target-wrapper {
+  position: relative !important;
+  transform: translateY(10px) scale(0.85);
+  filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 6 !important;
-  pointer-events: none !important;
-  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
-}
-
-
-
-.enemy-target-wrapper {
-  transform: translateY(10px) scale(0.85);
-  filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
+  width: 100%;
 }
 
 .enemy-sprite-img {
@@ -430,12 +420,19 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* EIGENES POKÉMON */
+/* EIGENES POKÉMON (PERFEKT POSITIONIERT ÜBER DEM HUD) */
 .player-sprite-wrapper {
-  z-index: 6;
-  transform: translateY(20px) scale(1.65);
+  position: absolute !important;
+  bottom: 120px !important;
+  left: 50% !important;
+  transform: translateX(-50%) scale(1.35) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 6 !important;
+  pointer-events: none !important;
   filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
-  pointer-events: none;
 }
 
 .player-sprite-img {
@@ -592,16 +589,16 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
-/* ANGRIFFS- & AUSWEICH-ANIMATIONEN (INKL. GEGNER-TACKLE) */
+/* ANGRIFFS- & AUSWEICH-ANIMATIONEN */
 .anim-player-tackle {
   animation: playerTackleAnimCorrected 0.4s ease-in-out !important;
 }
 
 @keyframes playerTackleAnimCorrected {
-  0% { transform: translateY(20px) scale(1.65); }
-  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
-  50% { transform: translateY(-20px) scale(1.75); }
-  100% { transform: translateY(20px) scale(1.65); }
+  0% { transform: translateY(20px) scale(1.35); }
+  30% { transform: translateY(-30px) scale(1.45); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
+  50% { transform: translateY(-20px) scale(1.45); }
+  100% { transform: translateY(20px) scale(1.35); }
 }
 
 .anim-enemy-tackle {
@@ -693,9 +690,9 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes dodgeLeftAnim {
-  0% { transform: translateY(20px) scale(1.65) translateX(0); }
-  40% { transform: translateY(20px) scale(1.65) translateX(-90px) rotate(-15deg); }
-  100% { transform: translateY(20px) scale(1.65) translateX(0); }
+  0% { transform: translateX(-50%) scale(1.35) translateX(0); }
+  40% { transform: translateX(-50%) scale(1.35) translateX(-90px) rotate(-15deg); }
+  100% { transform: translateX(-50%) scale(1.35) translateX(0); }
 }
 
 @keyframes dodgeRightAnim {
@@ -727,19 +724,20 @@ button:active { transform: scale(0.97); }
 }
 
 /* =========================================================
-   ELEMENTARE PROJEKTIL-ANIMATIONEN (KORRIGIERT & SICHTBAR)
+   ELEMENTARE PROJEKTIL-ANIMATIONEN (RICHTUNGSSTEUERUNG)
    ========================================================= */
 
 .elemental-projectile {
   position: absolute;
   font-size: 45px;
-  z-index: 99999 !important; /* Ganz nach oben im Layer-Stack holen */
+  z-index: 99999 !important;
   pointer-events: none;
   left: 50% !important;
   transform: translateX(-50%);
   filter: drop-shadow(0 0 15px rgba(255,255,255,0.9));
 }
 
+/* FLUG VON UNTEN NACH OBEN (Spieler -> Gegner) */
 @keyframes flyToEnemyFeuer {
   0% { bottom: 120px; transform: translateX(-50%) scale(0.5) rotate(0deg); opacity: 0; }
   20% { opacity: 1; transform: translateX(-50%) scale(1.5) rotate(180deg); }
@@ -765,27 +763,6 @@ button:active { transform: scale(0.97); }
   0% { bottom: 120px; transform: translateX(-50%) scale(0.2); opacity: 0; }
   20% { opacity: 1; transform: translateX(-50%) scale(1.8); }
   100% { bottom: 65vh; transform: translateX(-50%) scale(1); opacity: 0; }
-}
-
-
-/* Erschütterung und rotes Aufblitzen für das eigene Pokémon bei Treffern */
-.anim-player-hit {
-  animation: playerHitAnim 0.4s ease-in-out !important;
-}
-
-@keyframes playerHitAnim {
-  0% { transform: translateY(20px) scale(1.65); filter: brightness(1); }
-  25% { transform: translateY(20px) scale(1.65) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  50% { transform: translateY(20px) scale(1.65) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  75% { transform: translateY(20px) scale(1.65) translateX(-4px); }
-  100% { transform: translateY(20px) scale(1.65); filter: brightness(1); }
-}
-
-/* Direkter Treffer-Effekt fürs Bild */
-.direct-hit-flash {
-  filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
-  transform: translateY(20px) scale(1.75) translateX(6px) !important;
-  transition: transform 0.05s ease, filter 0.05s ease !important;
 }
 
 /* FLUG VON OBEN NACH UNTEN (Gegner -> Spieler) */
@@ -816,4 +793,21 @@ button:active { transform: scale(0.97); }
   100% { top: 65vh; transform: translateX(-50%) scale(1); opacity: 0; }
 }
 
+/* TREFFER- & AUFBLESEN-ANIMATIONEN */
+.anim-player-hit {
+  animation: playerHitAnim 0.4s ease-in-out !important;
+}
 
+@keyframes playerHitAnim {
+  0% { transform: translateX(-50%) scale(1.35); filter: brightness(1); }
+  25% { transform: translateX(-50%) scale(1.35) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  50% { transform: translateX(-50%) scale(1.35) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  75% { transform: translateX(-50%) scale(1.35) translateX(-4px); }
+  100% { transform: translateX(-50%) scale(1.35); filter: brightness(1); }
+}
+
+.direct-hit-flash {
+  filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
+  transform: translateX(-50%) scale(1.45) translateX(6px) !important;
+  transition: transform 0.05s ease, filter 0.05s ease !important;
+}
