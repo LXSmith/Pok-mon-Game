@@ -639,13 +639,6 @@ function forceDevSpawn() {
   triggerSignalDetected();
 }
 
-
-  // Für Test-Modus: Spawnt direkt 15 Meter vor dem Spieler, damit Blip auf dem Radar angezeigt wird
-  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, 15, currentHeading);
-
-  triggerSignalDetected();
-}
-
 function triggerSignalDetected() {
   isScanning = false;
 
@@ -711,7 +704,8 @@ function updateBlipPosition() {
 
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
 
-  if (distMeters <= 4) {
+  // Startet den Kampf, wenn der Spieler im normalen Spielverlauf nah genug ranläuft
+  if (distMeters > 0 && distMeters <= 3) {
     blip.classList.add('hidden');
     const scareBtn = document.getElementById('btn-scare-overlay');
     if (scareBtn) scareBtn.classList.add('hidden');
@@ -730,6 +724,13 @@ function updateBlipPosition() {
 
   blip.style.left = x + "px";
   blip.style.top = y + "px";
+  
+  // Bei Klick auf den Blip direkt Kampf starten (z.B. für Dev/Test 0m Spawns)
+  blip.onclick = () => {
+    blip.classList.add('hidden');
+    targetPokemonCoords = null;
+    startBattleFromScan();
+  };
 }
 
 function cancelScan() {
@@ -910,6 +911,12 @@ function updateBattleUI() {
   document.getElementById('player-title').innerText = playerBattlePokemon.name.toUpperCase();
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
   document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
+
+  // Lade Grafik deines eigenen Pokémon im Vordergrund
+  const playerCardImg = document.getElementById('player-card-img');
+  if (playerCardImg) {
+    playerCardImg.src = playerBattlePokemon.cardUrl;
+  }
 
   let dots = "";
   for (let i = 0; i < 3; i++) dots += (i < playerEnergy) ? "🟡 " : "⚪ ";
