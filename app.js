@@ -1120,7 +1120,7 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-    const onMove = (e) => {
+        const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       if (e.cancelable) e.preventDefault();
 
@@ -1133,7 +1133,7 @@ const CatchEngine = {
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
       if (this.touchHistory.length > 6) this.touchHistory.shift();
 
-      // Spin-Erkennung (Kreisbewegung des Fingers)
+      // Spin-Erkennung mit korrigierter Richtungszuordnung
       if (this.touchHistory.length >= 3) {
         const h = this.touchHistory;
         const dx1 = h[h.length-1].x - h[h.length-2].x;
@@ -1144,12 +1144,14 @@ const CatchEngine = {
 
         if (Math.abs(crossProduct) > 80) {
           this.ball.isSpinning = true;
-          this.ball.spinSpeed = crossProduct > 0 ? 14 : -14;
+          // VORZEICHEN UMGEDREHT: Drehung im Uhrzeigersinn -> positiv, gegen Uhrzeigersinn -> negativ
+          this.ball.spinSpeed = crossProduct > 0 ? -14 : 14;
         }
       }
 
       this.updateBallElement();
     };
+
 
     const onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
@@ -1197,26 +1199,22 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-    updatePhysics() {
+      updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
-      // 1. Position aktualisieren
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
       b.z += b.vz * 0.016;
 
-      // Gravitation zieht den Ball schrittweise nach unten
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // 2. CURVEBALL-PHYSIK: Korrigierte Richtung & balancierte Kurvenstärke
+      // CURVEBALL-PHYSIK: Richtige Flugbahn in Drehrichtung
       if (b.isSpinning) {
-        // Das Minuszeichen dreht die Richtung um, der Wert 4.5 sorgt für eine treffbare Kurve
-        const curveForce = -(b.spinSpeed * 4.5); 
+        const curveForce = (b.spinSpeed * 4.5); 
         b.vx += curveForce * 0.016;
         
-        // Drehung läuft im Flug weiter
         b.spinAngle += b.spinSpeed * 1.5;
       }
 
@@ -1235,6 +1233,7 @@ const CatchEngine = {
       this.updateBallElement();
     }
   },
+
 
 
   updateRing() {
