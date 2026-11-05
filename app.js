@@ -1213,36 +1213,42 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-  updatePhysics() {
+    updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
-      const startY = window.innerHeight - 130;
       const enemyImg = document.getElementById('enemy-card-img');
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
       const targetY = enemyRect.top + enemyRect.height / 2;
 
+      // 1. Raum-Bewegung (X, Y und Z-Tiefe)
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
-      b.vy += 420 * 0.016;
-
-      const totalDist = startY - targetY;
-      const currentDist = startY - b.y;
-      const progress = currentDist / totalDist;
       
-      b.z = Math.max(0.15, 1.0 - (progress * 0.55));
+      // Gravitation zieht die Wurfparabel nach unten
+      b.vy += 580 * 0.016;
 
+      // Z-Skalierung schrumpft kontinuierlich basierend auf der Tiefengeschwindigkeit vz
+      b.z += b.vz * 0.016;
+      b.z = Math.max(0.12, b.z); // Verhindert negatives Skalieren
+
+      // Curveball-Drall zieht den Ball seitlich
       if (b.isSpinning) {
-        b.vx += (b.spinSpeed * 4.0) * 0.016;
+        b.vx += (b.spinSpeed * 4.2) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
       }
 
       this.updateBallElement();
 
-      // KORRIGIERTE TREFFERPRÜFUNG
-      if (b.y <= targetY && b.vy < 0) {
+      // 2. PRÄZISE TREFFERPRÜFUNG IM 3D-FENSTER:
+      // Ein Treffer ist NUR möglich, wenn der Ball exakt auf Höhe des Pokémon ist (z zwingt Wurf-Reichweite!)
+      // Passt die Ballgröße (z-Wert) zur Tiefe der Karte (ca. 0.45 - 0.55)?
+      const isAtTargetDepth = (b.z <= 0.52 && b.z >= 0.38);
+      const isNearTargetY = Math.abs(b.y - targetY) < 45;
+
+      if (isAtTargetDepth && isNearTargetY) {
         const targetX = enemyRect.left + enemyRect.width / 2;
-        const hitRadius = (enemyRect.width / 2) + 25;
+        const hitRadius = (enemyRect.width / 2) + 18;
 
         if (Math.abs(b.x - targetX) <= hitRadius) {
           b.isThrown = false;
@@ -1251,10 +1257,11 @@ const CatchEngine = {
         }
       }
 
-      // VORBEIFLUG: Wenn der Ball am Ziel vorbeigeflogen ist und weiter nach hinten abtaucht
-      if (b.y < -120 || b.y > window.innerHeight + 100 || b.x < -100 || b.x > window.innerWidth + 100) {
+      // 3. VORBEIFLUG / ZU STARKER WURF:
+      // Wenn der Ball hinter die Karte fliegt (z < 0.35) ohne getroffen zu haben, fliegt er weiter nach hinten weg!
+      if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
-        this.showFeedback("DANEBEN!");
+        this.showFeedback("ZU STARK / DANEBEN!");
         setTimeout(() => this.resetBall(), 600);
       }
     } else if (b.isSpinning) {
