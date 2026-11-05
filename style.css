@@ -428,37 +428,42 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-/* POKÉBALL UNTEN IM VORDERGRUND */
+/* POKÉBALL 3D LOOK (POKÉMON GO STYLED) */
 .catch-throw-ball {
   position: fixed;
-  bottom: 80px;
+  bottom: 60px;
   left: 50%;
   transform: translate(-50%, 0) scale(1.2);
-  width: 85px;
-  height: 85px;
+  width: 95px;
+  height: 95px;
   z-index: 100;
   cursor: grab;
   touch-action: none;
-  filter: drop-shadow(0 12px 18px rgba(0,0,0,0.6));
+  /* 3D-Schlagschatten und dezenter Glanz */
+  filter: drop-shadow(0 18px 14px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  transition: filter 0.2s ease;
 }
 
 .catch-throw-ball img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
   pointer-events: none;
 }
 
+/* Beim Festhalten/Wischen mit dem Finger */
 .catch-throw-ball.dragging {
   cursor: grabbing;
-  transform: translate(-50%, -50%) scale(1.3) !important;
+  filter: drop-shadow(0 25px 20px rgba(0, 0, 0, 0.75)) brightness(1.1);
+}
+
+/* Curveball-Glitzern und schneller Spin */
+.catch-throw-ball.spinning {
+  filter: drop-shadow(0 0 18px #ffcb05) drop-shadow(0 0 25px #00f0ff) brightness(1.2);
 }
 
 .catch-throw-ball.spinning img {
-  animation: spinBall 0.18s linear infinite;
-}
-
-.catch-throw-ball.spinning {
-  filter: drop-shadow(0 0 20px #ffcb05) drop-shadow(0 0 30px #00f0ff);
+  animation: spinBall 0.16s linear infinite;
 }
 
 @keyframes spinBall {
@@ -466,15 +471,17 @@ button:active { transform: scale(0.97); }
   100% { transform: rotate(360deg); }
 }
 
+/* Wackeln beim Fangen */
 .catch-throw-ball.wobble {
-  animation: wobbleBall 0.65s ease-in-out infinite;
+  animation: wobbleBall 0.6s ease-in-out infinite;
 }
 
 @keyframes wobbleBall {
   0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-  25% { transform: translate(-50%, -50%) rotate(-25deg); }
-  75% { transform: translate(-50%, -50%) rotate(25deg); }
+  25% { transform: translate(-50%, -50%) rotate(-22deg); }
+  75% { transform: translate(-50%, -50%) rotate(22deg); }
 }
+
 
 /* BOTTOM HUD & KAMPF-BUTTONS */
 .arena-bottom-hud {
