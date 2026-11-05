@@ -428,25 +428,26 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-/* POKÉBALL 3D LOOK (POKÉMON GO STYLED) */
+/* PERFEKT ZENTRIERTER UND RUNDER 3D-POKÉBALL */
 .catch-throw-ball {
   position: fixed;
-  bottom: 60px;
+  bottom: 80px;
   left: 50%;
-  transform: translate(-50%, 0) scale(1.2);
-  width: 95px;
-  height: 95px;
+  transform: translateX(-50%) scale(1);
+  width: 90px;
+  height: 90px;
   z-index: 100;
   cursor: grab;
   touch-action: none;
   
-  /* Schneidet eckige Hintergründe perfekt als Kreis aus */
+  /* Exakter Kreis-Schnitt ohne Ränder */
   border-radius: 50%;
   overflow: hidden;
+  background: transparent;
   
   /* Bodenschatten für plastische Tiefe */
-  filter: drop-shadow(0 18px 14px rgba(0, 0, 0, 0.65));
-  transition: filter 0.15s ease;
+  filter: drop-shadow(0 15px 12px rgba(0, 0, 0, 0.7));
+  transition: filter 0.15s ease, transform 0.1s ease;
 }
 
 .catch-throw-ball img {
@@ -454,7 +455,9 @@ button:active { transform: scale(0.97); }
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+  display: block;
 }
+
 
 
 /* Beim Festhalten/Wischen mit dem Finger */
@@ -480,7 +483,7 @@ button:active { transform: scale(0.97); }
 /* Wackeln beim Fangen */
 .catch-throw-ball.wobble {
   animation: wobbleBall 0.6s ease-in-out infinite;
-}
+
 
 @keyframes wobbleBall {
   0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
