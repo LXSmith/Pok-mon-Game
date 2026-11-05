@@ -1618,7 +1618,7 @@ function showEvolutionScreen(pokemon) {
   const evoData = EVOLUTION_CHAINS[pokemon.name];
   document.getElementById('evo-title').innerText = `Was? ${pokemon.name} ist bereit!`;
   document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
-  document.getElementById('evo-card-img').src = pokemon.cardUrl;
+  document.getElementById('evo-card-img').src = evoData ? evoData.cardUrl : pokemon.cardUrl;
   document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
   document.getElementById('evo-screen').classList.remove('hidden');
 }
