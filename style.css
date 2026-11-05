@@ -361,37 +361,38 @@ button:active { transform: scale(0.97); }
   color: var(--accent-yellow);
 }
 
-/* BÜHNE MIT PERSPEKTIVE */
+/* BÜHNE MIT FLEXBOX-STRUKTUR (OBEN GEGNER, UNTEN SPIELER) */
 .arena-stage {
-  position: relative;
+  position: relative !important;
   z-index: 5;
   flex: 1;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   perspective: 700px;
-  height: calc(100vh - 160px);
-  padding: 10px 0;
-  box-sizing: border-box;
+  padding: 20px 0 !important;
+  box-sizing: border-box !important;
 }
 
-/* GEGNER POSITION */
+/* GEGNER POSITION (OBEN) */
 .enemy-target-wrapper {
   position: relative !important;
-  transform: translateY(10px) scale(0.85);
+  top: 10px !important;
+  transform: scale(1.1) !important;
   filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
+  z-index: 5 !important;
   width: 100%;
 }
 
 .enemy-sprite-img {
-  width: 140px;
-  height: 180px;
+  width: 150px;
+  height: 190px;
   object-fit: contain;
 }
 
@@ -420,12 +421,11 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* EIGENES POKÉMON (PERFEKT POSITIONIERT ÜBER DEM HUD) */
+/* EIGENES POKÉMON / BISASAM (UNTEN, GROSS SKALIERT) */
 .player-sprite-wrapper {
-  position: absolute !important;
-  bottom: 120px !important;
-  left: 50% !important;
-  transform: translateX(-50%) scale(1.35) !important;
+  position: relative !important;
+  bottom: 10px !important;
+  transform: scale(1.65) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -595,10 +595,10 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes playerTackleAnimCorrected {
-  0% { transform: translateY(20px) scale(1.35); }
-  30% { transform: translateY(-30px) scale(1.45); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
-  50% { transform: translateY(-20px) scale(1.45); }
-  100% { transform: translateY(20px) scale(1.35); }
+  0% { transform: scale(1.65); }
+  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
+  50% { transform: translateY(-20px) scale(1.75); }
+  100% { transform: scale(1.65); }
 }
 
 .anim-enemy-tackle {
@@ -606,10 +606,10 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes enemyTackleAnim {
-  0% { transform: translateY(10px) scale(0.85); }
-  30% { transform: translateY(40px) scale(0.95); filter: drop-shadow(0 0 12px rgba(255,0,0,0.7)); }
-  50% { transform: translateY(30px) scale(0.95); }
-  100% { transform: translateY(10px) scale(0.85); }
+  0% { transform: scale(1.1); }
+  30% { transform: translateY(30px) scale(1.2); filter: drop-shadow(0 0 12px rgba(255,0,0,0.7)); }
+  50% { transform: translateY(20px) scale(1.2); }
+  100% { transform: scale(1.1); }
 }
 
 .anim-hit-shake {
@@ -617,12 +617,12 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes hitShake {
-  0% { transform: translateY(10px) scale(0.85); filter: brightness(1); }
-  20% { transform: translateY(10px) scale(0.85) translateX(-10px); filter: brightness(2) drop-shadow(0 0 10px red); }
-  40% { transform: translateY(10px) scale(0.85) translateX(10px); filter: brightness(2) drop-shadow(0 0 10px red); }
-  60% { transform: translateY(10px) scale(0.85) translateX(-6px); }
-  80% { transform: translateY(10px) scale(0.85) translateX(6px); }
-  100% { transform: translateY(10px) scale(0.85); filter: brightness(1); }
+  0% { transform: scale(1.1); filter: brightness(1); }
+  20% { transform: scale(1.1) translateX(-10px); filter: brightness(2) drop-shadow(0 0 10px red); }
+  40% { transform: scale(1.1) translateX(10px); filter: brightness(2) drop-shadow(0 0 10px red); }
+  60% { transform: scale(1.1) translateX(-6px); }
+  80% { transform: scale(1.1) translateX(6px); }
+  100% { transform: scale(1.1); filter: brightness(1); }
 }
 
 .anim-suck-in {
@@ -690,15 +690,15 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes dodgeLeftAnim {
-  0% { transform: translateX(-50%) scale(1.35) translateX(0); }
-  40% { transform: translateX(-50%) scale(1.35) translateX(-90px) rotate(-15deg); }
-  100% { transform: translateX(-50%) scale(1.35) translateX(0); }
+  0% { transform: scale(1.65) translateX(0); }
+  40% { transform: scale(1.65) translateX(-90px) rotate(-15deg); }
+  100% { transform: scale(1.65) translateX(0); }
 }
 
 @keyframes dodgeRightAnim {
-  0% { transform: translateY(10px) scale(0.85) translateX(0); }
-  40% { transform: translateY(10px) scale(0.85) translateX(90px) rotate(15deg); }
-  100% { transform: translateY(10px) scale(0.85) translateX(0); }
+  0% { transform: scale(1.1) translateX(0); }
+  40% { transform: scale(1.1) translateX(90px) rotate(15deg); }
+  100% { transform: scale(1.1) translateX(0); }
 }
 
 /* MODALS & EVOLUTION */
@@ -799,15 +799,15 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes playerHitAnim {
-  0% { transform: translateX(-50%) scale(1.35); filter: brightness(1); }
-  25% { transform: translateX(-50%) scale(1.35) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  50% { transform: translateX(-50%) scale(1.35) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  75% { transform: translateX(-50%) scale(1.35) translateX(-4px); }
-  100% { transform: translateX(-50%) scale(1.35); filter: brightness(1); }
+  0% { transform: scale(1.65); filter: brightness(1); }
+  25% { transform: scale(1.65) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  50% { transform: scale(1.65) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  75% { transform: scale(1.65) translateX(-4px); }
+  100% { transform: scale(1.65); filter: brightness(1); }
 }
 
 .direct-hit-flash {
   filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
-  transform: translateX(-50%) scale(1.45) translateX(6px) !important;
+  transform: scale(1.75) translateX(6px) !important;
   transition: transform 0.05s ease, filter 0.05s ease !important;
 }
