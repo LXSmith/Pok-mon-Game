@@ -1086,10 +1086,23 @@ const CatchEngine = {
     }
   },
 
-  resetBall() {
+    resetBall() {
     const b = this.ball;
-    b.x = window.innerWidth / 2;
-    b.y = window.innerHeight - 130;
+
+    // Ermittelt die Position deiner Karte (z. B. Bisasam)
+    const playerImg = document.getElementById('player-card-img');
+    const playerRect = playerImg ? playerImg.getBoundingClientRect() : null;
+
+    if (playerRect && playerRect.width > 0) {
+      // Platziert den Ball rechts neben dein Pokémon
+      b.x = playerRect.right + 45;
+      b.y = playerRect.top + (playerRect.height / 2);
+    } else {
+      // Fallback: Rechts im unteren Spielfeldbereich
+      b.x = window.innerWidth * 0.82;
+      b.y = window.innerHeight - 200;
+    }
+
     b.z = 1.0;
     b.vx = 0; b.vy = 0; b.vz = 0;
     b.isDragging = false;
@@ -1120,11 +1133,12 @@ const CatchEngine = {
       this.ball.isDragging = true;
       this.ball.isSpinning = false;
       this.ball.spinSpeed = 0;
-      this.ball.x = pt.clientX;
-      this.ball.y = pt.clientY;
+
+      // Startet die Zieh-Bewegung genau dort, wo der Ball liegt
       this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
       this.updateBallElement();
     };
+
 
     const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
