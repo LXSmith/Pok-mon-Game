@@ -785,3 +785,10 @@ button:active { transform: scale(0.97); }
   100% { transform: translateY(20px) scale(1.65); filter: brightness(1); }
 }
 
+/* Direkter Treffer-Effekt fürs Bild */
+.direct-hit-flash {
+  filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
+  transform: translateY(20px) scale(1.75) translateX(6px) !important;
+  transition: transform 0.05s ease, filter 0.05s ease !important;
+}
+
