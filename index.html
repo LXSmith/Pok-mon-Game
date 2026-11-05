@@ -16,8 +16,8 @@
   <!-- Leaflet CSS für OpenStreetMap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Externe CSS v=21000 -->
-  <link rel="stylesheet" href="style.css?v=21000">
+  <!-- Externe CSS v=23000 -->
+  <link rel="stylesheet" href="style.css?v=23000">
 </head>
 <body>
 
@@ -120,7 +120,6 @@
       </div>
 
       <footer class="hud-footer">
-        <!-- ENTWICKLER TEST-BUTTON (SPRINGT TIMER DIREKT AUF 0) -->
         <button type="button" id="btn-dev-spawn" onclick="forceDevSpawn()" class="btn-dev-spawn">
           ⚡ POKÉMON SPAWNEN (TEST)
         </button>
@@ -132,27 +131,23 @@
       </footer>
     </section>
 
-    <!-- SCREEN 5: FULLSCREEN BATTLE & CATCH ARENA (POKÉMON GO STYLE) -->
+    <!-- SCREEN 5: FULLSCREEN BATTLE ARENA -->
     <section id="screen-battle" class="screen-panel hidden battle-fullscreen-container">
-      <!-- NATUR-HINTERGRUND -->
       <div class="arena-background"></div>
-      
-      <!-- DYNAMISCHES EFFEKT OVERLAY FÜR SPEZIALANGRIFFE -->
       <div id="elemental-fx-overlay" class="hidden"></div>
 
-      <!-- TOP BAR: GEGNER STATS & LEBENSBALKEN -->
+      <!-- TOP HUD -->
       <div class="arena-top-hud">
         <div id="enemy-title" class="battle-title-hud">WILDES POKÉMON</div>
         <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
         <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
       </div>
 
-      <!-- GEGNER POKÉMON FREI IM RAUM (MIT PERSPEKTIVISCHER TIEFE) -->
+      <!-- STAGE WITH PERSPECTIVE -->
       <div class="arena-stage">
         <div id="enemy-target-wrapper" class="enemy-target-wrapper">
-          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
+          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Pokémon Card">
           
-          <!-- ZIELRING AUF DEM POKÉMON -->
           <div id="target-ring-outer" class="target-ring-outer hidden">
             <div id="target-ring-inner" class="target-ring-inner"></div>
           </div>
@@ -162,20 +157,21 @@
       <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
       <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon erscheint!</div>
 
-      <!-- BOTTTOM HUD: SPIELER STATS & KONTROLLEN -->
+      <!-- BOTTOM HUD -->
       <div class="arena-bottom-hud">
         <div class="player-mini-stats">
           <span id="player-title">Dein Pokémon</span> | KP: <span id="player-hp-text">50/50</span>
+          <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
         </div>
         
         <div class="battle-action-bar">
           <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
           <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-action btn-special">🔥 Spezial</button>
-          <button type="button" id="btn-catch-mode" onclick="toggleCatchMode()" class="btn-action btn-catch">🔴 Fang-Modus</button>
+          <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
         </div>
       </div>
 
-      <!-- GROSSER, INTERAKTIVER POKÉBALL UNTEN IN DER MITTE -->
+      <!-- POKÉBALL -->
       <div id="catch-throw-ball" class="catch-throw-ball hidden">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokéball">
       </div>
@@ -268,8 +264,8 @@
 
   </main>
 
-  <!-- Leaflet JS & App Script v=21000 -->
+  <!-- Leaflet JS & App Script v=23000 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=21000"></script>
+  <script src="app.js?v=23000"></script>
 </body>
 </html>
