@@ -1107,15 +1107,23 @@ function onPlayerDodgeClick() {
   }, 600);
 }
 
-/* FÜHRT NORMALE GEGNER-SCHADENSBERECHNUNG AUS */
+/* FÜHRT NORMALE GEGNER-SCHADENSBERECHNUNG UND ANGRISSANIMATION AUS */
 function executeEnemyDamage() {
+  const enemyImg = document.getElementById('enemy-card-img');
+  
+  // 1. Gegner-Angriffsanimation auslösen
+  if (enemyImg) enemyImg.classList.add('anim-enemy-tackle');
   playPunchSound();
+
   let dmg = Math.round(currentEnemy.maxHp * 0.30);
   playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
 
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
 
+  // 2. Animation zurücksetzen & Zustand verarbeiten
   setTimeout(() => {
+    if (enemyImg) enemyImg.classList.remove('anim-enemy-tackle');
+
     isEnemyAttacking = false;
 
     if (playerBattlePokemon.hp <= 0) {
@@ -1692,6 +1700,8 @@ function switchMenuTab(tabName) {
 }
 
 function exitToMainMenu() {
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
   closeMenuModal();
   cancelScan();
   saveCurrentData();
