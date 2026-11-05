@@ -653,3 +653,48 @@ button:active { transform: scale(0.97); }
   100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
 }
 
+/* GRELL LEUCHTENDER AUSWEICH-BUTTON (LINKS NEBEN SPIELER-KARTE) */
+.btn-dodge-glow {
+  position: absolute !important;
+  bottom: 155px !important;
+  left: 15px !important;
+  width: auto !important;
+  z-index: 10005 !important;
+  background: linear-gradient(180deg, #ffe600 0%, #ff0055 100%) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  padding: 12px 18px !important;
+  border-radius: 25px !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 20px #ffe600, 0 0 40px #ff0055, 0 8px 15px rgba(0,0,0,0.6) !important;
+  animation: dodgePulse 0.3s ease-in-out infinite alternate !important;
+}
+
+@keyframes dodgePulse {
+  0% { transform: scale(0.95); filter: brightness(1); }
+  100% { transform: scale(1.1); filter: brightness(1.4); }
+}
+
+/* AUSWEICH-ANIMATIONEN (STARK SEITLICH WEICHEN) */
+.anim-dodge-left {
+  animation: dodgeLeftAnim 0.5s ease-in-out forwards !important;
+}
+
+.anim-dodge-right {
+  animation: dodgeRightAnim 0.5s ease-in-out forwards !important;
+}
+
+@keyframes dodgeLeftAnim {
+  0% { transform: translateY(20px) scale(1.65) translateX(0); }
+  40% { transform: translateY(20px) scale(1.65) translateX(-90px) rotate(-15deg); }
+  100% { transform: translateY(20px) scale(1.65) translateX(0); }
+}
+
+@keyframes dodgeRightAnim {
+  0% { transform: translateY(10px) scale(0.85) translateX(0); }
+  40% { transform: translateY(10px) scale(0.85) translateX(90px) rotate(15deg); }
+  100% { transform: translateY(10px) scale(0.85) translateX(0); }
+}
+
+
