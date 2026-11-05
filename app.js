@@ -1036,7 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (COMPLETE ANIMATED)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (FIXED & ANIMATED)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1215,17 +1215,14 @@ const CatchEngine = {
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
       const targetY = enemyRect.top + enemyRect.height / 2;
 
-      // Positionen fortbewegen
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
-      b.vy += 420 * 0.016; // Gravitation
+      b.vy += 420 * 0.016;
 
-      // Kontinuierliche Tiefen-Skalierung (schrumpft auch über die Karte hinaus nach hinten)
       const totalDist = startY - targetY;
       const currentDist = startY - b.y;
       const progress = currentDist / totalDist;
       
-      // Schrumpft weiter bis 0.15, wenn er weit nach hinten fliegt
       b.z = Math.max(0.15, 1.0 - (progress * 0.55));
 
       if (b.isSpinning) {
@@ -1235,11 +1232,10 @@ const CatchEngine = {
 
       this.updateBallElement();
 
-      // TREFFERPRÜFUNG: Auf Höhe der Zielkarte
-      if (Math.abs(b.y - targetY) < 30 && b.vy < 0) {
-        // Prüfen ob X-Koordinate die Karte trifft
+      // KORRIGIERTE TREFFERPRÜFUNG
+      if (b.y <= targetY && b.vy < 0) {
         const targetX = enemyRect.left + enemyRect.width / 2;
-        const hitRadius = (enemyRect.width / 2) + 20;
+        const hitRadius = (enemyRect.width / 2) + 25;
 
         if (Math.abs(b.x - targetX) <= hitRadius) {
           b.isThrown = false;
@@ -1248,8 +1244,8 @@ const CatchEngine = {
         }
       }
 
-      // VORBEIFLUG: Wenn der Ball zu weit oben, zu weit unten oder aus dem Screen fliegt
-      if (b.y < -100 || b.y > window.innerHeight + 100 || b.x < -100 || b.x > window.innerWidth + 100) {
+      // VORBEIFLUG: Wenn der Ball am Ziel vorbeigeflogen ist und weiter nach hinten abtaucht
+      if (b.y < -120 || b.y > window.innerHeight + 100 || b.x < -100 || b.x > window.innerWidth + 100) {
         b.isThrown = false;
         this.showFeedback("DANEBEN!");
         setTimeout(() => this.resetBall(), 600);
@@ -1331,7 +1327,7 @@ const CatchEngine = {
     if (!ctx) return;
     try {
       const now = ctx.currentTime;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      const notes = [523.25, 659.25, 783.99, 1046.50];
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -1354,13 +1350,11 @@ const CatchEngine = {
     
     if (ring) ring.classList.add('hidden');
 
-    // 1. EINSAUG-ANIMATION DER KARTE IN DEN BALL
     if (enemyImg) {
       enemyImg.classList.add('anim-suck-in');
     }
     playBeep(800, 0.2);
 
-    // 2. BALL FÄLLT NACH DEM EINSAUGEN AUF DEN BODEN UND WACKELT
     setTimeout(() => {
       if (ballEl) {
         ballEl.classList.add('wobble');
@@ -1378,9 +1372,7 @@ const CatchEngine = {
           clearInterval(wobbleInterval);
           if (ballEl) ballEl.classList.remove('wobble');
 
-          // ERFOLGS-PRÜFUNG
           if (Math.random() <= finalChance) {
-            // ERFOLG: SIEGES-FANFARE & STERNE-ANIMATION
             this.playFanfareSound();
             
             const stars = document.createElement('div');
@@ -1413,7 +1405,6 @@ const CatchEngine = {
             }, 600);
 
           } else {
-            // MISSERFOLG: POKÉMON PUFFT AUS DEM BALL HERAUS
             playBeep(220, 0.4);
             if (enemyImg) {
               enemyImg.classList.remove('anim-suck-in');
@@ -1432,10 +1423,6 @@ const CatchEngine = {
   }
 };
 
-};
-
-
-
 function attemptCatch() {
   if (isTrainingMode) return;
   if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
@@ -1445,6 +1432,7 @@ function attemptCatch() {
 
   CatchEngine.startCatchSession();
 }
+
 
 function winBattle() {
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
