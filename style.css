@@ -421,11 +421,11 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* EIGENES POKÉMON / BISASAM (UNTEN, GROSS SKALIERT) */
+/* EIGENES POKÉMON (WEITER OBEN & GRÖSSER SKALIERT) */
 .player-sprite-wrapper {
   position: relative !important;
-  bottom: 10px !important;
-  transform: scale(1.65) !important;
+  bottom: 60px !important; /* Schiebt das Pokémon und seine Leiste deutlich weiter nach oben */
+  transform: scale(1.85) !important; /* Macht es noch etwas größer */
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -434,6 +434,7 @@ button:active { transform: scale(0.97); }
   pointer-events: none !important;
   filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
 }
+
 
 .player-sprite-img {
   width: 140px;
@@ -595,10 +596,10 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes playerTackleAnimCorrected {
-  0% { transform: scale(1.65); }
-  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
-  50% { transform: translateY(-20px) scale(1.75); }
-  100% { transform: scale(1.65); }
+  0% { transform: scale(1.85); }
+  30% { transform: translateY(-30px) scale(1.95); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
+  50% { transform: translateY(-20px) scale(1.95); }
+  100% { transform: scale(1.85); }
 }
 
 .anim-enemy-tackle {
@@ -690,15 +691,14 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes dodgeLeftAnim {
-  0% { transform: scale(1.65) translateX(0); }
-  40% { transform: scale(1.65) translateX(-90px) rotate(-15deg); }
-  100% { transform: scale(1.65) translateX(0); }
+  0% { transform: scale(1.85) translateX(0); }
+  40% { transform: scale(1.85) translateX(-90px) rotate(-15deg); }
+  100% { transform: scale(1.85) translateX(0); }
 }
-
 @keyframes dodgeRightAnim {
-  0% { transform: scale(1.1) translateX(0); }
-  40% { transform: scale(1.1) translateX(90px) rotate(15deg); }
-  100% { transform: scale(1.1) translateX(0); }
+  0% { transform: scale(1.85) translateX(0); }
+  40% { transform: scale(1.85) translateX(90px) rotate(15deg); }
+  100% { transform: scale(1.85) translateX(0); }
 }
 
 /* MODALS & EVOLUTION */
@@ -799,15 +799,17 @@ button:active { transform: scale(0.97); }
 }
 
 @keyframes playerHitAnim {
-  0% { transform: scale(1.65); filter: brightness(1); }
-  25% { transform: scale(1.65) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  50% { transform: scale(1.65) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
-  75% { transform: scale(1.65) translateX(-4px); }
-  100% { transform: scale(1.65); filter: brightness(1); }
+  0% { transform: scale(1.85); filter: brightness(1); }
+  25% { transform: scale(1.85) translateX(-8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  50% { transform: scale(1.85) translateX(8px); filter: brightness(2.5) drop-shadow(0 0 12px red); }
+  75% { transform: scale(1.85) translateX(-4px); }
+  100% { transform: scale(1.85); filter: brightness(1); }
 }
 
-.direct-hit-flash {
+
+direct-hit-flash {
   filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
-  transform: scale(1.75) translateX(6px) !important;
+  transform: scale(1.95) translateX(6px) !important;
   transition: transform 0.05s ease, filter 0.05s ease !important;
 }
+
