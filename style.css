@@ -611,3 +611,40 @@ button:active { transform: scale(0.97); }
   padding: 12px 15px calc(env(safe-area-inset-bottom, 15px) + 10px) 15px !important;
   box-sizing: border-box !important;
 }
+
+/* EINSAUG-ANIMATION BEIM TREFFER */
+.anim-suck-in {
+  transition: transform 0.45s cubic-bezier(0.5, 0, 0.75, 0), opacity 0.45s ease !important;
+  transform: scale(0.01) rotate(720deg) translateY(-50px) !important;
+  opacity: 0 !important;
+}
+
+/* PUFF-ANIMATION BEIM AUSBRECHEN */
+.anim-puff-out {
+  animation: puffReappear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes puffReappear {
+  0% { transform: scale(0.1); opacity: 0; filter: brightness(3); }
+  50% { transform: scale(1.2); opacity: 0.8; filter: brightness(1.5); }
+  100% { transform: scale(1.0); opacity: 1; filter: brightness(1); }
+}
+
+/* ERFOLGS-STERNE PARTICLES */
+.catch-stars-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  pointer-events: none;
+  z-index: 200;
+  animation: starsPop 0.8s ease-out forwards;
+}
+
+@keyframes starsPop {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
