@@ -1114,7 +1114,7 @@ function executeEnemyDamage() {
   const enemyImg = document.getElementById('enemy-card-img');
   const playerImg = document.getElementById('player-card-img');
   
-  // 1. Gegner-Angriffsanimation auslösen
+  // 1. Gegner-Tackle Animation
   if (enemyImg) enemyImg.classList.add('anim-enemy-tackle');
   playPunchSound();
 
@@ -1126,16 +1126,19 @@ function executeEnemyDamage() {
     playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
     updateBattleUI();
 
-    // 2. Treffer-Animation beim eigenen Pokémon auslösen
-    if (playerImg) playerImg.classList.add('anim-player-hit');
+    // 2. Treffer direkt am Bild-Element auslösen (Rot leuchten / wackeln)
+    if (playerImg) {
+      playerImg.classList.add('direct-hit-flash');
+      playBeep(200, 0.2); // Zusätzlicher tiefer Treffer-Ton
+    }
 
     document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} trifft voll! (-${dmg} KP)`;
 
     if (enemyImg) enemyImg.classList.remove('anim-enemy-tackle');
 
-    // Nach Ende der Spieler-Treffer-Animation die Klasse wieder entfernen
+    // Nach 400ms den Treffer-Effekt beim Spieler wieder entfernen
     setTimeout(() => {
-      if (playerImg) playerImg.classList.remove('anim-player-hit');
+      if (playerImg) playerImg.classList.remove('direct-hit-flash');
     }, 400);
 
     isEnemyAttacking = false;
@@ -1154,6 +1157,7 @@ function executeEnemyDamage() {
 
   }, 400);
 }
+
 
 
 /* =========================================================
