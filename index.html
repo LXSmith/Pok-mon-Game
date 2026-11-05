@@ -132,18 +132,28 @@
       </footer>
     </section>
 
-    <!-- SCREEN 5: BATTLE -->
-    <section id="screen-battle" class="card-ui screen-panel hidden" style="position: relative;">
+        <!-- SCREEN 5: BATTLE -->
+    <section id="screen-battle" class="card-ui screen-panel hidden" style="position: relative; overflow: hidden;">
       <!-- DYNAMISCHES EFFEKT OVERLAY FÜR SPEZIALANGRIFFE -->
       <div id="elemental-fx-overlay" class="hidden"></div>
 
-      <div class="battle-header">
+      <div class="battle-header" style="position: relative;">
         <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
         <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
         <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
-        <img id="enemy-card-img" class="battle-card-img" src="" alt="Gegner">
+        
+        <!-- POKÉMON KARTE DES GEGNERS -->
+        <div class="target-card-wrapper" style="position: relative; display: inline-block;">
+          <img id="enemy-card-img" class="battle-card-img" src="" alt="Gegner">
+          
+          <!-- ZIELRING DIREKT AUF DER KARTE -->
+          <div id="target-ring-outer" class="target-ring-outer hidden">
+            <div id="target-ring-inner" class="target-ring-inner"></div>
+          </div>
+        </div>
       </div>
       
+      <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
       <div id="battle-warning-box" class="battle-box">Kampf beginnt!</div>
       
       <div class="battle-footer">
@@ -154,15 +164,9 @@
         <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
       </div>
       
-      <!-- POKÉMON GO CATCH ARENA OVERLAY -->
-      <div id="catch-arena" class="catch-arena hidden">
-        <div id="target-ring-outer" class="target-ring-outer">
-          <div id="target-ring-inner" class="target-ring-inner"></div>
-        </div>
-        <div id="catch-throw-ball" class="catch-throw-ball">
-          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokéball">
-        </div>
-        <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
+      <!-- FREI BEWEGBARER POKÉBALL -->
+      <div id="catch-throw-ball" class="catch-throw-ball hidden">
+        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokéball">
       </div>
 
       <div class="battle-controls">
@@ -171,6 +175,7 @@
         <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-primary btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
       </div>
     </section>
+
 
     <!-- MODAL 1: SCAN & TRAINING WAHL -->
     <div id="modal-scan" class="modal-overlay hidden">
