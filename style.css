@@ -361,7 +361,7 @@ button:active { transform: scale(0.97); }
   color: var(--accent-yellow);
 }
 
-/* BÜHNE MIT FLEXBOX-STRUKTUR (OBEN GEGNER, UNTEN SPIELER) */
+/* BÜHNE (OBEN GEGNER, UNTEN SPIELER OHNE PUFFER) */
 .arena-stage {
   position: relative !important;
   z-index: 5;
@@ -372,7 +372,7 @@ button:active { transform: scale(0.97); }
   justify-content: space-between !important;
   align-items: center !important;
   perspective: 700px;
-  padding: 20px 0 !important;
+  padding: 10px 0 !important;
   box-sizing: border-box !important;
 }
 
