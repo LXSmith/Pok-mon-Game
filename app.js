@@ -1160,7 +1160,7 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-    const onEnd = (e) => {
+        const onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       this.ball.isDragging = false;
 
@@ -1170,14 +1170,20 @@ const CatchEngine = {
         const dt = (last.time - first.time) / 1000;
 
         if (dt > 0.01) {
-          const vx = (last.x - first.x) / dt * 0.5;
-          const vy = (last.y - first.y) / dt * 0.65;
+          // X- und Y-Geschwindigkeiten basierend auf Wischeschwung
+          const vx = (last.x - first.x) / dt * 0.45;
+          const vy = (last.y - first.y) / dt * 0.55;
 
-          if (vy < -100) {
+          // Werfen erst ab Mindest-Schwung nach oben (vy ist negativ bei Aufwärtswischen)
+          if (vy < -120) {
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
-            this.ball.vz = -1.2;
+            
+            // 3D-TIEFEN-IMPULS: Starkes Wischen erzeugt mehr Tiefengeschwindigkeit!
+            // Je schneller gewischt wird, desto schneller schrumpft und fliegt der Ball nach hinten.
+            const swipeSpeed = Math.hypot(vx, vy);
+            this.ball.vz = - (swipeSpeed * 0.0018); 
           } else {
             this.resetBall();
           }
@@ -1186,6 +1192,7 @@ const CatchEngine = {
         this.resetBall();
       }
     };
+
 
     el.addEventListener('touchstart', onStart, { passive: false });
     window.addEventListener('touchmove', onMove, { passive: false });
