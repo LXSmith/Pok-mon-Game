@@ -156,7 +156,7 @@ html, body {
 /* APP VIEWPORT CONTAINER */
 .app-viewport { width: 100vw; height: 100dvh; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-/* PANELS & CARDS (Gilt nur für gewöhnliche Menü-Karten) */
+/* PANELS & CARDS */
 .screen-panel:not(.battle-fullscreen-container) {
   width: 100%;
   max-width: 360px;
@@ -305,27 +305,29 @@ button:active { transform: scale(0.97); }
 @keyframes flashGlow { 0% { filter: drop-shadow(0 0 8px #fff) brightness(1); } 100% { filter: drop-shadow(0 0 20px var(--accent-yellow)) brightness(1.3); } }
 
 /* =========================================================
-   POKÉMON GO FULLSCREEN CATCH ARENA (KORRIGIERT & BALANCIERT)
+   POKÉMON GO FULLSCREEN CATCH & BATTLE ARENA
    ========================================================= */
 
+#screen-battle,
 .battle-fullscreen-container {
-  position: absolute !important;
+  position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
+  height: 100vh !important;
   height: 100dvh !important;
   max-width: 100vw !important;
   margin: 0 !important;
   padding: 0 !important;
-  z-index: 50 !important;
-  background: #111827;
-  overflow: hidden;
+  z-index: 9999 !important;
+  background: #111827 !important;
+  overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
   box-sizing: border-box !important;
 }
 
-/* GRÜNER NATUR HINTERGRUND MIT PERSPEKTIV-RADIAL */
+/* GRÜNER NATUR HINTERGRUND */
 .arena-background {
   position: absolute;
   top: 0;
@@ -337,7 +339,7 @@ button:active { transform: scale(0.97); }
   z-index: 1;
 }
 
-/* TOP HUD (Gegner HP & Level) */
+/* TOP HUD */
 .arena-top-hud {
   position: relative;
   z-index: 10;
@@ -359,7 +361,7 @@ button:active { transform: scale(0.97); }
   color: var(--accent-yellow);
 }
 
-/* DIE BÜHNE MIT PERSPEKTIVE / TIEFE (KORRIGIERTE VERTIKALE STAUCHUNG) */
+/* BÜHNE MIT PERSPEKTIVE */
 .arena-stage {
   position: relative;
   z-index: 5;
@@ -367,17 +369,25 @@ button:active { transform: scale(0.97); }
   width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   perspective: 700px;
-  padding-bottom: 20px;
+  height: calc(100vh - 160px);
+  padding: 10px 0;
+  box-sizing: border-box;
+}
+
+.enemy-target-wrapper,
+.player-sprite-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative;
+  width: 100%;
 }
 
 .enemy-target-wrapper {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   transform: translateY(10px) scale(0.85);
   filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
 }
@@ -388,7 +398,7 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-/* ZIELRING SCHRUMPFEND */
+/* ZIELRING */
 .target-ring-outer {
   position: absolute;
   top: 50%;
@@ -413,11 +423,10 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* EIGENES POKÉMON (DEUTLICH GRÖSSER FÜR TIEFE) */
+/* EIGENES POKÉMON */
 .player-sprite-wrapper {
-  position: relative;
   z-index: 6;
-  transform: translateY(20px) scale(1.65); /* Von 1.15 auf 1.65 vergrößert */
+  transform: translateY(20px) scale(1.65);
   filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
   pointer-events: none;
 }
@@ -428,23 +437,18 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-
-/* PERFEKT ZENTRIERTER UND RUNDER 3D-POKÉBALL */
+/* 3D-POKÉBALL */
 .catch-throw-ball,
 #catch-throw-ball {
   position: fixed !important;
-  width: 75px !important; /* Von 90px auf 75px angepasst, damit er kompakt neben der Karte liegt */
+  width: 75px !important;
   height: 75px !important;
   z-index: 10001 !important;
   cursor: grab !important;
   touch-action: none !important;
-  
-  /* Exakter Kreis-Schnitt ohne Ränder */
   border-radius: 50% !important;
   overflow: hidden !important;
   background: transparent !important;
-  
-  /* Bodenschatten für plastische Tiefe */
   filter: drop-shadow(0 15px 12px rgba(0, 0, 0, 0.7));
   transition: filter 0.15s ease;
 }
@@ -454,38 +458,20 @@ button:active { transform: scale(0.97); }
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  
-  /* NEU: Zoomt den Pokéball leicht im Kreis heran, schiebt den grauen Rand im Bild nach außen */
   transform: scale(1.16) !important;
-  
   pointer-events: none !important;
   display: block !important;
 }
 
-
-/* Beim Festhalten/Wischen mit dem Finger */
 .catch-throw-ball.dragging {
   cursor: grabbing !important;
   filter: drop-shadow(0 25px 20px rgba(0, 0, 0, 0.75)) brightness(1.1);
 }
 
-/* Curveball-Glitzern und schneller Spin */
 .catch-throw-ball.spinning {
   filter: drop-shadow(0 0 18px #ffcb05) drop-shadow(0 0 25px #00f0ff) brightness(1.2);
 }
 
-/* 
-  DIE CSS ANIMATION spinBall WURDE ENTFERNT,
-  DAMIT DAS JAVASCRIPT DIE DREHRICHTUNG (LINKS/RECHTS) FREI STEUERN KANN!
-*/
-
-
-@keyframes spinBall {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Wackeln beim Fangen */
 .catch-throw-ball.wobble {
   animation: wobbleBall 0.6s ease-in-out infinite;
 }
@@ -496,14 +482,21 @@ button:active { transform: scale(0.97); }
   75% { transform: translate(-50%, -50%) rotate(22deg); }
 }
 
-/* BOTTOM HUD & KAMPF-BUTTONS */
-.arena-bottom-hud {
-  position: relative;
-  z-index: 10;
-  padding: 12px 15px 20px 15px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+/* BOTTOM HUD */
+.arena-bottom-hud,
+#screen-battle .arena-bottom-hud {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 10000 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  padding: 12px 15px calc(env(safe-area-inset-bottom, 15px) + 10px) 15px !important;
+  box-sizing: border-box !important;
 }
 
 .player-mini-stats {
@@ -566,15 +559,53 @@ button:active { transform: scale(0.97); }
   pointer-events: none;
 }
 
-/* ANGRIFFS- & EINSCHLAG-ANIMATIONEN */
-.anim-player-tackle {
-  animation: playerTackle 0.35s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+/* KP-OVERLAYS */
+.hp-overlay {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  color: white;
+  min-width: 170px;
+  max-width: 200px;
+  z-index: 10;
 }
 
-@keyframes playerTackle {
-  0% { transform: translateY(0) scale(1.15); }
-  50% { transform: translateY(-40px) scale(1.25); }
-  100% { transform: translateY(0) scale(1.15); }
+.enemy-hp-overlay { margin-bottom: 6px !important; }
+.player-hp-overlay { margin-top: 6px !important; }
+
+.enemy-sprite-img,
+.player-sprite-img {
+  max-height: 24vh !important;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+/* ANGRIFFS- & AUSWEICH-ANIMATIONEN (INKL. GEGNER-TACKLE) */
+.anim-player-tackle {
+  animation: playerTackleAnimCorrected 0.4s ease-in-out !important;
+}
+
+@keyframes playerTackleAnimCorrected {
+  0% { transform: translateY(20px) scale(1.65); }
+  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
+  50% { transform: translateY(-20px) scale(1.75); }
+  100% { transform: translateY(20px) scale(1.65); }
+}
+
+.anim-enemy-tackle {
+  animation: enemyTackleAnim 0.4s ease-in-out !important;
+}
+
+@keyframes enemyTackleAnim {
+  0% { transform: translateY(10px) scale(0.85); }
+  30% { transform: translateY(40px) scale(0.95); filter: drop-shadow(0 0 12px rgba(255,0,0,0.7)); }
+  50% { transform: translateY(30px) scale(0.95); }
+  100% { transform: translateY(10px) scale(0.85); }
 }
 
 .anim-hit-shake {
@@ -590,41 +621,12 @@ button:active { transform: scale(0.97); }
   100% { transform: translateY(10px) scale(0.85); filter: brightness(1); }
 }
 
-#screen-battle {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  z-index: 9999 !important;
-  background: #111827 !important;
-  overflow: hidden !important;
-}
-
-#screen-battle .arena-bottom-hud {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 10000 !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: rgba(15, 23, 42, 0.95) !important;
-  padding: 12px 15px calc(env(safe-area-inset-bottom, 15px) + 10px) 15px !important;
-  box-sizing: border-box !important;
-}
-
-/* EINSAUG-ANIMATION BEIM TREFFER */
 .anim-suck-in {
   transition: transform 0.45s cubic-bezier(0.5, 0, 0.75, 0), opacity 0.45s ease !important;
   transform: scale(0.01) rotate(720deg) translateY(-50px) !important;
   opacity: 0 !important;
 }
 
-/* PUFF-ANIMATION BEIM AUSBRECHEN */
 .anim-puff-out {
   animation: puffReappear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -635,7 +637,6 @@ button:active { transform: scale(0.97); }
   100% { transform: scale(1.0); opacity: 1; filter: brightness(1); }
 }
 
-/* ERFOLGS-STERNE PARTICLES */
 .catch-stars-overlay {
   position: absolute;
   top: 50%;
@@ -653,7 +654,7 @@ button:active { transform: scale(0.97); }
   100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
 }
 
-/* GRELL LEUCHTENDER AUSWEICH-BUTTON (LINKS NEBEN SPIELER-KARTE) */
+/* AUSWEICH-BUTTON & ANIMATIONEN */
 .btn-dodge-glow {
   position: absolute !important;
   bottom: 155px !important;
@@ -676,7 +677,6 @@ button:active { transform: scale(0.97); }
   100% { transform: scale(1.1); filter: brightness(1.4); }
 }
 
-/* AUSWEICH-ANIMATIONEN (STARK SEITLICH WEICHEN) */
 .anim-dodge-left {
   animation: dodgeLeftAnim 0.5s ease-in-out forwards !important;
 }
@@ -697,63 +697,7 @@ button:active { transform: scale(0.97); }
   100% { transform: translateY(10px) scale(0.85) translateX(0); }
 }
 
-/* Container für die Karten-Bühne im Kampf */
-.arena-stage {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  height: calc(100vh - 160px);
-  padding: 10px 0;
-  box-sizing: border-box;
-}
-
-/* Karten-Wrapper: Flex-Direction auf Column erzwingen! */
-.enemy-target-wrapper,
-.player-sprite-wrapper {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative;
-  width: 100%;
-}
-
-/* KP-Overlays styling */
-.hp-overlay {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(6px);
-  padding: 6px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  text-align: center;
-  color: white;
-  min-width: 170px;
-  max-width: 200px;
-  z-index: 10;
-}
-
-/* Gegner-KP direkt über der Karte */
-.enemy-hp-overlay {
-  margin-bottom: 6px !important;
-}
-
-/* Spieler-KP direkt unter der Karte */
-.player-hp-overlay {
-  margin-top: 6px !important;
-}
-
-/* Karten-Größe begrenzen, damit Platz für KP-Leisten bleibt */
-.enemy-sprite-img,
-.player-sprite-img {
-  max-height: 24vh !important;
-  width: auto;
-  object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-}
-
-/* Modal-Card Anpassung */
+/* MODALS & EVOLUTION */
 .modal-card {
   max-width: 320px;
   max-height: 85vh;
@@ -763,7 +707,6 @@ button:active { transform: scale(0.97); }
   align-items: center;
 }
 
-/* Entwicklungs-Karte skalieren */
 #evo-card-img,
 .battle-card-img {
   max-width: 180px !important;
@@ -776,7 +719,7 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px rgba(255, 203, 5, 0.5);
 }
 
-/* Fullscreen FX Overlay für Spezialangriffe */
+/* SPEZIALANGRIFF OVERLAYS */
 #elemental-fx-overlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -784,7 +727,6 @@ button:active { transform: scale(0.97); }
   pointer-events: none;
 }
 
-/* FEUER: Wirbelndes & pulsierendes Glühen */
 .fx-feuer {
   background: radial-gradient(circle, rgba(255,69,0,0.85) 0%, rgba(255,140,0,0.6) 50%, transparent 80%);
   animation: fxFeuerAnim 3.5s ease-in-out forwards;
@@ -797,7 +739,6 @@ button:active { transform: scale(0.97); }
   100% { opacity: 0; transform: scale(1.8) rotate(360deg); }
 }
 
-/* WASSER: Blaue Flutwelle */
 .fx-wasser {
   background: linear-gradient(180deg, rgba(0,191,255,0.8) 0%, rgba(30,144,255,0.9) 50%, rgba(0,0,139,0.7) 100%);
   animation: fxWasserAnim 3.5s ease-in-out forwards;
@@ -809,7 +750,6 @@ button:active { transform: scale(0.97); }
   100% { opacity: 0; transform: translateY(-100%); }
 }
 
-/* ELEKTRO: Grelle Blitze */
 .fx-elektro {
   background: rgba(255, 235, 59, 0.9);
   animation: fxElektroAnim 3.5s steps(4, end) forwards;
@@ -821,7 +761,6 @@ button:active { transform: scale(0.97); }
   100% { opacity: 0; }
 }
 
-/* PFLANZE: Grünes Natur-Leuchten */
 .fx-pflanze {
   background: radial-gradient(circle, rgba(76,209,55,0.9) 0%, rgba(16,185,129,0.7) 60%, transparent 90%);
   animation: fxPflanzeAnim 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -831,33 +770,4 @@ button:active { transform: scale(0.97); }
   30% { opacity: 1; transform: scale(1.1); }
   70% { opacity: 0.8; transform: scale(0.95); }
   100% { opacity: 0; transform: scale(1.4); }
-}
-
-
-/* =========================================================
-   ERGÄNZUNG FÜR GEGNER- & SPIELER-ANGRITTSANIMATIONEN
-   ========================================================= */
-
-/* Gegner stürmt nach unten/vorne Richtung Spieler */
-@keyframes enemyTackleAnim {
-  0% { transform: translateY(0) scale(0.85); }
-  30% { transform: translateY(40px) scale(0.95); filter: drop-shadow(0 0 12px rgba(255,0,0,0.7)); }
-  50% { transform: translateY(30px) scale(0.95); }
-  100% { transform: translateY(0) scale(0.85); }
-}
-
-.anim-enemy-tackle {
-  animation: enemyTackleAnim 0.4s ease-in-out !important;
-}
-
-/* Korrigierter Spieler-Tackle (stürmt nach oben/vorne Richtung Gegner) */
-@keyframes playerTackleAnimCorrected {
-  0% { transform: translateY(20px) scale(1.65); }
-  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
-  50% { transform: translateY(-20px) scale(1.75); }
-  100% { transform: translateY(20px) scale(1.65); }
-}
-
-.anim-player-tackle {
-  animation: playerTackleAnimCorrected 0.4s ease-in-out !important;
 }
