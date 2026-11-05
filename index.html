@@ -16,8 +16,8 @@
   <!-- Leaflet CSS für OpenStreetMap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Externe CSS v=28000 -->
-  <link rel="stylesheet" href="style.css?v=24000">
+  <!-- Externe CSS -->
+  <link rel="stylesheet" href="style.css?v=30000">
 </head>
 <body>
 
@@ -135,28 +135,25 @@
     <section id="screen-battle" class="screen-panel hidden battle-fullscreen-container">
       <div class="arena-background"></div>
       <div id="elemental-fx-overlay" class="hidden"></div>
-
-<!-- POKÉBALL (Muss im HTML vorhanden sein, aber standardmäßig die Klasse 'hidden' haben) -->
-<div id="catch-throw-ball" class="catch-throw-ball hidden">
-  <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
-</div>
+      <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
 
       <!-- TOP HUD -->
       <div class="arena-top-hud">
         <div id="enemy-title" class="battle-title-hud">WILDES POKÉMON</div>
-        <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
+        <div class="bar-bg" style="margin-top:6px;"><div id="enemy-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
         <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
       </div>
+
+      <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon greift an!</div>
 
       <!-- STAGE WITH PERSPECTIVE -->
       <div class="arena-stage">
         <!-- GEGNER POKÉMON (HINTERGRUND) -->
         <div id="enemy-target-wrapper" class="enemy-target-wrapper">
-          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
-          
           <div id="target-ring-outer" class="target-ring-outer hidden">
             <div id="target-ring-inner" class="target-ring-inner"></div>
           </div>
+          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
         </div>
 
         <!-- DEIN EIGENES POKÉMON (VORDERGRUND UNTEN) -->
@@ -165,14 +162,15 @@
         </div>
       </div>
 
-      <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
-      <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon erscheint!</div>
+      <!-- POKÉBALL -->
+      <div id="catch-throw-ball" class="catch-throw-ball hidden">
+        <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
+      </div>
 
       <!-- BOTTOM HUD -->
       <div class="arena-bottom-hud">
         <div class="player-mini-stats">
-          <span id="player-title">Dein Pokémon</span> | KP: <span id="player-hp-text">50/50</span>
-          <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
+          <span id="player-title">Dein Pokémon</span> | KP: <span id="player-hp-text">50/50</span> | Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span>
         </div>
         
         <div class="battle-action-bar">
@@ -181,13 +179,6 @@
           <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
         </div>
       </div>
-
-<!-- POKÉBALL (ORIGINALER DATEINAME) -->
-<div id="catch-throw-ball" class="catch-throw-ball hidden">
-  <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
-</div>
-
-
     </section>
 
     <!-- MODAL 1: SCAN & TRAINING WAHL -->
@@ -277,8 +268,8 @@
 
   </main>
 
-  <!-- Leaflet JS & App Script v=28000 -->
+  <!-- Leaflet JS & App Script v=30000 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=28000"></script>
+  <script src="app.js?v=30000"></script>
 </body>
 </html>
