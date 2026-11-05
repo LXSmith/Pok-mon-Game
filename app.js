@@ -354,16 +354,17 @@ const EVOLUTION_CHAINS = {
 };
 
 const COMMON_POKEMON = [
-  { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/16.png", weakness: "elektro" },
-  { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png", weakness: "kampf" },
-  { name: "Raupy", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10.png", weakness: "feuer" },
-  { name: "Enton", type: "wasser", hp: 50, maxHp: 50, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/54.png", weakness: "elektro" }
+  { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/57_hires.png", weakness: "elektro" },
+  { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf" },
+  { name: "Raupy", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/45_hires.png", weakness: "feuer" },
+  { name: "Hornliu", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", weakness: "feuer" }
 ];
 
 const RARE_POKEMON = [
-  { name: "Pikachu", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", weakness: "boden" },
-  { name: "Fukano", type: "feuer", hp: 55, maxHp: 55, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/58.png", weakness: "wasser" },
-  { name: "Kleinstein", type: "gestein", hp: 60, maxHp: 60, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/74.png", weakness: "wasser" }
+  { name: "Pikachu", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "boden" },
+  { name: "Fukano", type: "feuer", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/28_hires.png", weakness: "wasser" },
+  { name: "Kleinstein", type: "gestein", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/47_hires.png", weakness: "wasser" },
+  { name: "Pinsir", type: "käfer", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
 ];
 
 let selectedFlowMode = 'continue';
@@ -535,9 +536,9 @@ function chooseStarter(type, element) {
 
 function confirmStarter() {
   const starters = {
-    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png", weakness: "feuer", evoChance: 0 },
-    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png", weakness: "wasser", evoChance: 0 },
-    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png", weakness: "pflanze", evoChance: 0 }
+    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", evoChance: 0 },
+    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", evoChance: 0 },
+    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", evoChance: 0 }
   };
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
@@ -584,7 +585,7 @@ function renderPokemonTeam() {
         <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
         <div style="text-align:left;">
           <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
-          <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp}</div>
+          <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp} | Evo: ${p.evoChance || 0}%</div>
         </div>
       </div>
       ${idx === 0 ? '<span class="tag-active">Aktiv</span>' : ''}
@@ -594,7 +595,7 @@ function renderPokemonTeam() {
 }
 
 /* =========================================================
-   4. RADAR & SCAN LOGIK
+   4. RADAR, SCAN & EXAKTE BLIP-POSITIONSBERECHNUNG
    ========================================================= */
 function closeScanModal() {
   document.getElementById('modal-scan').classList.add('hidden');
@@ -613,7 +614,7 @@ function startScanProcess(type) {
   ringContainer.className = "radar-rings state-scanning";
   statusText.innerText = "Scanne Umgebung...";
 
-  let durationMs = (type === 'quick') ? 4000 : 8000;
+  let durationMs = (type === 'quick') ? (Math.random() * 3 + 3) * 60 * 1000 : (Math.random() * 15 + 15) * 60 * 1000;
 
   clearTimeout(scanTimer);
   scanTimer = setTimeout(() => {
@@ -624,19 +625,29 @@ function startScanProcess(type) {
 function forceDevSpawn() {
   isScanning = false;
   currentScanType = 'quick';
+
+  if (!currentPosition) {
+    currentPosition = { lat: 51.1657, lon: 10.4515 };
+  }
+
+  // Für Test-Modus: Spawnt direkt 15 Meter vor dem Spieler, damit Blip auf dem Radar angezeigt wird
+  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, 15, currentHeading);
+
   triggerSignalDetected();
 }
 
 function triggerSignalDetected() {
   isScanning = false;
 
-  if (currentPosition) {
-    const randomDistance = Math.random() * (3 - 0.5) + 0.5;
-    const randomBearing = Math.random() * 360;
-    targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
-  } else {
-    targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
-    currentPosition = { lat: 51.1657, lon: 10.4515 };
+  if (!targetPokemonCoords) {
+    if (currentPosition) {
+      const randomDistance = Math.random() * (25 - 10) + 10;
+      const randomBearing = Math.random() * 360;
+      targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
+    } else {
+      targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
+      currentPosition = { lat: 51.1657, lon: 10.4515 };
+    }
   }
 
   const ringContainer = document.getElementById('radar-ring-container');
@@ -659,7 +670,7 @@ function triggerSignalDetected() {
 
 function scarePokemon() {
   if (!currentPosition) return;
-  const randomDistance = Math.random() * (3 - 0.5) + 0.5;
+  const randomDistance = Math.random() * (25 - 10) + 10;
   const randomBearing = Math.random() * 360;
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   playBeep(1000, 0.15);
@@ -728,10 +739,139 @@ function resetRadarUI() {
 }
 
 /* =========================================================
-   5. KAMPF- & FANGSYSTEM
+   4b. ZUHAUSE TRAININGS-MODUS
    ========================================================= */
+function openTrainingSelection() {
+  closeScanModal();
+
+  if (currentSaveData.pokemonTeam.length < 2) {
+    alert("Du benötigst mindestens 2 Pokémon in deinem Team für ein Training!");
+    return;
+  }
+
+  const container = document.getElementById('training-partner-list');
+  container.innerHTML = "";
+
+  currentSaveData.pokemonTeam.forEach((p, idx) => {
+    if (idx === 0) return;
+
+    const div = document.createElement('div');
+    div.className = "pokemon-row";
+    div.style.cursor = "pointer";
+    div.onclick = () => startTrainingMatch(p);
+    div.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
+        <div style="text-align:left;">
+          <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" style="font-size:10px; width:auto; padding:6px 12px;">Wählen</button>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('modal-training-select').classList.remove('hidden');
+}
+
+function closeTrainingSelection() {
+  document.getElementById('modal-training-select').classList.add('hidden');
+}
+
+function startTrainingMatch(partnerMon) {
+  closeTrainingSelection();
+  isTrainingMode = true;
+  trainingPartnerMon = partnerMon;
+
+  currentEnemy = { ...partnerMon, hp: partnerMon.maxHp };
+  playerBattlePokemon = currentSaveData.pokemonTeam[0];
+  playerEnergy = 0;
+  isPlayerTurn = true;
+  isEnemyAttacking = false;
+
+  showScreen('screen-battle');
+  updateBattleUI();
+
+  const catchBtn = document.getElementById('btn-catch-pokemon');
+  if (catchBtn) catchBtn.style.display = 'none';
+  document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
+}
+
+/* =========================================================
+   5. ERWEITERTES KAMPFSYSTEM MIT ANIMATIONEN & SOUNDS
+   ========================================================= */
+function playPunchSound() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+    
+    gain.gain.setValueAtTime(0.8, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch(e){}
+}
+
+function playElementalSound(type) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const t = type.toLowerCase();
+    if (t === 'feuer') {
+      playPunchSound();
+      playBeep(220, 0.3);
+      setTimeout(() => playBeep(110, 0.4), 100);
+    } else if (t === 'wasser') {
+      playBeep(600, 0.1);
+      setTimeout(() => playBeep(800, 0.1), 80);
+      setTimeout(() => playBeep(500, 0.2), 160);
+    } else if (t === 'elektro') {
+      playBeep(1200, 0.05);
+      setTimeout(() => playBeep(400, 0.05), 50);
+      setTimeout(() => playBeep(1500, 0.1), 100);
+    } else {
+      playPunchSound();
+      playBeep(440, 0.2);
+    }
+  } catch(e){}
+}
+
+function triggerElementalFX(elementType) {
+  const overlay = document.getElementById('elemental-fx-overlay');
+  if (!overlay) return;
+
+  const rawType = elementType ? elementType.toLowerCase() : 'feuer';
+  let fxClass = 'fx-feuer';
+
+  if (rawType === 'wasser') fxClass = 'fx-wasser';
+  else if (rawType === 'pflanze') fxClass = 'fx-pflanze';
+  else if (rawType === 'elektro') fxClass = 'fx-elektro';
+
+  overlay.className = fxClass;
+  overlay.classList.remove('hidden');
+
+  playElementalSound(rawType);
+
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    overlay.className = 'hidden';
+  }, 700);
+}
+
 function startBattleFromScan() {
   isTrainingMode = false;
+  const catchBtn = document.getElementById('btn-catch-pokemon');
+  if (catchBtn) catchBtn.style.display = 'block';
+
   resetRadarUI();
   showScreen('screen-battle');
 
@@ -745,30 +885,117 @@ function startBattleFromScan() {
   isEnemyAttacking = false;
 
   updateBattleUI();
-  document.getElementById('battle-warning-box').innerText = `Ein wildes ${currentEnemy.name} ist aufgetaucht!`;
-  
-  // Fangen sofort starten
-  CatchEngine.startCatchSession();
+  document.getElementById('battle-warning-box').innerText = `Ein wildes ${currentEnemy.name} greift an!`;
 }
 
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
-  document.getElementById('enemy-title').innerText = "WILDES " + currentEnemy.name.toUpperCase();
+  const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
+  document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
   document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
   document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
   document.getElementById('enemy-hp-bar').style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
 
   document.getElementById('player-title').innerText = playerBattlePokemon.name.toUpperCase();
-  document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp} / ${playerBattlePokemon.maxHp} KP`;
+  document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
+  document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
+
+  let dots = "";
+  for (let i = 0; i < 3; i++) dots += (i < playerEnergy) ? "🟡 " : "⚪ ";
+  document.getElementById('player-energy-dots').innerText = dots;
+
+  const specBtn = document.getElementById('btn-special-attack');
+  if (specBtn) {
+    specBtn.disabled = !(playerEnergy >= 3 && isPlayerTurn && !isEnemyAttacking);
+    specBtn.style.opacity = specBtn.disabled ? "0.4" : "1";
+  }
 }
 
-function toggleCatchMode() {
-  if (CatchEngine.active) {
-    CatchEngine.stopCatchSession();
-  } else {
-    CatchEngine.startCatchSession();
-  }
+function executePlayerAttack() {
+  if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
+
+  isPlayerTurn = false;
+  isEnemyAttacking = true;
+
+  const enemyImg = document.getElementById('enemy-card-img');
+  playPunchSound();
+
+  let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
+  if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+
+  currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+  playerEnergy = Math.min(3, playerEnergy + 1);
+  updateBattleUI();
+
+  document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+
+  if (enemyImg) enemyImg.classList.add('anim-hit-shake');
+
+  setTimeout(() => {
+    if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
+    if (currentEnemy.hp <= 0) return winBattle();
+    setTimeout(scheduleEnemyAttack, 800);
+  }, 400);
+}
+
+function executePlayerSpecial() {
+  if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
+
+  isPlayerTurn = false;
+  isEnemyAttacking = true;
+  playerEnergy = 0;
+
+  const enemyImg = document.getElementById('enemy-card-img');
+  triggerElementalFX(playerBattlePokemon.type);
+
+  setTimeout(() => {
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.70);
+    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+
+    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+    updateBattleUI();
+
+    document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${playerBattlePokemon.type.toUpperCase()})! (-${dmg} KP)`;
+
+    if (enemyImg) enemyImg.classList.add('anim-hit-shake');
+
+    setTimeout(() => {
+      if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
+      if (currentEnemy.hp <= 0) return winBattle();
+      setTimeout(scheduleEnemyAttack, 800);
+    }, 400);
+
+  }, 350);
+}
+
+function scheduleEnemyAttack() {
+  if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
+
+  isEnemyAttacking = true;
+  isPlayerTurn = false;
+
+  playPunchSound();
+  const dmg = Math.round(currentEnemy.maxHp * 0.20);
+  playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
+
+  document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
+
+  setTimeout(() => {
+    isEnemyAttacking = false;
+
+    if (playerBattlePokemon.hp <= 0) {
+      setTimeout(() => {
+        playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+        saveCurrentData();
+        alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
+        showScreen('screen-radar-hud');
+      }, 500);
+    } else {
+      isPlayerTurn = true;
+      updateBattleUI();
+    }
+  }, 500);
 }
 
 /* =========================================================
@@ -806,6 +1033,7 @@ const CatchEngine = {
       ball.classList.add('dragging');
       ball.style.left = pt.clientX + 'px';
       ball.style.top = pt.clientY + 'px';
+      ball.style.transform = 'translate(-50%, -50%) scale(1.3)';
     };
 
     const moveDrag = (e) => {
@@ -837,7 +1065,7 @@ const CatchEngine = {
       const deltaX = pt.clientX - this.startX;
       const deltaY = pt.clientY - this.startY;
 
-      if (deltaY < -40 && duration < 0.9) {
+      if (deltaY < -30 && duration < 0.9) {
         this.performThrow(deltaX, deltaY, duration, pt.clientX, pt.clientY);
       } else {
         this.resetBallPosition();
@@ -929,7 +1157,7 @@ const CatchEngine = {
     if (!ball) return;
     
     const enemyImg = document.getElementById('enemy-card-img');
-    const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 200, width: 120, height: 120 };
+    const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
     
     const targetCenterX = enemyRect.left + enemyRect.width / 2;
     const targetCenterY = enemyRect.top + enemyRect.height / 2;
@@ -954,8 +1182,7 @@ const CatchEngine = {
       const currentX = startLeft + (targetX - startLeft) * progress + (Math.sin(progress * Math.PI) * curveOffset);
       const currentTop = startTop + (targetY - startTop) * progress;
       
-      // PERSPEKTIVISCHER SCALE: Ball wird kleiner, je weiter er nach hinten fliegt!
-      const currentScale = 1.2 - (progress * 0.7);
+      const currentScale = 1.2 - (progress * 0.65);
 
       ball.style.left = currentX + 'px';
       ball.style.top = currentTop + 'px';
@@ -1077,12 +1304,113 @@ const CatchEngine = {
   }
 };
 
-function executePlayerAttack() {
-  alert("Du greifst an!");
+function attemptCatch() {
+  if (isTrainingMode) return;
+  if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
+
+  currentSaveData.pokeballs--;
+  updateBattleUI();
+
+  CatchEngine.startCatchSession();
 }
 
-function executePlayerSpecial() {
-  alert("Spezialangriff!");
+function winBattle() {
+  document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
+  try {
+    playBeep(523.25, 0.15);
+    setTimeout(() => playBeep(659.25, 0.15), 150);
+    setTimeout(() => playBeep(783.99, 0.4), 300);
+  } catch(e){}
+
+  setTimeout(() => {
+    if (isTrainingMode) {
+      const earnedExp = 10;
+      addPokemonExp(playerBattlePokemon, earnedExp);
+      if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
+      playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+      saveCurrentData();
+
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
+      document.getElementById('victory-item-text').innerText = `Beide Pokémon haben gelernt!`;
+      document.getElementById('victory-screen').classList.remove('hidden');
+    } else {
+      const earnedExp = 20;
+      addTrainerExp(earnedExp);
+      currentSaveData.pokeballs += 2;
+
+      const activeMon = playerBattlePokemon;
+      const leveledUp = addPokemonExp(activeMon, earnedExp);
+      activeMon.hp = activeMon.maxHp;
+      saveCurrentData();
+
+      if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
+        pendingEvoPokemon = activeMon;
+        showEvolutionScreen(activeMon);
+      } else {
+        document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
+        document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
+        document.getElementById('victory-screen').classList.remove('hidden');
+      }
+    }
+  }, 1000);
+}
+
+function addPokemonExp(pokemon, amount) {
+  if (!pokemon.exp) pokemon.exp = 0;
+  if (!pokemon.maxExp) pokemon.maxExp = pokemon.level * 15;
+
+  pokemon.exp += amount;
+  let didLevelUp = false;
+
+  while (pokemon.exp >= pokemon.maxExp) {
+    pokemon.level++;
+    pokemon.exp -= pokemon.maxExp;
+    pokemon.maxExp = pokemon.level * 15;
+    pokemon.maxHp += 5;
+    pokemon.hp = pokemon.maxHp;
+    
+    if (pokemon.evoChance === undefined) pokemon.evoChance = 0;
+    pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
+    didLevelUp = true;
+  }
+  return didLevelUp;
+}
+
+function showEvolutionScreen(pokemon) {
+  const evoData = EVOLUTION_CHAINS[pokemon.name];
+  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} ist bereit!`;
+  document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
+  document.getElementById('evo-card-img').src = pokemon.cardUrl;
+  document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
+  document.getElementById('evo-screen').classList.remove('hidden');
+}
+
+function rollEvolution() {
+  if (!pendingEvoPokemon) return;
+  const roll = Math.floor(Math.random() * 100) + 1;
+  const evoData = EVOLUTION_CHAINS[pendingEvoPokemon.name];
+  const currentChance = pendingEvoPokemon.evoChance || 0;
+
+  if (roll <= currentChance && evoData) {
+    pendingEvoPokemon.name = evoData.next;
+    pendingEvoPokemon.cardUrl = evoData.cardUrl;
+    pendingEvoPokemon.maxHp += evoData.hpBonus;
+    pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
+    pendingEvoPokemon.evoChance = 0;
+    saveCurrentData();
+    alert(`🎉 Glückwunsch! Dein Pokémon hat sich zu ${pendingEvoPokemon.name} entwickelt!`);
+  } else {
+    playBeep(300, 0.3);
+    alert(`Fast geschafft! Die Entwicklung hat noch nicht geklappt.`);
+  }
+
+  document.getElementById('evo-screen').classList.add('hidden');
+  showScreen('screen-radar-hud');
+}
+
+function closeVictoryOverlay() {
+  document.getElementById('victory-screen').classList.add('hidden');
+  showScreen('screen-radar-hud');
 }
 
 function addTrainerExp(amount) {
@@ -1123,12 +1451,57 @@ function closeMenuModal() {
   document.getElementById('modal-menu').classList.add('hidden');
 }
 
+function switchMenuTab(tabName) {
+  ['pokemon', 'items', 'exp'].forEach(t => {
+    document.getElementById(`mtab-content-${t}`).classList.add('hidden');
+    document.getElementById(`mtab-btn-${t}`).classList.remove('active');
+  });
+
+  document.getElementById(`mtab-content-${tabName}`).classList.remove('hidden');
+  document.getElementById(`mtab-btn-${tabName}`).classList.add('active');
+}
+
 function exitToMainMenu() {
   closeMenuModal();
   cancelScan();
   saveCurrentData();
   updateSlotUI();
   showScreen('screen-main-menu');
+}
+
+/* BACKUP SYSTEM */
+function exportSaveGame() {
+  const backup = {
+    slot1: localStorage.getItem('pokemon_rl_slot_1'),
+    slot2: localStorage.getItem('pokemon_rl_slot_2'),
+    slot3: localStorage.getItem('pokemon_rl_slot_3')
+  };
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pokemon_rpg_backup.json';
+  a.click();
+}
+
+function triggerImport() {
+  document.getElementById('import-file-input').click();
+}
+
+function importSaveGame(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data.slot1) localStorage.setItem('pokemon_rl_slot_1', data.slot1);
+      if (data.slot2) localStorage.setItem('pokemon_rl_slot_2', data.slot2);
+      if (data.slot3) localStorage.setItem('pokemon_rl_slot_3', data.slot3);
+      alert("Spielstand erfolgreich wiederhergestellt!");
+      location.reload();
+    } catch (err) { alert("Fehlerhafte Datei."); }
+  };
+  reader.readAsText(file);
 }
 
 // INTRO ENGINE STARTEN
