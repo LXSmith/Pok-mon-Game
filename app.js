@@ -630,6 +630,16 @@ function forceDevSpawn() {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
+  // Pokémon spawnt direkt auf deinen eigenen GPS-Koordinaten (0m Entfernung)
+  targetPokemonCoords = { 
+    lat: currentPosition.lat, 
+    lon: currentPosition.lon 
+  };
+
+  triggerSignalDetected();
+}
+
+
   // Für Test-Modus: Spawnt direkt 15 Meter vor dem Spieler, damit Blip auf dem Radar angezeigt wird
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, 15, currentHeading);
 
