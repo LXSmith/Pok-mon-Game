@@ -720,46 +720,46 @@ button:active { transform: scale(0.97); }
 }
 
 /* =========================================================
-   NEUE ELEMENTARE PROJEKTIL-ANIMATIONEN (SPEZIALANGRIFFE)
+   ELEMENTARE PROJEKTIL-ANIMATIONEN (KORRIGIERT & SICHTBAR)
    ========================================================= */
 
 .elemental-projectile {
   position: absolute;
   font-size: 45px;
-  z-index: 150;
+  z-index: 99999 !important; /* Ganz nach oben im Layer-Stack holen */
   pointer-events: none;
-  transition: all 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-  filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+  left: 50% !important;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 15px rgba(255,255,255,0.9));
 }
 
 @keyframes flyToEnemyFeuer {
-  0% { transform: translate(-50%, 50px) scale(0.5) rotate(0deg); opacity: 0; }
-  20% { opacity: 1; transform: translate(-50%, -50px) scale(1.5) rotate(180deg); filter: drop-shadow(0 0 25px orange); }
-  80% { transform: translate(-50%, -220px) scale(1.2) rotate(360deg); }
-  100% { transform: translate(-50%, -260px) scale(0.8) rotate(720deg); opacity: 0; }
+  0% { bottom: 120px; transform: translateX(-50%) scale(0.5) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.5) rotate(180deg); }
+  80% { transform: translateX(-50%) scale(1.2) rotate(360deg); }
+  100% { bottom: 65vh; transform: translateX(-50%) scale(0.8) rotate(720deg); opacity: 0; }
 }
 
 @keyframes flyToEnemyWasser {
-  0% { transform: translate(-50%, 50px) scale(0.5); opacity: 0; }
-  20% { opacity: 1; transform: translate(-50%, -60px) scale(1.6); filter: drop-shadow(0 0 25px cyan); }
-  80% { transform: translate(-50%, -220px) scale(1.2); }
-  100% { transform: translate(-50%, -260px) scale(0.5); opacity: 0; }
+  0% { bottom: 120px; transform: translateX(-50%) scale(0.5); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.6); }
+  80% { transform: translateX(-50%) scale(1.2); }
+  100% { bottom: 65vh; transform: translateX(-50%) scale(0.5); opacity: 0; }
 }
 
 @keyframes flyToEnemyPflanze {
-  0% { transform: translate(-50%, 50px) scale(0.3) rotate(0deg); opacity: 0; }
-  20% { opacity: 1; transform: translate(-50%, -60px) scale(1.4) rotate(90deg); filter: drop-shadow(0 0 20px lime); }
-  80% { transform: translate(-50%, -220px) scale(1.2) rotate(270deg); }
-  100% { transform: translate(-50%, -260px) scale(0.6) rotate(360deg); opacity: 0; }
+  0% { bottom: 120px; transform: translateX(-50%) scale(0.3) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.4) rotate(90deg); }
+  80% { transform: translateX(-50%) scale(1.2) rotate(270deg); }
+  100% { bottom: 65vh; transform: translateX(-50%) scale(0.6) rotate(360deg); opacity: 0; }
 }
 
 @keyframes flyToEnemyElektro {
-  0% { transform: translate(-50%, 50px) scale(0.2); opacity: 0; }
-  20% { opacity: 1; transform: translate(-50%, -60px) scale(1.8); filter: drop-shadow(0 0 30px yellow); }
-  40% { transform: translate(-30px, -120px) scale(1.4); }
-  60% { transform: translate(30px, -180px) scale(1.4); }
-  100% { transform: translate(-50%, -260px) scale(1); opacity: 0; }
+  0% { bottom: 120px; transform: translateX(-50%) scale(0.2); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.8); }
+  100% { bottom: 65vh; transform: translateX(-50%) scale(1); opacity: 0; }
 }
+
 
 /* Erschütterung und rotes Aufblitzen für das eigene Pokémon bei Treffern */
 .anim-player-hit {
