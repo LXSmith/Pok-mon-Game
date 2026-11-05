@@ -157,7 +157,7 @@ html, body {
 .app-viewport { width: 100vw; height: 100dvh; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
 /* PANELS & CARDS */
-.screen-panel { width: 90%; max-width: 360px; margin: 0 auto; }
+.screen-panel { width: 100%; max-width: 360px; margin: 0 auto; }
 
 .card-ui {
   background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -175,7 +175,6 @@ button:active { transform: scale(0.97); }
 .btn-secondary { background: #334155; color: #ffffff; margin-top: 8px; }
 .btn-special { background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%); color: #ffffff; }
 
-/* TEST BUTTON STYLING */
 .btn-dev-spawn {
   background: linear-gradient(180deg, #ec4899 0%, #be185d 100%) !important;
   color: #ffffff !important;
@@ -227,7 +226,6 @@ button:active { transform: scale(0.97); }
 .state-scanning .sweeper { display: block; animation: rotateSweeper 2s linear infinite; }
 @keyframes rotateSweeper { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* RADAR BLIP */
 .radar-blip {
   position: absolute;
   width: 20px;
@@ -302,160 +300,63 @@ button:active { transform: scale(0.97); }
 .evo-pulse { animation: flashGlow 1s infinite alternate; }
 @keyframes flashGlow { 0% { filter: drop-shadow(0 0 8px #fff) brightness(1); } 100% { filter: drop-shadow(0 0 20px var(--accent-yellow)) brightness(1.3); } }
 
-/* ========================================== */
-/* BATTLE ANIMATIONEN & SPEZIALEFFEKTE        */
-/* ========================================== */
-
-/* Normaler Tackle-Angriff (Ausholen + Schlag) */
-.anim-tackle-player {
-  animation: tacklePlayer 0.4s ease-in-out !important;
-}
-
-.anim-tackle-enemy {
-  animation: tackleEnemy 0.4s ease-in-out !important;
-}
-
-@keyframes tacklePlayer {
-  0% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(15px) scale(0.95); }
-  60% { transform: translateY(-35px) scale(1.15); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-@keyframes tackleEnemy {
-  0% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(-15px) scale(0.95); }
-  60% { transform: translateY(35px) scale(1.15); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-/* Treffer-Feedback (Schaden nehmen) */
-.anim-hit-shake {
-  animation: hitShake 0.3s ease-in-out !important;
-}
-
-@keyframes hitShake {
-  0%, 100% { transform: translateX(0); filter: brightness(1); }
-  20% { transform: translateX(-12px); filter: brightness(2) drop-shadow(0 0 12px red); }
-  40% { transform: translateX(12px); filter: brightness(0.5); }
-  60% { transform: translateX(-6px); filter: brightness(1.8); }
-  80% { transform: translateX(6px); }
-}
-
-/* OVERLAY FÜR ELEMENTAR-SPEZIALATTACKEN */
-#elemental-fx-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  border-radius: 20px;
-}
-
-/* FEUER ATTACKE 🔥 */
-.fx-feuer, .fx-fire {
-  background: radial-gradient(circle, rgba(255,69,0,0.85) 0%, rgba(255,140,0,0.6) 50%, transparent 80%);
-  animation: fireBurst 0.7s ease-out forwards;
-}
-
-@keyframes fireBurst {
-  0% { transform: scale(0.2); opacity: 0; }
-  50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 25px #ff4500); }
-  100% { transform: scale(1.8); opacity: 0; }
-}
-
-/* WASSER ATTACKE 💧 */
-.fx-wasser {
-  background: radial-gradient(circle, rgba(0,191,255,0.85) 0%, rgba(30,144,255,0.4) 60%, transparent 85%);
-  animation: waterSplash 0.7s ease-out forwards;
-}
-
-@keyframes waterSplash {
-  0% { transform: scale(0.1) rotate(0deg); opacity: 0; }
-  50% { transform: scale(1.4) rotate(180deg); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
-}
-
-/* PFLANZEN ATTACKE 🍃 */
-.fx-pflanze {
-  background: radial-gradient(circle, rgba(46,204,113,0.85) 0%, rgba(39,174,96,0.4) 60%, transparent 85%);
-  animation: leafStorm 0.7s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
-}
-
-@keyframes leafStorm {
-  0% { transform: scale(0.3) rotate(-45deg); opacity: 0; }
-  50% { transform: scale(1.2) rotate(45deg); opacity: 1; filter: drop-shadow(0 0 20px #2ecc71); }
-  100% { transform: scale(1.6) rotate(90deg); opacity: 0; }
-}
-
-/* ELEKTRO ATTACKE ⚡ */
-.fx-elektro {
-  background: rgba(255, 230, 0, 0.6);
-  animation: zapLightning 0.5s steps(4, end) forwards;
-}
-
-@keyframes zapLightning {
-  0%, 100% { opacity: 0; }
-  20%, 60% { opacity: 1; filter: drop-shadow(0 0 30px #ffee00) invert(1); }
-  40%, 80% { opacity: 0.3; }
-}
-
 /* =========================================================
-   POKÉMON GO FULLSCREEN CATCH ARENA STYLES
+   POKÉMON GO FULLSCREEN CATCH ARENA (FEST IM VIEWPORT INTEGRIRT)
    ========================================================= */
 
+/* Der Haupt-Battle Screen nimmt exakt das gesamte Display ein */
 .battle-fullscreen-container {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  z-index: 9999;
-  background: #202020;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 50 !important;
+  background: #111827;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
 }
 
-/* GRÜNER NATUR HINTERGRUND MIT TIEFEN-VERLAUF */
+/* GRÜNER NATUR HINTERGRUND MIT PERSPEKTIV-RADIAL */
 .arena-background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, #4a8c3e 0%, #2e6223 50%, #1c4214 100%);
-  background-image: radial-gradient(circle at 50% 30%, #6ab854 0%, #306825 70%);
+  background: linear-gradient(to bottom, #4a8c3e 0%, #2e6223 55%, #1a3d13 100%);
+  background-image: radial-gradient(circle at 50% 35%, #6ab854 0%, #2e6223 70%);
   z-index: 1;
 }
 
-/* HUD OBEN */
+/* TOP HUD (Gegner HP & Level) */
 .arena-top-hud {
   position: relative;
   z-index: 10;
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
-  margin: 15px;
-  border-radius: 12px;
+  padding: 12px 15px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  margin: 15px 15px 0 15px;
+  border-radius: 16px;
   color: white;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .battle-title-hud {
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  color: var(--accent-yellow);
 }
 
-/* DIE BÜHNE MIT PERSPEKTIVE / TIEFE */
+/* DIE BÜHNE MIT PERSPEKTIVE / TIEFE (ZENTRIERT) */
 .arena-stage {
   position: relative;
   z-index: 5;
@@ -463,7 +364,7 @@ button:active { transform: scale(0.97); }
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 600px;
+  perspective: 700px;
 }
 
 .enemy-target-wrapper {
@@ -471,28 +372,32 @@ button:active { transform: scale(0.97); }
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: translateY(-20px) scale(0.85);
-  filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5));
+  transform: translateY(-10px) scale(0.9);
+  filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
 }
 
 .enemy-sprite-img {
-  width: 180px;
-  height: auto;
-  max-height: 220px;
+  width: 150px;
+  height: 210px;
   object-fit: contain;
+  border-radius: 12px;
 }
 
-/* POKÉMON GO ZIELRING */
+/* ZIELRING SCHRUMPFEND */
 .target-ring-outer {
   position: absolute;
-  width: 150px;
-  height: 150px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
   border: 2px dashed rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   pointer-events: none;
+  z-index: 15;
 }
 
 .target-ring-inner {
@@ -503,14 +408,14 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
 
-/* POKÉBALL GANZ UNTEN IM VORDERGRUND */
+/* POKÉBALL UNTEN IM VORDERGRUND */
 .catch-throw-ball {
   position: fixed;
-  bottom: 40px;
+  bottom: 80px;
   left: 50%;
-  transform: translate(-50%, 0) scale(1.3);
-  width: 90px;
-  height: 90px;
+  transform: translate(-50%, 0) scale(1.2);
+  width: 85px;
+  height: 85px;
   z-index: 100;
   cursor: grab;
   touch-action: none;
@@ -520,11 +425,12 @@ button:active { transform: scale(0.97); }
 .catch-throw-ball img {
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .catch-throw-ball.dragging {
   cursor: grabbing;
-  transform: translate(-50%, -50%) scale(1.4) !important;
+  transform: translate(-50%, -50%) scale(1.3) !important;
 }
 
 .catch-throw-ball.spinning img {
@@ -550,51 +456,61 @@ button:active { transform: scale(0.97); }
   75% { transform: translate(-50%, -50%) rotate(25deg); }
 }
 
-/* BOTTOM HUD & ACTIONS */
+/* BOTTOM HUD & KAMPF-BUTTONS */
 .arena-bottom-hud {
   position: relative;
   z-index: 10;
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
+  padding: 12px 15px 20px 15px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.player-mini-stats {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .battle-action-bar {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
-  margin-top: 10px;
 }
 
 .btn-action {
   flex: 1;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 12px 8px;
+  border-radius: 12px;
   border: none;
   background: #334155;
   color: white;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .btn-catch {
-  background: #e11d48;
+  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
 }
 
 .battle-box-hud {
   position: absolute;
-  top: 100px;
+  top: 90px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 6px 14px;
+  font-size: 12px;
   font-weight: bold;
   color: #fff;
   z-index: 20;
   text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .throw-feedback {
@@ -602,7 +518,7 @@ button:active { transform: scale(0.97); }
   top: 35%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
   color: #ffcb05;
   text-shadow: 0 4px 15px rgba(0,0,0,0.9), 0 0 20px #ff2e55;
