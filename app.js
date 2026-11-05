@@ -1186,7 +1186,7 @@ const CatchEngine = {
       b.z = Math.max(0.3, b.z);
 
       if (b.isSpinning) {
-        b.vx += (b.spinSpeed * 12);
+        b.vx -= (b.spinSpeed * 12);
       }
 
       this.updateBallElement();
