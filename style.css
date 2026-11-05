@@ -781,3 +781,32 @@ button:active { transform: scale(0.97); }
   transition: transform 0.05s ease, filter 0.05s ease !important;
 }
 
+/* FLUG VON OBEN NACH UNTEN (Gegner -> Spieler) */
+@keyframes flyToPlayerFeuer {
+  0% { top: 120px; transform: translateX(-50%) scale(0.5) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.5) rotate(180deg); }
+  80% { transform: translateX(-50%) scale(1.2) rotate(360deg); }
+  100% { top: 65vh; transform: translateX(-50%) scale(0.8) rotate(720deg); opacity: 0; }
+}
+
+@keyframes flyToPlayerWasser {
+  0% { top: 120px; transform: translateX(-50%) scale(0.5); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.6); }
+  80% { transform: translateX(-50%) scale(1.2); }
+  100% { top: 65vh; transform: translateX(-50%) scale(0.5); opacity: 0; }
+}
+
+@keyframes flyToPlayerPflanze {
+  0% { top: 120px; transform: translateX(-50%) scale(0.3) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.4) rotate(90deg); }
+  80% { transform: translateX(-50%) scale(1.2) rotate(270deg); }
+  100% { top: 65vh; transform: translateX(-50%) scale(0.6) rotate(360deg); opacity: 0; }
+}
+
+@keyframes flyToPlayerElektro {
+  0% { top: 120px; transform: translateX(-50%) scale(0.2); opacity: 0; }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.8); }
+  100% { top: 65vh; transform: translateX(-50%) scale(1); opacity: 0; }
+}
+
+
