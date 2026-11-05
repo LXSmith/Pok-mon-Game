@@ -1036,7 +1036,8 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (REPARIERT)
+   /* =========================================================
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (VOLLSTÄNDIG FREI)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1065,6 +1066,7 @@ const CatchEngine = {
     const ballEl = document.getElementById('catch-throw-ball');
     if (ballEl) {
       ballEl.classList.remove('hidden');
+      ballEl.style.display = 'block';
       this.bindEvents(ballEl);
     }
     
@@ -1079,18 +1081,21 @@ const CatchEngine = {
     if (ring) ring.classList.add('hidden');
     
     const ballEl = document.getElementById('catch-throw-ball');
-    if (ballEl) ballEl.classList.add('hidden');
+    if (ballEl) {
+      ballEl.classList.add('hidden');
+      ballEl.style.display = 'none';
+    }
   },
 
   resetBall() {
     const b = this.ball;
     b.x = window.innerWidth / 2;
-    b.y = window.innerHeight - 120;
+    b.y = window.innerHeight - 130;
     b.z = 1.0;
     b.vx = 0; b.vy = 0; b.vz = 0;
     b.isDragging = false;
     b.isThrown = false;
-    b.isSpinning = false; // Spin wird beim Reset sauber beendet
+    b.isSpinning = false;
     b.spinSpeed = 0;
     b.spinAngle = 0;
 
@@ -1104,14 +1109,21 @@ const CatchEngine = {
 
     const onStart = (e) => {
       if (!this.active || this.ball.isThrown) return;
+      if (e.cancelable) e.preventDefault();
+
       const pt = e.touches ? e.touches[0] : e;
       this.ball.isDragging = true;
       this.ball.isSpinning = false;
+      this.ball.x = pt.clientX;
+      this.ball.y = pt.clientY;
       this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
+      this.updateBallElement();
     };
 
     const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
+      if (e.cancelable) e.preventDefault();
+
       const pt = e.touches ? e.touches[0] : e;
       const now = performance.now();
 
@@ -1121,6 +1133,7 @@ const CatchEngine = {
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
       if (this.touchHistory.length > 6) this.touchHistory.shift();
 
+      // Spin-Erkennung (Kreisbewegung des Fingers)
       if (this.touchHistory.length >= 3) {
         const h = this.touchHistory;
         const dx1 = h[h.length-1].x - h[h.length-2].x;
@@ -1129,16 +1142,16 @@ const CatchEngine = {
         const dy2 = h[h.length-2].y - h[h.length-3].y;
         const crossProduct = (dx1 * dy2) - (dy1 * dx2);
 
-        if (Math.abs(crossProduct) > 120) {
+        if (Math.abs(crossProduct) > 80) {
           this.ball.isSpinning = true;
-          this.ball.spinSpeed = crossProduct > 0 ? 12 : -12;
+          this.ball.spinSpeed = crossProduct > 0 ? 14 : -14;
         }
       }
 
       this.updateBallElement();
     };
 
-    const onEnd = () => {
+    const onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       this.ball.isDragging = false;
 
@@ -1148,10 +1161,10 @@ const CatchEngine = {
         const dt = (last.time - first.time) / 1000;
 
         if (dt > 0.01) {
-          const vx = (last.x - first.x) / dt * 0.45;
-          const vy = (last.y - first.y) / dt * 0.6;
+          const vx = (last.x - first.x) / dt * 0.5;
+          const vy = (last.y - first.y) / dt * 0.65;
 
-          if (vy < -120) {
+          if (vy < -100) {
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
@@ -1165,9 +1178,9 @@ const CatchEngine = {
       }
     };
 
-    el.addEventListener('touchstart', onStart, { passive: true });
-    window.addEventListener('touchmove', onMove, { passive: true });
-    window.addEventListener('touchend', onEnd);
+    el.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onEnd, { passive: false });
 
     el.addEventListener('mousedown', onStart);
     window.addEventListener('mousemove', onMove);
@@ -1195,9 +1208,9 @@ const CatchEngine = {
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // KORRIGIERTE DRALL-FLUGBAHN
+      // Curveball-Drall: Lenkt den Ball seitlich ab
       if (b.isSpinning) {
-        b.vx += (b.spinSpeed * 0.8);
+        b.vx += (b.spinSpeed * 1.2);
       }
 
       this.updateBallElement();
@@ -1357,6 +1370,7 @@ const CatchEngine = {
     }, 400);
   }
 };
+
 
 
 function attemptCatch() {
