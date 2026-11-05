@@ -1036,8 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (VOLLSTÄNDIG FREI)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (PERFEKTE CURVE)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1120,38 +1119,49 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-        const onMove = (e) => {
+    const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       if (e.cancelable) e.preventDefault();
 
       const pt = e.touches ? e.touches[0] : e;
       const now = performance.now();
 
+      const prevX = this.ball.x;
+      const prevY = this.ball.y;
+
       this.ball.x = pt.clientX;
       this.ball.y = pt.clientY;
 
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
-      if (this.touchHistory.length > 6) this.touchHistory.shift();
+      if (this.touchHistory.length > 8) this.touchHistory.shift();
 
-      // Spin-Erkennung mit korrigierter Richtungszuordnung
-      if (this.touchHistory.length >= 3) {
-        const h = this.touchHistory;
-        const dx1 = h[h.length-1].x - h[h.length-2].x;
-        const dy1 = h[h.length-1].y - h[h.length-2].y;
-        const dx2 = h[h.length-2].x - h[h.length-3].x;
-        const dy2 = h[h.length-2].y - h[h.length-3].y;
-        const crossProduct = (dx1 * dy2) - (dy1 * dx2);
+      // DYNAMISCHE DREHRICHTUNG: Winkeländerung bezüglich des Bewegungszentrums
+      if (this.touchHistory.length >= 4) {
+        let totalAngularDelta = 0;
+        for (let i = 1; i < this.touchHistory.length; i++) {
+          const p1 = this.touchHistory[i - 1];
+          const p2 = this.touchHistory[i];
+          // Vektor-Winkeländerung
+          const angle1 = Math.atan2(p1.y - prevY, p1.x - prevX);
+          const angle2 = Math.atan2(p2.y - prevY, p2.x - prevX);
+          let diff = angle2 - angle1;
+          
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          totalAngularDelta += diff;
+        }
 
-        if (Math.abs(crossProduct) > 80) {
+        // Bei verlässlicher Kreisbewegung aktivieren
+        if (Math.abs(totalAngularDelta) > 1.2) {
           this.ball.isSpinning = true;
-          // VORZEICHEN UMGEDREHT: Drehung im Uhrzeigersinn -> positiv, gegen Uhrzeigersinn -> negativ
-          this.ball.spinSpeed = crossProduct > 0 ? -14 : 14;
+          // Positiver Wert = Uhrzeigersinn (Rechts-Kurve)
+          // Negativer Wert = Gegen Uhrzeigersinn (Links-Kurve)
+          this.ball.spinSpeed = totalAngularDelta > 0 ? 15 : -15;
         }
       }
 
       this.updateBallElement();
     };
-
 
     const onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
@@ -1199,7 +1209,7 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-      updatePhysics() {
+  updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
@@ -1210,11 +1220,10 @@ const CatchEngine = {
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // CURVEBALL-PHYSIK: Richtige Flugbahn in Drehrichtung
+      // EXAKTE PHYSIK: Spin dreht Ball optisch weiter und zieht ihn in Drehrichtung
       if (b.isSpinning) {
-        const curveForce = (b.spinSpeed * 4.5); 
-        b.vx += curveForce * 0.016;
-        
+        // Positiver spinSpeed zieht nach rechts, negativer spinSpeed zieht nach links
+        b.vx += (b.spinSpeed * 3.5) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
       }
 
@@ -1233,8 +1242,6 @@ const CatchEngine = {
       this.updateBallElement();
     }
   },
-
-
 
   updateRing() {
     if (this.ball.isThrown) return;
@@ -1262,6 +1269,7 @@ const CatchEngine = {
     ballEl.style.top = b.y + 'px';
     
     const scale = b.z * (b.isDragging ? 1.3 : 1.2);
+    // Visualisierung der exakten Ballrotation
     const rotation = b.isSpinning ? `rotate(${b.spinAngle}deg)` : '';
     
     ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
@@ -1377,6 +1385,7 @@ const CatchEngine = {
     }, 400);
   }
 };
+
 
 
 
