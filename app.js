@@ -861,47 +861,40 @@ function playElementalSound(type) {
   } catch(e){}
 }
 
-function triggerElementalFX(elementType) {
-  // Wir hängen es direkt an das Battle-Screen oder den Body an, damit es nichts verdeckt
+function triggerElementalFX(elementType, direction = 'up') {
   const battleScreen = document.getElementById('screen-battle') || document.body;
-
   const rawType = elementType ? elementType.toLowerCase() : 'feuer';
   
   let symbol = '🔥';
-  let animName = 'flyToEnemyFeuer';
+  let animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
   
   if (rawType === 'wasser' || rawType === 'schiggy') {
     symbol = '💧🫧';
-    animName = 'flyToEnemyWasser';
+    animName = (direction === 'down') ? 'flyToPlayerWasser' : 'flyToEnemyWasser';
   } else if (rawType === 'pflanze' || rawType === 'bisasam') {
     symbol = '🍃🌿';
-    animName = 'flyToEnemyPflanze';
+    animName = (direction === 'down') ? 'flyToPlayerPflanze' : 'flyToEnemyPflanze';
   } else if (rawType === 'elektro') {
     symbol = '⚡💥';
-    animName = 'flyToEnemyElektro';
+    animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
   } else if (rawType === 'feuer' || rawType === 'glumanda') {
     symbol = '🔥☄️';
-    animName = 'flyToEnemyFeuer';
+    animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
   }
 
   playElementalSound(rawType);
 
-  // Projektile nacheinander abfeuern
   for (let i = 0; i < 4; i++) {
     setTimeout(() => {
       const proj = document.createElement('div');
       proj.className = 'elemental-projectile';
       proj.innerText = symbol;
-      
-      // Zufälliger leichter Versatz nach links/rechts
       proj.style.marginLeft = (Math.random() * 80 - 40) + 'px';
       
       battleScreen.appendChild(proj);
 
-      // Animation starten
       proj.style.animation = `${animName} 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards`;
 
-      // Nach Ende aufräumen
       setTimeout(() => {
         proj.remove();
       }, 1200);
@@ -909,6 +902,7 @@ function triggerElementalFX(elementType) {
     }, i * 250);
   }
 }
+
 
 
 
