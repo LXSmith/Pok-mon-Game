@@ -704,7 +704,6 @@ function updateBlipPosition() {
 
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
 
-  // Startet den Kampf, wenn der Spieler im normalen Spielverlauf nah genug ranläuft
   if (distMeters > 0 && distMeters <= 3) {
     blip.classList.add('hidden');
     const scareBtn = document.getElementById('btn-scare-overlay');
@@ -724,8 +723,7 @@ function updateBlipPosition() {
 
   blip.style.left = x + "px";
   blip.style.top = y + "px";
-  
-  // Bei Klick auf den Blip direkt Kampf starten (z.B. für Dev/Test 0m Spawns)
+
   blip.onclick = () => {
     blip.classList.add('hidden');
     targetPokemonCoords = null;
@@ -912,7 +910,6 @@ function updateBattleUI() {
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
   document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
 
-  // Lade Grafik deines eigenen Pokémon im Vordergrund
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
     playerCardImg.src = playerBattlePokemon.cardUrl;
@@ -929,31 +926,43 @@ function updateBattleUI() {
   }
 }
 
+/* KORRIGIERTE ANGRIFFS-ANIMATION (PLAYER TACKLE & ENEMY HIT SHAKE) */
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
   isPlayerTurn = false;
   isEnemyAttacking = true;
 
+  const playerImg = document.getElementById('player-card-img');
   const enemyImg = document.getElementById('enemy-card-img');
+  
+  // 1. Dein Pokémon führt den Tackle nach vorne aus
+  if (playerImg) playerImg.classList.add('anim-player-tackle');
   playPunchSound();
 
   let dmg = Math.round(playerBattlePokemon.maxHp * 0.25);
   if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
-  currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-  playerEnergy = Math.min(3, playerEnergy + 1);
-  updateBattleUI();
-
-  document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
-
-  if (enemyImg) enemyImg.classList.add('anim-hit-shake');
-
+  // 2. Einschlag nach 150ms
   setTimeout(() => {
+    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+    playerEnergy = Math.min(3, playerEnergy + 1);
+    updateBattleUI();
+
+    document.getElementById('battle-warning-box').innerText = `Du greifst an! (-${dmg} KP)`;
+
+    // Gegner wackelt und blitzt rot auf
+    if (enemyImg) enemyImg.classList.add('anim-hit-shake');
+  }, 150);
+
+  // 3. Animationen zurücksetzen und Zug beenden
+  setTimeout(() => {
+    if (playerImg) playerImg.classList.remove('anim-player-tackle');
     if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
+    
     if (currentEnemy.hp <= 0) return winBattle();
-    setTimeout(scheduleEnemyAttack, 800);
-  }, 400);
+    setTimeout(scheduleEnemyAttack, 600);
+  }, 500);
 }
 
 function executePlayerSpecial() {
@@ -1016,223 +1025,243 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO FULLSCREEN CATCH ENGINE
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (60 FPS)
    ========================================================= */
 const CatchEngine = {
   active: false,
-  isDragging: false,
-  isSpinning: false,
-  ringScale: 1.0,
-  ringTimer: null,
-  eventsBound: false,
-  
-  startX: 0, startY: 0, startTime: 0,
-  lastX: 0, lastY: 0,
-  spinHistory: [],
+  animId: null,
 
-  initEvents() {
-    if (this.eventsBound) return;
-    const ball = document.getElementById('catch-throw-ball');
-    if (!ball) return;
-
-    const startDrag = (e) => {
-      if (!this.active) return;
-      const pt = e.touches ? e.touches[0] : e;
-      this.isDragging = true;
-      
-      this.startX = pt.clientX;
-      this.startY = pt.clientY;
-      this.lastX = pt.clientX;
-      this.lastY = pt.clientY;
-      this.startTime = performance.now();
-      this.spinHistory = [];
-
-      ball.classList.add('dragging');
-      ball.style.left = pt.clientX + 'px';
-      ball.style.top = pt.clientY + 'px';
-      ball.style.transform = 'translate(-50%, -50%) scale(1.3)';
-    };
-
-    const moveDrag = (e) => {
-      if (!this.active || !this.isDragging) return;
-      const pt = e.touches ? e.touches[0] : e;
-      
-      const dx = pt.clientX - this.lastX;
-      const dy = pt.clientY - this.lastY;
-      this.spinHistory.push({ dx, dy, time: performance.now() });
-      if (this.spinHistory.length > 8) this.spinHistory.shift();
-
-      this.detectCurveSpin();
-
-      ball.style.left = pt.clientX + 'px';
-      ball.style.top = pt.clientY + 'px';
-
-      this.lastX = pt.clientX;
-      this.lastY = pt.clientY;
-    };
-
-    const endDrag = (e) => {
-      if (!this.active || !this.isDragging) return;
-      this.isDragging = false;
-      ball.classList.remove('dragging');
-
-      const pt = e.changedTouches ? e.changedTouches[0] : e;
-      const duration = (performance.now() - this.startTime) / 1000;
-      
-      const deltaX = pt.clientX - this.startX;
-      const deltaY = pt.clientY - this.startY;
-
-      if (deltaY < -30 && duration < 0.9) {
-        this.performThrow(deltaX, deltaY, duration, pt.clientX, pt.clientY);
-      } else {
-        this.resetBallPosition();
-      }
-    };
-
-    ball.addEventListener('touchstart', startDrag, { passive: true });
-    window.addEventListener('touchmove', moveDrag, { passive: true });
-    window.addEventListener('touchend', endDrag);
-
-    ball.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', moveDrag);
-    window.addEventListener('mouseup', endDrag);
-
-    this.eventsBound = true;
+  ball: {
+    x: 0, y: 0, z: 1.0,
+    vx: 0, vy: 0, vz: 0,
+    isDragging: false,
+    isThrown: false,
+    isSpinning: false,
+    spinAngle: 0,
+    spinSpeed: 0
   },
+
+  touchHistory: [],
+  ringScale: 1.0,
+  ringShrinking: true,
+  eventsBound: false,
 
   startCatchSession() {
     this.active = true;
-    this.isDragging = false;
-    this.isSpinning = false;
-    this.ringScale = 1.0;
-
-    const ball = document.getElementById('catch-throw-ball');
     const ring = document.getElementById('target-ring-outer');
-
-    if (ball) ball.classList.remove('hidden');
     if (ring) ring.classList.remove('hidden');
 
-    this.resetBallPosition();
-    this.startRingShrink();
-    this.initEvents();
+    this.initCanvas();
+    this.resetBall();
+    this.startLoop();
   },
 
   stopCatchSession() {
     this.active = false;
-    clearInterval(this.ringTimer);
-    const ball = document.getElementById('catch-throw-ball');
+    cancelAnimationFrame(this.animId);
     const ring = document.getElementById('target-ring-outer');
-    if (ball) ball.classList.add('hidden');
     if (ring) ring.classList.add('hidden');
+    
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) ballEl.classList.add('hidden');
   },
 
-  startRingShrink() {
-    clearInterval(this.ringTimer);
-    const innerRing = document.getElementById('target-ring-inner');
+  initCanvas() {
+    let ballEl = document.getElementById('catch-throw-ball');
+    if (!ballEl) return;
     
-    this.ringTimer = setInterval(() => {
-      this.ringScale -= 0.03;
-      if (this.ringScale <= 0.2) this.ringScale = 1.0;
-      
-      if (innerRing) {
-        innerRing.style.transform = `scale(${this.ringScale})`;
-        innerRing.style.borderColor = this.ringScale < 0.4 ? '#ff2e55' : (this.ringScale < 0.7 ? '#ffcb05' : '#10b981');
+    ballEl.classList.remove('hidden');
+    this.bindEvents(ballEl);
+  },
+
+  resetBall() {
+    const b = this.ball;
+    b.x = window.innerWidth / 2;
+    b.y = window.innerHeight - 100;
+    b.z = 1.0;
+    b.vx = 0; b.vy = 0; b.vz = 0;
+    b.isDragging = false;
+    b.isThrown = false;
+    b.isSpinning = false;
+    b.spinSpeed = 0;
+
+    this.touchHistory = [];
+    this.updateBallElement();
+  },
+
+  bindEvents(el) {
+    if (this.eventsBound) return;
+    this.eventsBound = true;
+
+    const onStart = (e) => {
+      if (!this.active || this.ball.isThrown) return;
+      const pt = e.touches ? e.touches[0] : e;
+      this.ball.isDragging = true;
+      this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
+    };
+
+    const onMove = (e) => {
+      if (!this.active || !this.ball.isDragging) return;
+      const pt = e.touches ? e.touches[0] : e;
+      const now = performance.now();
+
+      this.ball.x = pt.clientX;
+      this.ball.y = pt.clientY;
+
+      this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
+      if (this.touchHistory.length > 5) this.touchHistory.shift();
+
+      if (this.touchHistory.length >= 3) {
+        const h = this.touchHistory;
+        const dx1 = h[h.length-1].x - h[h.length-2].x;
+        const dy1 = h[h.length-1].y - h[h.length-2].y;
+        const dx2 = h[h.length-2].x - h[h.length-3].x;
+        const dy2 = h[h.length-2].y - h[h.length-3].y;
+        const crossProduct = (dx1 * dy2) - (dy1 * dx2);
+
+        if (Math.abs(crossProduct) > 150) {
+          this.ball.isSpinning = true;
+          this.ball.spinSpeed = crossProduct > 0 ? 15 : -15;
+        }
       }
-    }, 30);
-  },
 
-  detectCurveSpin() {
-    if (this.spinHistory.length < 4) return;
-    let angleChange = 0;
-    for (let i = 1; i < this.spinHistory.length; i++) {
-      const a1 = Math.atan2(this.spinHistory[i-1].dy, this.spinHistory[i-1].dx);
-      const a2 = Math.atan2(this.spinHistory[i].dy, this.spinHistory[i].dx);
-      angleChange += (a2 - a1);
-    }
-    
-    if (Math.abs(angleChange) > 1.8 && !this.isSpinning) {
-      this.isSpinning = true;
-      const ball = document.getElementById('catch-throw-ball');
-      if (ball) ball.classList.add('spinning');
-    }
-  },
+      this.updateBallElement();
+    };
 
-  resetBallPosition() {
-    const ball = document.getElementById('catch-throw-ball');
-    if (!ball) return;
-    
-    ball.className = 'catch-throw-ball';
-    ball.style.left = (window.innerWidth / 2) + 'px';
-    ball.style.top = (window.innerHeight - 80) + 'px';
-    ball.style.transform = 'translate(-50%, -50%) scale(1.2)';
-    this.isSpinning = false;
-  },
+    const onEnd = () => {
+      if (!this.active || !this.ball.isDragging) return;
+      this.ball.isDragging = false;
 
-  performThrow(deltaX, deltaY, duration, releaseX, releaseY) {
-    clearInterval(this.ringTimer);
-    const ball = document.getElementById('catch-throw-ball');
-    if (!ball) return;
-    
-    const enemyImg = document.getElementById('enemy-card-img');
-    const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
-    
-    const targetCenterX = enemyRect.left + enemyRect.width / 2;
-    const targetCenterY = enemyRect.top + enemyRect.height / 2;
+      if (this.touchHistory.length >= 2) {
+        const last = this.touchHistory[this.touchHistory.length - 1];
+        const first = this.touchHistory[0];
+        const dt = (last.time - first.time) / 1000;
 
-    const velocityScale = Math.min(1.6, 350 / (duration * 1000));
-    const targetX = releaseX + (deltaX * 0.85 * velocityScale);
-    const targetY = releaseY + (deltaY * 1.2 * velocityScale);
+        if (dt > 0.01) {
+          const vx = (last.x - first.x) / dt * 0.4;
+          const vy = (last.y - first.y) / dt * 0.55;
 
-    const isCurve = this.isSpinning;
-    const curveOffset = isCurve ? (deltaX >= 0 ? 120 : -120) : 0;
-
-    const startLeft = releaseX;
-    const startTop = releaseY;
-
-    const startTime = performance.now();
-    const throwDuration = 450;
-
-    const animateThrow = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / throwDuration);
-
-      const currentX = startLeft + (targetX - startLeft) * progress + (Math.sin(progress * Math.PI) * curveOffset);
-      const currentTop = startTop + (targetY - startTop) * progress;
-      
-      const currentScale = 1.2 - (progress * 0.65);
-
-      ball.style.left = currentX + 'px';
-      ball.style.top = currentTop + 'px';
-      ball.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
-
-      if (progress < 1) {
-        requestAnimationFrame(animateThrow);
+          if (vy < -150) {
+            this.ball.isThrown = true;
+            this.ball.vx = vx;
+            this.ball.vy = vy;
+            this.ball.vz = -1.2;
+          } else {
+            this.resetBall();
+          }
+        }
       } else {
-        this.evaluateHit(currentX, currentTop, targetCenterX, targetCenterY, enemyRect, isCurve);
+        this.resetBall();
       }
     };
 
-    requestAnimationFrame(animateThrow);
+    el.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+
+    el.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
   },
 
-  evaluateHit(ballX, ballY, targetX, targetY, enemyRect, isCurve) {
-    const hitRadius = (enemyRect.width / 2) + 35; 
+  startLoop() {
+    const loop = () => {
+      if (!this.active) return;
+      this.updatePhysics();
+      this.updateRing();
+      this.animId = requestAnimationFrame(loop);
+    };
+    this.animId = requestAnimationFrame(loop);
+  },
+
+  updatePhysics() {
+    const b = this.ball;
+
+    if (b.isThrown) {
+      b.x += b.vx * 0.016;
+      b.y += b.vy * 0.016;
+      b.z += b.vz * 0.016;
+
+      b.vy += 980 * 0.016;
+      b.z = Math.max(0.3, b.z);
+
+      if (b.isSpinning) {
+        b.vx += (b.spinSpeed * 12);
+      }
+
+      this.updateBallElement();
+
+      const enemyImg = document.getElementById('enemy-card-img');
+      const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth/2-60, top: 180, width:120, height:160 };
+      const targetY = enemyRect.top + enemyRect.height / 2;
+
+      if (b.y <= targetY || b.vy > 400) {
+        b.isThrown = false;
+        this.evaluateHit(b.x, b.y, enemyRect);
+      }
+    } else if (b.isSpinning) {
+      b.spinAngle += b.spinSpeed;
+      this.updateBallElement();
+    }
+  },
+
+  updateRing() {
+    if (this.ball.isThrown) return;
+    const innerRing = document.getElementById('target-ring-inner');
+    if (!innerRing) return;
+
+    if (this.ringShrinking) {
+      this.ringScale -= 0.015;
+      if (this.ringScale <= 0.2) this.ringShrinking = false;
+    } else {
+      this.ringScale += 0.015;
+      if (this.ringScale >= 1.0) this.ringShrinking = true;
+    }
+
+    innerRing.style.transform = `scale(${this.ringScale})`;
+    innerRing.style.borderColor = this.ringScale < 0.4 ? '#ff2e55' : (this.ringScale < 0.7 ? '#ffcb05' : '#10b981');
+  },
+
+  updateBallElement() {
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (!ballEl) return;
+
+    const b = this.ball;
+    ballEl.style.left = b.x + 'px';
+    ballEl.style.top = b.y + 'px';
+    
+    const scale = b.z * (b.isDragging ? 1.3 : 1.2);
+    const rotation = b.isSpinning ? `rotate(${b.spinAngle}deg)` : '';
+    
+    ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
+    
+    if (b.isSpinning) {
+      ballEl.classList.add('spinning');
+    } else {
+      ballEl.classList.remove('spinning');
+    }
+  },
+
+  evaluateHit(ballX, ballY, enemyRect) {
+    const targetX = enemyRect.left + enemyRect.width / 2;
+    const targetY = enemyRect.top + enemyRect.height / 2;
+    const hitRadius = (enemyRect.width / 2) + 25;
+
     const dist = Math.hypot(ballX - targetX, ballY - targetY);
 
     if (dist <= hitRadius) {
       let throwBonus = 1.0;
       let feedbackText = "TREFFER!";
 
-      const ratio = dist / hitRadius;
-      if (ratio < 0.35) {
+      if (this.ringScale < 0.4) {
         throwBonus = 1.8;
         feedbackText = "FABELHAFT!";
-      } else if (ratio < 0.65) {
+      } else if (this.ringScale < 0.7) {
         throwBonus = 1.4;
         feedbackText = "GROSSARTIG!";
       }
 
-      if (isCurve) {
+      if (this.ball.isSpinning) {
         throwBonus *= 1.5;
         feedbackText += " (CURVE)";
       }
@@ -1241,10 +1270,7 @@ const CatchEngine = {
       this.triggerCatchSequence(throwBonus);
     } else {
       this.showFeedback("DANEBEN!");
-      setTimeout(() => {
-        this.resetBallPosition();
-        this.startRingShrink();
-      }, 800);
+      setTimeout(() => this.resetBall(), 800);
     }
   },
 
@@ -1257,7 +1283,7 @@ const CatchEngine = {
   },
 
   triggerCatchSequence(throwBonus) {
-    const ball = document.getElementById('catch-throw-ball');
+    const ballEl = document.getElementById('catch-throw-ball');
     const enemyImg = document.getElementById('enemy-card-img');
     const ring = document.getElementById('target-ring-outer');
     
@@ -1270,7 +1296,7 @@ const CatchEngine = {
     }
 
     setTimeout(() => {
-      if (ball) ball.classList.add('wobble');
+      if (ballEl) ballEl.classList.add('wobble');
       playBeep(600, 0.15);
 
       const baseChance = 0.85;
@@ -1283,7 +1309,7 @@ const CatchEngine = {
 
         if (wobbles >= 3) {
           clearInterval(wobbleInterval);
-          if (ball) ball.classList.remove('wobble');
+          if (ballEl) ballEl.classList.remove('wobble');
 
           if (Math.random() <= finalChance) {
             playBeep(1200, 0.4);
