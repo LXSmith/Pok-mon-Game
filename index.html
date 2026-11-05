@@ -164,11 +164,10 @@
         <!-- HINWEISBOX MITTE -->
         <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon greift an!</div>
 
-        <!-- EIGENES POKÉMON + KP-LEISTE DIREKT DRUNTER -->
+                <!-- EIGENES POKÉMON + KP-LEISTE DRÜBER -->
         <div class="player-sprite-wrapper">
-          <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
-
-          <div class="hp-overlay player-hp-overlay" style="margin-top: 8px;">
+          <!-- KP-Leiste sitzt jetzt sauber ÜBER dem Pokémon-Bild -->
+          <div class="hp-overlay player-hp-overlay" style="margin-bottom: 8px; margin-top: 0;">
             <div id="player-title" style="font-weight:bold; font-size:12px; color:#fff;">Dein Pokémon</div>
             <div class="bar-bg" style="margin-top:4px;">
               <div id="player-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div>
@@ -177,6 +176,12 @@
               <span>KP: <span id="player-hp-text">50/50</span></span>
               <span>Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></span>
             </div>
+          </div>
+
+          <!-- Pokémon Bild kommt direkt darunter -->
+          <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
+        </div>
+
           </div>
         </div>
 
