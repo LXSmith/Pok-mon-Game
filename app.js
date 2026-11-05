@@ -166,7 +166,7 @@ function sendNotification(title, body) {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE
+   1. CINEMATIC INTRO ENGINE (Mit stabilen Bildquellen)
    ========================================================= */
 const IntroManager = {
   active: true,
@@ -273,13 +273,14 @@ const IntroManager = {
     const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
+    // Extrem stabile Direkt-Links (Glurak, Pikachu, Mewtu, Turtok, Bisaflor, Gengar)
     const tcgCards = [
-      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
-      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
-      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' }
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png',
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png',
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png',
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png'
     ];
 
     const cardCount = 14;
@@ -288,10 +289,10 @@ const IntroManager = {
     for (let i = 0; i < cardCount; i++) {
       setTimeout(() => {
         if (!this.active) return;
-        const cardData = tcgCards[i % tcgCards.length];
+        const imgSrc = tcgCards[i % tcgCards.length];
         const card = document.createElement('div');
         card.className = 'tcg-card';
-        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
+        card.innerHTML = `<img src="${imgSrc}" alt="Card">`;
 
         const startX = (Math.random() - 0.5) * 80;
         const startY = (Math.random() - 0.5) * 60;
@@ -340,6 +341,7 @@ const IntroManager = {
     }
   }
 };
+
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
