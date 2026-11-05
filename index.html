@@ -166,8 +166,8 @@
 
                 <!-- EIGENES POKÉMON + KP-LEISTE DRÜBER -->
         <div class="player-sprite-wrapper">
-          <!-- KP-Leiste sitzt jetzt sauber ÜBER dem Pokémon-Bild -->
-          <div class="hp-overlay player-hp-overlay" style="margin-bottom: 8px; margin-top: 0;">
+          <!-- KP-Leiste kommt im HTML ZUERST, damit sie oben sitzt -->
+          <div class="hp-overlay player-hp-overlay" style="margin-bottom: 6px;">
             <div id="player-title" style="font-weight:bold; font-size:12px; color:#fff;">Dein Pokémon</div>
             <div class="bar-bg" style="margin-top:4px;">
               <div id="player-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div>
@@ -178,9 +178,10 @@
             </div>
           </div>
 
-          <!-- Pokémon Bild kommt direkt darunter -->
+          <!-- Pokémon Bild kommt DANACH -->
           <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
         </div>
+
 
           </div>
         </div>
