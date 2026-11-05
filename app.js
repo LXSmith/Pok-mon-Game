@@ -862,18 +862,17 @@ function playElementalSound(type) {
 }
 
 function triggerElementalFX(elementType) {
-  const battleScreen = document.getElementById('screen-battle');
-  if (!battleScreen) return;
+  // Wir hängen es direkt an das Battle-Screen oder den Body an, damit es nichts verdeckt
+  const battleScreen = document.getElementById('screen-battle') || document.body;
 
   const rawType = elementType ? elementType.toLowerCase() : 'feuer';
   
-  // Standard-Werte setzen
   let symbol = '🔥';
   let animName = 'flyToEnemyFeuer';
   
   if (rawType === 'wasser' || rawType === 'schiggy') {
     symbol = '💧🫧';
-    animName = 'flyTestWasser'; // bzw. flyToEnemyWasser
+    animName = 'flyToEnemyWasser';
   } else if (rawType === 'pflanze' || rawType === 'bisasam') {
     symbol = '🍃🌿';
     animName = 'flyToEnemyPflanze';
@@ -887,23 +886,22 @@ function triggerElementalFX(elementType) {
 
   playElementalSound(rawType);
 
-  // Mehrere Projektile nacheinander abfeuern
+  // Projektile nacheinander abfeuern
   for (let i = 0; i < 4; i++) {
     setTimeout(() => {
       const proj = document.createElement('div');
       proj.className = 'elemental-projectile';
       proj.innerText = symbol;
       
-      // Startposition unten beim eigenen Pokémon
-      proj.style.left = (window.innerWidth / 2 + (Math.random() * 60 - 30)) + 'px';
-      proj.style.bottom = '140px';
+      // Zufälliger leichter Versatz nach links/rechts
+      proj.style.marginLeft = (Math.random() * 80 - 40) + 'px';
       
       battleScreen.appendChild(proj);
 
-      // Animation per JS direkt anwenden
+      // Animation starten
       proj.style.animation = `${animName} 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards`;
 
-      // Nach Ende der Animation wieder entfernen
+      // Nach Ende aufräumen
       setTimeout(() => {
         proj.remove();
       }, 1200);
@@ -911,6 +909,7 @@ function triggerElementalFX(elementType) {
     }, i * 250);
   }
 }
+
 
 
 function startBattleFromScan() {
