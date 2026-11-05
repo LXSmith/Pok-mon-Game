@@ -1210,14 +1210,29 @@ const CatchEngine = {
     const b = this.ball;
 
     if (b.isThrown) {
+      // Start- und Zielpositionen für die 3D-Tiefenskalierung ermitteln
+      const startY = window.innerHeight - 130;
+      const enemyImg = document.getElementById('enemy-card-img');
+      const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
+      const targetY = enemyRect.top + enemyRect.height / 2;
+
+      // 1. Position anhand der Geschwindigkeiten bewegen
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
-      b.z += b.vz * 0.016;
 
-      b.vy += 980 * 0.016;
-      b.z = Math.max(0.3, b.z);
+      // Gravitation zieht die Flugbahn leicht nach unten
+      b.vy += 450 * 0.016;
 
-      // Curveball-Drall zieht Ball in Drehrichtung (rechts oder links)
+      // 2. TIEFENPERSPEKTIVE (Z-SKALIERUNG):
+      // Berechnet den prozentualen Flugfortschritt von startY bis targetY (0.0 = unten, 1.0 = am Gegner)
+      const totalDist = startY - targetY;
+      const currentDist = startY - b.y;
+      const progress = Math.min(1.0, Math.max(0.0, currentDist / totalDist));
+
+      // Ball schrumpft von Skalierung 1.0 auf 0.45, je näher er dem Pokémon kommt
+      b.z = 1.0 - (progress * 0.55);
+
+      // CURVEBALL-PHYSIK: Seitliche Ablenkung im Flug
       if (b.isSpinning) {
         b.vx += (b.spinSpeed * 4.0) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
@@ -1225,11 +1240,8 @@ const CatchEngine = {
 
       this.updateBallElement();
 
-      const enemyImg = document.getElementById('enemy-card-img');
-      const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth/2-60, top: 180, width:120, height:160 };
-      const targetY = enemyRect.top + enemyRect.height / 2;
-
-      if (b.y <= targetY || b.vy > 400) {
+      // Trefferprüfung bei Zielerreichung oder Tiefpunkt der Flugkurve
+      if (b.y <= targetY || b.vy > 500) {
         b.isThrown = false;
         this.evaluateHit(b.x, b.y, enemyRect);
       }
@@ -1238,6 +1250,7 @@ const CatchEngine = {
       this.updateBallElement();
     }
   },
+
 
   updateRing() {
     if (this.ball.isThrown) return;
