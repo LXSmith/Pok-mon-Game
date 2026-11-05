@@ -468,9 +468,11 @@ button:active { transform: scale(0.97); }
   filter: drop-shadow(0 0 18px #ffcb05) drop-shadow(0 0 25px #00f0ff) brightness(1.2);
 }
 
-.catch-throw-ball.spinning img {
-  animation: spinBall 0.16s linear infinite;
-}
+/* 
+  DIE CSS ANIMATION spinBall WURDE ENTFERNT,
+  DAMIT DAS JAVASCRIPT DIE DREHRICHTUNG (LINKS/RECHTS) FREI STEUERN KANN!
+*/
+
 
 @keyframes spinBall {
   0% { transform: rotate(0deg); }
