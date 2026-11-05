@@ -753,4 +753,26 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
+/* Modal-Card Anpassung */
+.modal-card {
+  max-width: 320px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Entwicklungs-Karte skalieren */
+#evo-card-img,
+.battle-card-img {
+  max-width: 180px !important;
+  max-height: 250px !important;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+  margin: 10px auto;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(255, 203, 5, 0.5);
+}
 
