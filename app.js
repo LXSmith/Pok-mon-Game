@@ -1112,33 +1112,49 @@ function onPlayerDodgeClick() {
 /* FÜHRT NORMALE GEGNER-SCHADENSBERECHNUNG UND ANGRISSANIMATION AUS */
 function executeEnemyDamage() {
   const enemyImg = document.getElementById('enemy-card-img');
+  const playerImg = document.getElementById('player-card-img');
   
+  // 1. Gegner-Angriffsanimation auslösen
   if (enemyImg) enemyImg.classList.add('anim-enemy-tackle');
   playPunchSound();
 
-  let dmg = Math.round(currentEnemy.maxHp * 0.30);
-  playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
+  document.getElementById('battle-warning-box').innerText = `⚠️ ${currentEnemy.name} greift an!`;
 
-  document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
-
+  // Kurz warten, bis der Gegner beim Spieler ankommt
   setTimeout(() => {
+    let dmg = Math.round(currentEnemy.maxHp * 0.30);
+    playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
+    updateBattleUI();
+
+    // 2. Treffer-Animation beim eigenen Pokémon auslösen
+    if (playerImg) playerImg.classList.add('anim-player-hit');
+
+    document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} trifft voll! (-${dmg} KP)`;
+
     if (enemyImg) enemyImg.classList.remove('anim-enemy-tackle');
+
+    // Nach Ende der Spieler-Treffer-Animation die Klasse wieder entfernen
+    setTimeout(() => {
+      if (playerImg) playerImg.classList.remove('anim-player-hit');
+    }, 400);
 
     isEnemyAttacking = false;
 
-    if (playerBattlePokemon.hp <= 0) {
-      setTimeout(() => {
+    setTimeout(() => {
+      if (playerBattlePokemon.hp <= 0) {
         playerBattlePokemon.hp = playerBattlePokemon.maxHp;
         saveCurrentData();
         alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
         showScreen('screen-radar-hud');
-      }, 500);
-    } else {
-      isPlayerTurn = true;
-      updateBattleUI();
-    }
-  }, 500);
+      } else {
+        isPlayerTurn = true;
+        updateBattleUI();
+      }
+    }, 800);
+
+  }, 400);
 }
+
 
 /* =========================================================
    POKÉMON GO REALTIME PHYSICS CATCH ENGINE (FIXED & ANIMATED)
