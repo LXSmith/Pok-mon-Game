@@ -1036,7 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (STABLE SPIN & CURVE)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (WINKEL-SPIN FIX)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1131,31 +1131,29 @@ const CatchEngine = {
       this.ball.y = pt.clientY;
 
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
-      if (this.touchHistory.length > 5) this.touchHistory.shift();
+      if (this.touchHistory.length > 8) this.touchHistory.shift();
 
-      // STABILE DREHRICHTUNGSERKENNUNG ÜBER VEKTORKREUZPRODUKT
+      // WINKELGESCHWINDIGKEIT GEGENÜBER BALLZENTRUM BERECHNEN
       if (this.touchHistory.length >= 4) {
         const h = this.touchHistory;
         const len = h.length;
-        
-        // Letzter Richtungsvektor
+
+        // Vektoren von den Touch-Punkten zum aktuellen Fingerpunkt (Zentrum der Bewegung)
+        const v1x = h[len - 2].x - h[len - 4].x;
+        const v1y = h[len - 2].y - h[len - 4].y;
         const v2x = h[len - 1].x - h[len - 2].x;
         const v2y = h[len - 1].y - h[len - 2].y;
-        
-        // Vorletzter Richtungsvektor
-        const v1x = h[len - 2].x - h[len - 3].x;
-        const v1y = h[len - 3].y - h[len - 3].y;
 
-        // 2D-Kreuzprodukt zur Bestimmung des Drehsinns
+        // Sauber berechnetes 2D-Kreuzprodukt
         const cp = (v1x * v2y) - (v1y * v2x);
 
-        // Schwellenwert verhindert Zittern bei geraden Wischbewegungen
-        if (Math.abs(cp) > 40) {
+        // Funktioniert jetzt sowohl bei großen als auch bei kleinen Kreisen
+        if (Math.abs(cp) > 8) {
           this.ball.isSpinning = true;
           
-          // Sanfte Glättung (Hysterese): Verhindert plötzliches Wackeln
+          // Positiv = Uhrzeigersinn, Negativ = Gegen Uhrzeigersinn
           const targetSpeed = cp > 0 ? 14 : -14;
-          this.ball.spinSpeed = this.ball.spinSpeed * 0.7 + targetSpeed * 0.3;
+          this.ball.spinSpeed = this.ball.spinSpeed * 0.6 + targetSpeed * 0.4;
         }
       }
 
@@ -1219,7 +1217,7 @@ const CatchEngine = {
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // CURVEBALL-PHYSIK: Dynamische und korrekte Ablenkung im Flug
+      // Curveball-Drall zieht Ball in Drehrichtung (rechts oder links)
       if (b.isSpinning) {
         b.vx += (b.spinSpeed * 4.0) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
@@ -1382,7 +1380,6 @@ const CatchEngine = {
     }, 400);
   }
 };
-
 
 
 
