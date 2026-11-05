@@ -1022,6 +1022,7 @@ function executePlayerAttack() {
   }
 }
 
+
 function executePlayerSpecial() {
   if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -1030,27 +1031,31 @@ function executePlayerSpecial() {
   playerEnergy = 0;
 
   const enemyImg = document.getElementById('enemy-card-img');
-  triggerElementalFX(playerBattlePokemon.type);
+  const type = playerBattlePokemon.type.toUpperCase();
 
+  document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${type}) WIRD AUFGELADEN!`;
+  
+  // 3,5 Sekunden lange Elementar-FX starten
+ function triggerElementalFX(elementType) {
+  const overlay = document.getElementById('elemental-fx-overlay');
+  if (!overlay) return;
+
+  const rawType = elementType ? elementType.toLowerCase() : 'feuer';
+  let fxClass = 'fx-' + rawType;
+
+  overlay.className = fxClass;
+  overlay.classList.remove('hidden');
+
+  playElementalSound(rawType);
+
+  // Animation läuft 3,5 Sekunden
   setTimeout(() => {
-    let dmg = Math.round(playerBattlePokemon.maxHp * 0.60);
-    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
-
-    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
-    updateBattleUI();
-
-    document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${playerBattlePokemon.type.toUpperCase()})! (-${dmg} KP)`;
-
-    if (enemyImg) enemyImg.classList.add('anim-hit-shake');
-
-    setTimeout(() => {
-      if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
-      if (currentEnemy.hp <= 0) return winBattle();
-      setTimeout(scheduleEnemyAttack, 800);
-    }, 400);
-
-  }, 350);
+    overlay.classList.add('hidden');
+    overlay.className = 'hidden';
+  }, 3500);
 }
+
+
 
 /* GEGNER-ANGRIFF MIT 25% CHANCE AUF SPIELER-AUSWEICHEN (1 SEKUNDE FENSTER) */
 function scheduleEnemyAttack() {
