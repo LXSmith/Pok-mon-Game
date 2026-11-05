@@ -166,7 +166,7 @@ function sendNotification(title, body) {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Mit stabilen Fallback-Bildern)
+   1. CINEMATIC INTRO ENGINE
    ========================================================= */
 const IntroManager = {
   active: true,
@@ -903,9 +903,6 @@ function triggerElementalFX(elementType, direction = 'up') {
   }
 }
 
-
-
-
 function startBattleFromScan() {
   isTrainingMode = false;
   
@@ -975,7 +972,6 @@ function updateBattleUI() {
   }
 }
 
-/* KORRIGIERTE ANGRIFFS-ANIMATION MIT 15% GEGNER-AUSWEICHEN */
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -1001,7 +997,9 @@ function executePlayerAttack() {
       if (playerImg) playerImg.classList.remove('anim-player-tackle');
       if (enemyImg) enemyImg.classList.remove('anim-dodge-right');
 
-      triggerElementalFX(currentEnemy.type);
+      // GEGNER KONTERT MIT SEINEM SPEZIALANGRIFF (PROJEKTILIEN FLIEGEN VON OBEN NACH UNTEN -> 'down')
+      triggerElementalFX(currentEnemy.type, 'down');
+      
       const specDmg = Math.round(currentEnemy.maxHp * 0.60);
       playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
 
@@ -1057,10 +1055,9 @@ function executePlayerSpecial() {
 
   document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${type}) WIRD AUFGELADEN!`;
   
-  // 3,5 Sekunden lange Elementar-FX starten
-  triggerElementalFX(playerBattlePokemon.type);
+  // SPEZIALANGRIFF DES SPIELERS FLIEGT NACH OBEN ZUM GEGNER ('up')
+  triggerElementalFX(playerBattlePokemon.type, 'up');
 
-  // Nach 3.5 Sekunden Schaden berechnen
   setTimeout(() => {
     let dmg = Math.round(playerBattlePokemon.maxHp * 0.60);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
@@ -1081,7 +1078,6 @@ function executePlayerSpecial() {
   }, 3500);
 }
 
-/* GEGNER-ANGRIFF MIT 25% CHANCE AUF SPIELER-AUSWEICHEN (1 SEKUNDE FENSTER) */
 function scheduleEnemyAttack() {
   if (currentEnemy.hp <= 0 || playerBattlePokemon.hp <= 0) return;
 
@@ -1108,7 +1104,6 @@ function scheduleEnemyAttack() {
   }
 }
 
-/* SPIELER TIPPET RECHTZEITIG AUF AUSWEICHEN */
 function onPlayerDodgeClick() {
   if (!isDodgeWindowActive) return;
   clearTimeout(dodgeTimer);
@@ -1136,34 +1131,29 @@ function onPlayerDodgeClick() {
   }, 600);
 }
 
-/* FÜHRT NORMALE GEGNER-SCHADENSBERECHNUNG UND ANGRISSANIMATION AUS */
 function executeEnemyDamage() {
   const enemyImg = document.getElementById('enemy-card-img');
   const playerImg = document.getElementById('player-card-img');
   
-  // 1. Gegner-Tackle Animation
   if (enemyImg) enemyImg.classList.add('anim-enemy-tackle');
   playPunchSound();
 
   document.getElementById('battle-warning-box').innerText = `⚠️ ${currentEnemy.name} greift an!`;
 
-  // Kurz warten, bis der Gegner beim Spieler ankommt
   setTimeout(() => {
     let dmg = Math.round(currentEnemy.maxHp * 0.30);
     playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
     updateBattleUI();
 
-    // 2. Treffer direkt am Bild-Element auslösen (Rot leuchten / wackeln)
     if (playerImg) {
       playerImg.classList.add('direct-hit-flash');
-      playBeep(200, 0.2); // Zusätzlicher tiefer Treffer-Ton
+      playBeep(200, 0.2);
     }
 
     document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} trifft voll! (-${dmg} KP)`;
 
     if (enemyImg) enemyImg.classList.remove('anim-enemy-tackle');
 
-    // Nach 400ms den Treffer-Effekt beim Spieler wieder entfernen
     setTimeout(() => {
       if (playerImg) playerImg.classList.remove('direct-hit-flash');
     }, 400);
@@ -1185,10 +1175,8 @@ function executeEnemyDamage() {
   }, 400);
 }
 
-
-
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (FIXED & ANIMATED)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE
    ========================================================= */
 const CatchEngine = {
   active: false,
