@@ -1036,7 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (60 FPS)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (REPARIERT)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1057,16 +1057,20 @@ const CatchEngine = {
   ringShrinking: true,
   eventsBound: false,
 
-    startCatchSession() {
+  startCatchSession() {
     this.active = true;
     const ring = document.getElementById('target-ring-outer');
     if (ring) ring.classList.remove('hidden');
 
-    this.initCanvas();
-    this.resetBall(); // Das hier entfernt automatisch das 'hidden' vom Ball!
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.remove('hidden');
+      this.bindEvents(ballEl);
+    }
+    
+    this.resetBall();
     this.startLoop();
   },
-
 
   stopCatchSession() {
     this.active = false;
@@ -1078,24 +1082,17 @@ const CatchEngine = {
     if (ballEl) ballEl.classList.add('hidden');
   },
 
-  initCanvas() {
-    let ballEl = document.getElementById('catch-throw-ball');
-    if (!ballEl) return;
-    
-    ballEl.classList.remove('hidden');
-    this.bindEvents(ballEl);
-  },
-
   resetBall() {
     const b = this.ball;
     b.x = window.innerWidth / 2;
-    b.y = window.innerHeight - 100;
+    b.y = window.innerHeight - 120;
     b.z = 1.0;
     b.vx = 0; b.vy = 0; b.vz = 0;
     b.isDragging = false;
     b.isThrown = false;
-    b.isSpinning = false;
+    b.isSpinning = false; // Spin wird beim Reset sauber beendet
     b.spinSpeed = 0;
+    b.spinAngle = 0;
 
     this.touchHistory = [];
     this.updateBallElement();
@@ -1109,6 +1106,7 @@ const CatchEngine = {
       if (!this.active || this.ball.isThrown) return;
       const pt = e.touches ? e.touches[0] : e;
       this.ball.isDragging = true;
+      this.ball.isSpinning = false;
       this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
     };
 
@@ -1121,7 +1119,7 @@ const CatchEngine = {
       this.ball.y = pt.clientY;
 
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
-      if (this.touchHistory.length > 5) this.touchHistory.shift();
+      if (this.touchHistory.length > 6) this.touchHistory.shift();
 
       if (this.touchHistory.length >= 3) {
         const h = this.touchHistory;
@@ -1131,9 +1129,9 @@ const CatchEngine = {
         const dy2 = h[h.length-2].y - h[h.length-3].y;
         const crossProduct = (dx1 * dy2) - (dy1 * dx2);
 
-        if (Math.abs(crossProduct) > 150) {
+        if (Math.abs(crossProduct) > 120) {
           this.ball.isSpinning = true;
-          this.ball.spinSpeed = crossProduct > 0 ? 15 : -15;
+          this.ball.spinSpeed = crossProduct > 0 ? 12 : -12;
         }
       }
 
@@ -1150,10 +1148,10 @@ const CatchEngine = {
         const dt = (last.time - first.time) / 1000;
 
         if (dt > 0.01) {
-          const vx = (last.x - first.x) / dt * 0.4;
-          const vy = (last.y - first.y) / dt * 0.55;
+          const vx = (last.x - first.x) / dt * 0.45;
+          const vy = (last.y - first.y) / dt * 0.6;
 
-          if (vy < -150) {
+          if (vy < -120) {
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
@@ -1197,8 +1195,9 @@ const CatchEngine = {
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
+      // KORRIGIERTE DRALL-FLUGBAHN
       if (b.isSpinning) {
-        b.vx -= (b.spinSpeed * 12);
+        b.vx += (b.spinSpeed * 0.8);
       }
 
       this.updateBallElement();
@@ -1358,6 +1357,7 @@ const CatchEngine = {
     }, 400);
   }
 };
+
 
 function attemptCatch() {
   if (isTrainingMode) return;
