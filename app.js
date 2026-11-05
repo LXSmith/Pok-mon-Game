@@ -949,7 +949,11 @@ function updateBattleUI() {
 
   document.getElementById('player-title').innerText = playerBattlePokemon.name.toUpperCase();
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
+  document.getElementById('player-hp-bar').style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
+
   document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
+
+
 
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
