@@ -16,8 +16,8 @@
   <!-- Leaflet CSS für OpenStreetMap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Externe CSS v=23000 -->
-  <link rel="stylesheet" href="style.css?v=23000">
+  <!-- Externe CSS v=24000 -->
+  <link rel="stylesheet" href="style.css?v=24000">
 </head>
 <body>
 
@@ -145,12 +145,18 @@
 
       <!-- STAGE WITH PERSPECTIVE -->
       <div class="arena-stage">
+        <!-- GEGNER POKÉMON (HINTERGRUND) -->
         <div id="enemy-target-wrapper" class="enemy-target-wrapper">
-          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Pokémon Card">
+          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
           
           <div id="target-ring-outer" class="target-ring-outer hidden">
             <div id="target-ring-inner" class="target-ring-inner"></div>
           </div>
+        </div>
+
+        <!-- DEIN EIGENES POKÉMON (VORDERGRUND UNTEN) -->
+        <div class="player-sprite-wrapper">
+          <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
         </div>
       </div>
 
@@ -264,8 +270,8 @@
 
   </main>
 
-  <!-- Leaflet JS & App Script v=23000 -->
+  <!-- Leaflet JS & App Script v=24000 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=23000"></script>
+  <script src="app.js?v=24000"></script>
 </body>
 </html>
