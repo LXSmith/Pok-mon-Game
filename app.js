@@ -166,7 +166,7 @@ function sendNotification(title, body) {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (Mit stabilen Bildquellen)
+   1. CINEMATIC INTRO ENGINE (Mit stabilen Fallback-Bildern)
    ========================================================= */
 const IntroManager = {
   active: true,
@@ -273,14 +273,13 @@ const IntroManager = {
     const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
-    // Extrem stabile Direkt-Links (Glurak, Pikachu, Mewtu, Turtok, Bisaflor, Gengar)
     const tcgCards = [
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png',
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png',
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png',
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png',
-      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png'
+      { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/10_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/2_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/9.png' },
+      { tcg: 'https://images.pokemontcg.io/base1/15_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/3.png' },
+      { tcg: 'https://images.pokemontcg.io/fossil/5_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png' }
     ];
 
     const cardCount = 14;
@@ -289,10 +288,10 @@ const IntroManager = {
     for (let i = 0; i < cardCount; i++) {
       setTimeout(() => {
         if (!this.active) return;
-        const imgSrc = tcgCards[i % tcgCards.length];
+        const cardData = tcgCards[i % tcgCards.length];
         const card = document.createElement('div');
         card.className = 'tcg-card';
-        card.innerHTML = `<img src="${imgSrc}" alt="Card">`;
+        card.innerHTML = `<img src="${cardData.tcg}" onerror="this.onerror=null; this.src='${cardData.fallback}';" alt="Card">`;
 
         const startX = (Math.random() - 0.5) * 80;
         const startY = (Math.random() - 0.5) * 60;
@@ -341,7 +340,6 @@ const IntroManager = {
     }
   }
 };
-
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
@@ -868,11 +866,7 @@ function triggerElementalFX(elementType) {
   if (!overlay) return;
 
   const rawType = elementType ? elementType.toLowerCase() : 'feuer';
-  let fxClass = 'fx-feuer';
-
-  if (rawType === 'wasser') fxClass = 'fx-wasser';
-  else if (rawType === 'pflanze') fxClass = 'fx-pflanze';
-  else if (rawType === 'elektro') fxClass = 'fx-elektro';
+  let fxClass = 'fx-' + rawType;
 
   overlay.className = fxClass;
   overlay.classList.remove('hidden');
@@ -882,7 +876,7 @@ function triggerElementalFX(elementType) {
   setTimeout(() => {
     overlay.classList.add('hidden');
     overlay.className = 'hidden';
-  }, 700);
+  }, 3500);
 }
 
 function startBattleFromScan() {
@@ -1024,7 +1018,6 @@ function executePlayerAttack() {
   }
 }
 
-
 function executePlayerSpecial() {
   if (!isPlayerTurn || playerEnergy < 3 || isEnemyAttacking || currentEnemy.hp <= 0) return;
 
@@ -1038,26 +1031,28 @@ function executePlayerSpecial() {
   document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${type}) WIRD AUFGELADEN!`;
   
   // 3,5 Sekunden lange Elementar-FX starten
- function triggerElementalFX(elementType) {
-  const overlay = document.getElementById('elemental-fx-overlay');
-  if (!overlay) return;
+  triggerElementalFX(playerBattlePokemon.type);
 
-  const rawType = elementType ? elementType.toLowerCase() : 'feuer';
-  let fxClass = 'fx-' + rawType;
-
-  overlay.className = fxClass;
-  overlay.classList.remove('hidden');
-
-  playElementalSound(rawType);
-
-  // Animation läuft 3,5 Sekunden
+  // Nach 3.5 Sekunden Schaden berechnen
   setTimeout(() => {
-    overlay.classList.add('hidden');
-    overlay.className = 'hidden';
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.60);
+    if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
+
+    currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
+    updateBattleUI();
+
+    document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF HIT! (-${dmg} KP)`;
+
+    if (enemyImg) enemyImg.classList.add('anim-hit-shake');
+
+    setTimeout(() => {
+      if (enemyImg) enemyImg.classList.remove('anim-hit-shake');
+      if (currentEnemy.hp <= 0) return winBattle();
+      setTimeout(scheduleEnemyAttack, 800);
+    }, 600);
+
   }, 3500);
 }
-
-
 
 /* GEGNER-ANGRIFF MIT 25% CHANCE AUF SPIELER-AUSWEICHEN (1 SEKUNDE FENSTER) */
 function scheduleEnemyAttack() {
@@ -1118,7 +1113,6 @@ function onPlayerDodgeClick() {
 function executeEnemyDamage() {
   const enemyImg = document.getElementById('enemy-card-img');
   
-  // 1. Gegner-Angriffsanimation auslösen
   if (enemyImg) enemyImg.classList.add('anim-enemy-tackle');
   playPunchSound();
 
@@ -1127,7 +1121,6 @@ function executeEnemyDamage() {
 
   document.getElementById('battle-warning-box').innerText = `${currentEnemy.name} greift an! (-${dmg} KP)`;
 
-  // 2. Animation zurücksetzen & Zustand verarbeiten
   setTimeout(() => {
     if (enemyImg) enemyImg.classList.remove('anim-enemy-tackle');
 
