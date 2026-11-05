@@ -833,3 +833,31 @@ button:active { transform: scale(0.97); }
   100% { opacity: 0; transform: scale(1.4); }
 }
 
+
+/* =========================================================
+   ERGÄNZUNG FÜR GEGNER- & SPIELER-ANGRITTSANIMATIONEN
+   ========================================================= */
+
+/* Gegner stürmt nach unten/vorne Richtung Spieler */
+@keyframes enemyTackleAnim {
+  0% { transform: translateY(0) scale(0.85); }
+  30% { transform: translateY(40px) scale(0.95); filter: drop-shadow(0 0 12px rgba(255,0,0,0.7)); }
+  50% { transform: translateY(30px) scale(0.95); }
+  100% { transform: translateY(0) scale(0.85); }
+}
+
+.anim-enemy-tackle {
+  animation: enemyTackleAnim 0.4s ease-in-out !important;
+}
+
+/* Korrigierter Spieler-Tackle (stürmt nach oben/vorne Richtung Gegner) */
+@keyframes playerTackleAnimCorrected {
+  0% { transform: translateY(20px) scale(1.65); }
+  30% { transform: translateY(-30px) scale(1.75); filter: drop-shadow(0 0 15px rgba(56,189,248,0.8)); }
+  50% { transform: translateY(-20px) scale(1.75); }
+  100% { transform: translateY(20px) scale(1.65); }
+}
+
+.anim-player-tackle {
+  animation: playerTackleAnimCorrected 0.4s ease-in-out !important;
+}
