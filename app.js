@@ -1197,20 +1197,27 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-  updatePhysics() {
+    updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
+      // 1. Position aktualisieren
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
       b.z += b.vz * 0.016;
 
+      // Gravitation zieht den Ball schrittweise nach unten
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // Curveball-Drall: Lenkt den Ball seitlich ab
+      // 2. CURVEBALL-PHYSIK: Korrigierte Richtung & balancierte Kurvenstärke
       if (b.isSpinning) {
-        b.vx += (b.spinSpeed * 1.2);
+        // Das Minuszeichen dreht die Richtung um, der Wert 4.5 sorgt für eine treffbare Kurve
+        const curveForce = -(b.spinSpeed * 4.5); 
+        b.vx += curveForce * 0.016;
+        
+        // Drehung läuft im Flug weiter
+        b.spinAngle += b.spinSpeed * 1.5;
       }
 
       this.updateBallElement();
@@ -1228,6 +1235,7 @@ const CatchEngine = {
       this.updateBallElement();
     }
   },
+
 
   updateRing() {
     if (this.ball.isThrown) return;
