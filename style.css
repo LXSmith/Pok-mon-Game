@@ -429,40 +429,37 @@ button:active { transform: scale(0.97); }
 }
 
 /* PERFEKT ZENTRIERTER UND RUNDER 3D-POKÉBALL */
-.catch-throw-ball {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%) scale(1);
-  width: 90px;
-  height: 90px;
-  z-index: 100;
-  cursor: grab;
-  touch-action: none;
+.catch-throw-ball,
+#catch-throw-ball {
+  position: fixed !important;
+  width: 90px !important;
+  height: 90px !important;
+  z-index: 10001 !important;
+  cursor: grab !important;
+  touch-action: none !important;
   
   /* Exakter Kreis-Schnitt ohne Ränder */
-  border-radius: 50%;
-  overflow: hidden;
-  background: transparent;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background: transparent !important;
   
   /* Bodenschatten für plastische Tiefe */
   filter: drop-shadow(0 15px 12px rgba(0, 0, 0, 0.7));
-  transition: filter 0.15s ease, transform 0.1s ease;
+  transition: filter 0.15s ease;
 }
 
-.catch-throw-ball img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-  display: block;
+.catch-throw-ball img,
+#catch-throw-ball img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  pointer-events: none !important;
+  display: block !important;
 }
-
-
 
 /* Beim Festhalten/Wischen mit dem Finger */
 .catch-throw-ball.dragging {
-  cursor: grabbing;
+  cursor: grabbing !important;
   filter: drop-shadow(0 25px 20px rgba(0, 0, 0, 0.75)) brightness(1.1);
 }
 
@@ -490,7 +487,6 @@ button:active { transform: scale(0.97); }
   25% { transform: translate(-50%, -50%) rotate(-22deg); }
   75% { transform: translate(-50%, -50%) rotate(22deg); }
 }
-
 
 /* BOTTOM HUD & KAMPF-BUTTONS */
 .arena-bottom-hud {
@@ -586,7 +582,6 @@ button:active { transform: scale(0.97); }
   100% { transform: translateY(10px) scale(0.85); filter: brightness(1); }
 }
 
-/* NORMALISET-Z-INDEX & POSITION FÜR SCHIRME */
 #screen-battle {
   position: fixed !important;
   top: 0 !important;
@@ -599,7 +594,6 @@ button:active { transform: scale(0.97); }
   overflow: hidden !important;
 }
 
-/* UNTERE LEISTE FEST AN DEN UNTEREN BILDSCHIRMRAND NAGGELN */
 #screen-battle .arena-bottom-hud {
   position: absolute !important;
   bottom: 0 !important;
@@ -613,15 +607,4 @@ button:active { transform: scale(0.97); }
   background: rgba(15, 23, 42, 0.95) !important;
   padding: 12px 15px calc(env(safe-area-inset-bottom, 15px) + 10px) 15px !important;
   box-sizing: border-box !important;
-}
-
-/* POKÉBALL SICHTBARKEIT & POSITION ERZWINGEN */
-#catch-throw-ball {
-  position: fixed !important;
-  bottom: 95px !important;
-  left: 50% !important;
-  transform: translateX(-50%) scale(1.1) !important;
-  width: 90px !important;
-  height: 90px !important;
-  z-index: 10001 !important;
 }
