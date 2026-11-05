@@ -1036,7 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (PERFEKTE CURVE)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (STABLE SPIN & CURVE)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1113,6 +1113,7 @@ const CatchEngine = {
       const pt = e.touches ? e.touches[0] : e;
       this.ball.isDragging = true;
       this.ball.isSpinning = false;
+      this.ball.spinSpeed = 0;
       this.ball.x = pt.clientX;
       this.ball.y = pt.clientY;
       this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
@@ -1126,37 +1127,35 @@ const CatchEngine = {
       const pt = e.touches ? e.touches[0] : e;
       const now = performance.now();
 
-      const prevX = this.ball.x;
-      const prevY = this.ball.y;
-
       this.ball.x = pt.clientX;
       this.ball.y = pt.clientY;
 
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
-      if (this.touchHistory.length > 8) this.touchHistory.shift();
+      if (this.touchHistory.length > 5) this.touchHistory.shift();
 
-      // DYNAMISCHE DREHRICHTUNG: Winkeländerung bezüglich des Bewegungszentrums
+      // STABILE DREHRICHTUNGSERKENNUNG ÜBER VEKTORKREUZPRODUKT
       if (this.touchHistory.length >= 4) {
-        let totalAngularDelta = 0;
-        for (let i = 1; i < this.touchHistory.length; i++) {
-          const p1 = this.touchHistory[i - 1];
-          const p2 = this.touchHistory[i];
-          // Vektor-Winkeländerung
-          const angle1 = Math.atan2(p1.y - prevY, p1.x - prevX);
-          const angle2 = Math.atan2(p2.y - prevY, p2.x - prevX);
-          let diff = angle2 - angle1;
-          
-          while (diff < -Math.PI) diff += Math.PI * 2;
-          while (diff > Math.PI) diff -= Math.PI * 2;
-          totalAngularDelta += diff;
-        }
+        const h = this.touchHistory;
+        const len = h.length;
+        
+        // Letzter Richtungsvektor
+        const v2x = h[len - 1].x - h[len - 2].x;
+        const v2y = h[len - 1].y - h[len - 2].y;
+        
+        // Vorletzter Richtungsvektor
+        const v1x = h[len - 2].x - h[len - 3].x;
+        const v1y = h[len - 3].y - h[len - 3].y;
 
-        // Bei verlässlicher Kreisbewegung aktivieren
-        if (Math.abs(totalAngularDelta) > 1.2) {
+        // 2D-Kreuzprodukt zur Bestimmung des Drehsinns
+        const cp = (v1x * v2y) - (v1y * v2x);
+
+        // Schwellenwert verhindert Zittern bei geraden Wischbewegungen
+        if (Math.abs(cp) > 40) {
           this.ball.isSpinning = true;
-          // Positiver Wert = Uhrzeigersinn (Rechts-Kurve)
-          // Negativer Wert = Gegen Uhrzeigersinn (Links-Kurve)
-          this.ball.spinSpeed = totalAngularDelta > 0 ? 15 : -15;
+          
+          // Sanfte Glättung (Hysterese): Verhindert plötzliches Wackeln
+          const targetSpeed = cp > 0 ? 14 : -14;
+          this.ball.spinSpeed = this.ball.spinSpeed * 0.7 + targetSpeed * 0.3;
         }
       }
 
@@ -1220,10 +1219,9 @@ const CatchEngine = {
       b.vy += 980 * 0.016;
       b.z = Math.max(0.3, b.z);
 
-      // EXAKTE PHYSIK: Spin dreht Ball optisch weiter und zieht ihn in Drehrichtung
+      // CURVEBALL-PHYSIK: Dynamische und korrekte Ablenkung im Flug
       if (b.isSpinning) {
-        // Positiver spinSpeed zieht nach rechts, negativer spinSpeed zieht nach links
-        b.vx += (b.spinSpeed * 3.5) * 0.016;
+        b.vx += (b.spinSpeed * 4.0) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
       }
 
@@ -1269,7 +1267,6 @@ const CatchEngine = {
     ballEl.style.top = b.y + 'px';
     
     const scale = b.z * (b.isDragging ? 1.3 : 1.2);
-    // Visualisierung der exakten Ballrotation
     const rotation = b.isSpinning ? `rotate(${b.spinAngle}deg)` : '';
     
     ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
