@@ -1046,15 +1046,16 @@ const CatchEngine = {
   ringShrinking: true,
   eventsBound: false,
 
-  startCatchSession() {
+    startCatchSession() {
     this.active = true;
     const ring = document.getElementById('target-ring-outer');
     if (ring) ring.classList.remove('hidden');
 
     this.initCanvas();
-    this.resetBall();
+    this.resetBall(); // Das hier entfernt automatisch das 'hidden' vom Ball!
     this.startLoop();
   },
+
 
   stopCatchSession() {
     this.active = false;
