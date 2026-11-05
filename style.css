@@ -483,7 +483,7 @@ button:active { transform: scale(0.97); }
 /* Wackeln beim Fangen */
 .catch-throw-ball.wobble {
   animation: wobbleBall 0.6s ease-in-out infinite;
-
+}
 
 @keyframes wobbleBall {
   0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
