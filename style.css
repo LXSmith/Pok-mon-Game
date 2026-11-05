@@ -379,13 +379,19 @@ button:active { transform: scale(0.97); }
 
 .enemy-target-wrapper,
 .player-sprite-wrapper {
+  position: absolute !important;
+  bottom: 90px !important; /* Platziert es sauber oberhalb des unteren Aktions-HUDs */
+  left: 50% !important;
+  transform: translateX(-50%) scale(1.35) !important; /* Zentriert und skaliert das Pokémon optimal */
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  position: relative;
-  width: 100%;
+  z-index: 6 !important;
+  pointer-events: none !important;
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
 }
+
 
 .enemy-target-wrapper {
   transform: translateY(10px) scale(0.85);
