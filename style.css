@@ -433,8 +433,8 @@ button:active { transform: scale(0.97); }
 .catch-throw-ball,
 #catch-throw-ball {
   position: fixed !important;
-  width: 90px !important;
-  height: 90px !important;
+  width: 75px !important; /* Von 90px auf 75px angepasst, damit er kompakt neben der Karte liegt */
+  height: 75px !important;
   z-index: 10001 !important;
   cursor: grab !important;
   touch-action: none !important;
@@ -454,9 +454,14 @@ button:active { transform: scale(0.97); }
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
+  
+  /* NEU: Zoomt den Pokéball leicht im Kreis heran, schiebt den grauen Rand im Bild nach außen */
+  transform: scale(1.16) !important;
+  
   pointer-events: none !important;
   display: block !important;
 }
+
 
 /* Beim Festhalten/Wischen mit dem Finger */
 .catch-throw-ball.dragging {
