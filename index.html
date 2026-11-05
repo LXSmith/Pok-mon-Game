@@ -132,50 +132,54 @@
       </footer>
     </section>
 
-        <!-- SCREEN 5: BATTLE -->
-    <section id="screen-battle" class="card-ui screen-panel hidden" style="position: relative; overflow: hidden;">
+    <!-- SCREEN 5: FULLSCREEN BATTLE & CATCH ARENA (POKÉMON GO STYLE) -->
+    <section id="screen-battle" class="screen-panel hidden battle-fullscreen-container">
+      <!-- NATUR-HINTERGRUND -->
+      <div class="arena-background"></div>
+      
       <!-- DYNAMISCHES EFFEKT OVERLAY FÜR SPEZIALANGRIFFE -->
       <div id="elemental-fx-overlay" class="hidden"></div>
 
-      <div class="battle-header" style="position: relative;">
-        <div id="enemy-title" class="battle-title">Wildes Pokémon</div>
+      <!-- TOP BAR: GEGNER STATS & LEBENSBALKEN -->
+      <div class="arena-top-hud">
+        <div id="enemy-title" class="battle-title-hud">WILDES POKÉMON</div>
         <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill"></div></div>
         <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
-        
-        <!-- POKÉMON KARTE DES GEGNERS -->
-        <div class="target-card-wrapper" style="position: relative; display: inline-block;">
-          <img id="enemy-card-img" class="battle-card-img" src="" alt="Gegner">
+      </div>
+
+      <!-- GEGNER POKÉMON FREI IM RAUM (MIT PERSPEKTIVISCHER TIEFE) -->
+      <div class="arena-stage">
+        <div id="enemy-target-wrapper" class="enemy-target-wrapper">
+          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
           
-          <!-- ZIELRING DIREKT AUF DER KARTE -->
+          <!-- ZIELRING AUF DEM POKÉMON -->
           <div id="target-ring-outer" class="target-ring-outer hidden">
             <div id="target-ring-inner" class="target-ring-inner"></div>
           </div>
         </div>
       </div>
-      
+
       <div id="throw-feedback" class="throw-feedback hidden">FABELHAFT!</div>
-      <div id="battle-warning-box" class="battle-box">Kampf beginnt!</div>
-      
-      <div class="battle-footer">
-        <img id="player-card-img" class="battle-card-img" src="" alt="Spieler">
-        <div id="player-title" class="battle-title">Dein Pokémon</div>
-        <div class="bar-bg"><div id="player-hp-bar" class="bar-fill hp-fill"></div></div>
-        <div id="player-hp-text" class="bar-text">50 / 50 KP</div>
-        <div class="energy-display" style="font-size:12px; margin-top:2px;">Energie: <span id="player-energy-dots">⚪ ⚪ ⚪</span></div>
+      <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon erscheint!</div>
+
+      <!-- BOTTTOM HUD: SPIELER STATS & KONTROLLEN -->
+      <div class="arena-bottom-hud">
+        <div class="player-mini-stats">
+          <span id="player-title">Dein Pokémon</span> | KP: <span id="player-hp-text">50/50</span>
+        </div>
+        
+        <div class="battle-action-bar">
+          <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
+          <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-action btn-special">🔥 Spezial</button>
+          <button type="button" id="btn-catch-mode" onclick="toggleCatchMode()" class="btn-action btn-catch">🔴 Fang-Modus</button>
+        </div>
       </div>
-      
-      <!-- FREI BEWEGBARER POKÉBALL -->
+
+      <!-- GROSSER, INTERAKTIVER POKÉBALL UNTEN IN DER MITTE -->
       <div id="catch-throw-ball" class="catch-throw-ball hidden">
         <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="Pokéball">
       </div>
-
-      <div class="battle-controls">
-        <button type="button" onclick="executePlayerAttack()" class="btn-secondary">⚔️ Angriff</button>
-        <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-secondary btn-special">🔥 Spezial</button>
-        <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-primary btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
-      </div>
     </section>
-
 
     <!-- MODAL 1: SCAN & TRAINING WAHL -->
     <div id="modal-scan" class="modal-overlay hidden">
