@@ -1036,7 +1036,7 @@ function scheduleEnemyAttack() {
 }
 
 /* =========================================================
-   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (WINKEL-SPIN FIX)
+   POKÉMON GO REALTIME PHYSICS CATCH ENGINE (COMPLETE ANIMATED)
    ========================================================= */
 const CatchEngine = {
   active: false,
@@ -1098,6 +1098,12 @@ const CatchEngine = {
     b.spinSpeed = 0;
     b.spinAngle = 0;
 
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.remove('wobble');
+      ballEl.style.opacity = '1';
+    }
+
     this.touchHistory = [];
     this.updateBallElement();
   },
@@ -1133,25 +1139,19 @@ const CatchEngine = {
       this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
       if (this.touchHistory.length > 8) this.touchHistory.shift();
 
-      // WINKELGESCHWINDIGKEIT GEGENÜBER BALLZENTRUM BERECHNEN
       if (this.touchHistory.length >= 4) {
         const h = this.touchHistory;
         const len = h.length;
 
-        // Vektoren von den Touch-Punkten zum aktuellen Fingerpunkt (Zentrum der Bewegung)
         const v1x = h[len - 2].x - h[len - 4].x;
         const v1y = h[len - 2].y - h[len - 4].y;
         const v2x = h[len - 1].x - h[len - 2].x;
         const v2y = h[len - 1].y - h[len - 2].y;
 
-        // Sauber berechnetes 2D-Kreuzprodukt
         const cp = (v1x * v2y) - (v1y * v2x);
 
-        // Funktioniert jetzt sowohl bei großen als auch bei kleinen Kreisen
         if (Math.abs(cp) > 8) {
           this.ball.isSpinning = true;
-          
-          // Positiv = Uhrzeigersinn, Negativ = Gegen Uhrzeigersinn
           const targetSpeed = cp > 0 ? 14 : -14;
           this.ball.spinSpeed = this.ball.spinSpeed * 0.6 + targetSpeed * 0.4;
         }
@@ -1210,29 +1210,24 @@ const CatchEngine = {
     const b = this.ball;
 
     if (b.isThrown) {
-      // Start- und Zielpositionen für die 3D-Tiefenskalierung ermitteln
       const startY = window.innerHeight - 130;
       const enemyImg = document.getElementById('enemy-card-img');
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
       const targetY = enemyRect.top + enemyRect.height / 2;
 
-      // 1. Position anhand der Geschwindigkeiten bewegen
+      // Positionen fortbewegen
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
+      b.vy += 420 * 0.016; // Gravitation
 
-      // Gravitation zieht die Flugbahn leicht nach unten
-      b.vy += 450 * 0.016;
-
-      // 2. TIEFENPERSPEKTIVE (Z-SKALIERUNG):
-      // Berechnet den prozentualen Flugfortschritt von startY bis targetY (0.0 = unten, 1.0 = am Gegner)
+      // Kontinuierliche Tiefen-Skalierung (schrumpft auch über die Karte hinaus nach hinten)
       const totalDist = startY - targetY;
       const currentDist = startY - b.y;
-      const progress = Math.min(1.0, Math.max(0.0, currentDist / totalDist));
+      const progress = currentDist / totalDist;
+      
+      // Schrumpft weiter bis 0.15, wenn er weit nach hinten fliegt
+      b.z = Math.max(0.15, 1.0 - (progress * 0.55));
 
-      // Ball schrumpft von Skalierung 1.0 auf 0.45, je näher er dem Pokémon kommt
-      b.z = 1.0 - (progress * 0.55);
-
-      // CURVEBALL-PHYSIK: Seitliche Ablenkung im Flug
       if (b.isSpinning) {
         b.vx += (b.spinSpeed * 4.0) * 0.016;
         b.spinAngle += b.spinSpeed * 1.5;
@@ -1240,17 +1235,30 @@ const CatchEngine = {
 
       this.updateBallElement();
 
-      // Trefferprüfung bei Zielerreichung oder Tiefpunkt der Flugkurve
-      if (b.y <= targetY || b.vy > 500) {
+      // TREFFERPRÜFUNG: Auf Höhe der Zielkarte
+      if (Math.abs(b.y - targetY) < 30 && b.vy < 0) {
+        // Prüfen ob X-Koordinate die Karte trifft
+        const targetX = enemyRect.left + enemyRect.width / 2;
+        const hitRadius = (enemyRect.width / 2) + 20;
+
+        if (Math.abs(b.x - targetX) <= hitRadius) {
+          b.isThrown = false;
+          this.evaluateHit(b.x, b.y, enemyRect);
+          return;
+        }
+      }
+
+      // VORBEIFLUG: Wenn der Ball zu weit oben, zu weit unten oder aus dem Screen fliegt
+      if (b.y < -100 || b.y > window.innerHeight + 100 || b.x < -100 || b.x > window.innerWidth + 100) {
         b.isThrown = false;
-        this.evaluateHit(b.x, b.y, enemyRect);
+        this.showFeedback("DANEBEN!");
+        setTimeout(() => this.resetBall(), 600);
       }
     } else if (b.isSpinning) {
       b.spinAngle += b.spinSpeed;
       this.updateBallElement();
     }
   },
-
 
   updateRing() {
     if (this.ball.isThrown) return;
@@ -1290,35 +1298,24 @@ const CatchEngine = {
   },
 
   evaluateHit(ballX, ballY, enemyRect) {
-    const targetX = enemyRect.left + enemyRect.width / 2;
-    const targetY = enemyRect.top + enemyRect.height / 2;
-    const hitRadius = (enemyRect.width / 2) + 25;
+    let throwBonus = 1.0;
+    let feedbackText = "TREFFER!";
 
-    const dist = Math.hypot(ballX - targetX, ballY - targetY);
-
-    if (dist <= hitRadius) {
-      let throwBonus = 1.0;
-      let feedbackText = "TREFFER!";
-
-      if (this.ringScale < 0.4) {
-        throwBonus = 1.8;
-        feedbackText = "FABELHAFT!";
-      } else if (this.ringScale < 0.7) {
-        throwBonus = 1.4;
-        feedbackText = "GROSSARTIG!";
-      }
-
-      if (this.ball.isSpinning) {
-        throwBonus *= 1.5;
-        feedbackText += " (CURVE)";
-      }
-
-      this.showFeedback(feedbackText);
-      this.triggerCatchSequence(throwBonus);
-    } else {
-      this.showFeedback("DANEBEN!");
-      setTimeout(() => this.resetBall(), 800);
+    if (this.ringScale < 0.4) {
+      throwBonus = 1.8;
+      feedbackText = "FABELHAFT!";
+    } else if (this.ringScale < 0.7) {
+      throwBonus = 1.4;
+      feedbackText = "GROSSARTIG!";
     }
+
+    if (this.ball.isSpinning) {
+      throwBonus *= 1.5;
+      feedbackText += " (CURVE)";
+    }
+
+    this.showFeedback(feedbackText);
+    this.triggerCatchSequence(throwBonus);
   },
 
   showFeedback(text) {
@@ -1329,6 +1326,27 @@ const CatchEngine = {
     setTimeout(() => fb.classList.add('hidden'), 1200);
   },
 
+  playFanfareSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.25);
+      });
+    } catch(e){}
+  },
+
   triggerCatchSequence(throwBonus) {
     const ballEl = document.getElementById('catch-throw-ball');
     const enemyImg = document.getElementById('enemy-card-img');
@@ -1336,62 +1354,84 @@ const CatchEngine = {
     
     if (ring) ring.classList.add('hidden');
 
+    // 1. EINSAUG-ANIMATION DER KARTE IN DEN BALL
     if (enemyImg) {
-      enemyImg.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-      enemyImg.style.transform = 'scale(0.05) rotate(360deg)';
-      enemyImg.style.opacity = '0';
+      enemyImg.classList.add('anim-suck-in');
     }
+    playBeep(800, 0.2);
 
+    // 2. BALL FÄLLT NACH DEM EINSAUGEN AUF DEN BODEN UND WACKELT
     setTimeout(() => {
-      if (ballEl) ballEl.classList.add('wobble');
-      playBeep(600, 0.15);
+      if (ballEl) {
+        ballEl.classList.add('wobble');
+      }
 
-      const baseChance = 0.85;
+      const baseChance = 0.80;
       const finalChance = Math.min(0.98, baseChance * throwBonus);
-
       let wobbles = 0;
+
       const wobbleInterval = setInterval(() => {
         wobbles++;
-        playBeep(500 + (wobbles * 120), 0.12);
+        playBeep(450 + (wobbles * 140), 0.15);
 
         if (wobbles >= 3) {
           clearInterval(wobbleInterval);
           if (ballEl) ballEl.classList.remove('wobble');
 
+          // ERFOLGS-PRÜFUNG
           if (Math.random() <= finalChance) {
-            playBeep(1200, 0.4);
-            this.stopCatchSession();
-            if (enemyImg) {
-              enemyImg.style.transform = 'scale(1)';
-              enemyImg.style.opacity = '1';
-            }
+            // ERFOLG: SIEGES-FANFARE & STERNE-ANIMATION
+            this.playFanfareSound();
+            
+            const stars = document.createElement('div');
+            stars.className = 'catch-stars-overlay';
+            stars.innerText = '✨⭐✨';
+            document.getElementById('screen-battle').appendChild(stars);
+            setTimeout(() => stars.remove(), 1000);
 
-            currentSaveData.pokemonTeam.push({
-              name: currentEnemy.name,
-              type: currentEnemy.type,
-              level: 1,
-              hp: currentEnemy.maxHp,
-              maxHp: currentEnemy.maxHp,
-              cardUrl: currentEnemy.cardUrl
-            });
+            setTimeout(() => {
+              this.stopCatchSession();
+              if (enemyImg) {
+                enemyImg.classList.remove('anim-suck-in');
+                enemyImg.style.transform = '';
+                enemyImg.style.opacity = '1';
+              }
 
-            addTrainerExp(35);
-            saveCurrentData();
-            alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen!`);
-            showScreen('screen-radar-hud');
+              currentSaveData.pokemonTeam.push({
+                name: currentEnemy.name,
+                type: currentEnemy.type,
+                level: 1,
+                hp: currentEnemy.maxHp,
+                maxHp: currentEnemy.maxHp,
+                cardUrl: currentEnemy.cardUrl
+              });
+
+              addTrainerExp(35);
+              saveCurrentData();
+              alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen!`);
+              showScreen('screen-radar-hud');
+            }, 600);
+
           } else {
-            playBeep(300, 0.3);
-            this.stopCatchSession();
+            // MISSERFOLG: POKÉMON PUFFT AUS DEM BALL HERAUS
+            playBeep(220, 0.4);
             if (enemyImg) {
-              enemyImg.style.transform = 'scale(1)';
-              enemyImg.style.opacity = '1';
+              enemyImg.classList.remove('anim-suck-in');
+              enemyImg.classList.add('anim-puff-out');
             }
-            alert(`${currentEnemy.name} ist ausgebrochen!`);
+
+            setTimeout(() => {
+              if (enemyImg) enemyImg.classList.remove('anim-puff-out');
+              this.resetBall();
+              alert(`${currentEnemy.name} ist ausgebrochen!`);
+            }, 700);
           }
         }
-      }, 650);
-    }, 400);
+      }, 700);
+    }, 450);
   }
+};
+
 };
 
 
