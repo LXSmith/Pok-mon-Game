@@ -207,27 +207,30 @@ const IntroManager = {
 
     const triggerAudio = (e) => {
       unlockAudio();
-      requestCompassPermission();
+      if (typeof requestCompassPermission === 'function') requestCompassPermission();
       if (!this.canInteractiveFinish) {
-        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
       }
     };
 
-    container.addEventListener('touchstart', triggerAudio, { passive: true });
-    container.addEventListener('pointerdown', triggerAudio, { passive: true });
+    container.addEventListener('touchstart', triggerAudio, { passive: false });
+    container.addEventListener('pointerdown', triggerAudio, { passive: false });
 
     container.addEventListener('click', (e) => {
       if (!this.canInteractiveFinish) {
-        e.preventDefault();
-        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
         return false;
       }
       this.finishIntro();
     });
 
+    // Sicherheitshalber den Card-Rush starten
     this.startCardRush();
+
+    // Sound-Effekt nach Verzögerung
     setTimeout(() => this.playSlashSound(), 5300);
 
+    // Freigabe für Interaktion erzwingen (Fallback nach 7.3s)
     setTimeout(() => {
       this.canInteractiveFinish = true;
       const promptEl = document.querySelector('.start-prompt');
@@ -297,6 +300,7 @@ const IntroManager = {
     const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
+    // Verwende zuverlässige PokeAPI-Fallback-Sprites, falls TCG-Server blockiert sind
     const tcgCards = [
       { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
       { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
@@ -326,19 +330,25 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
-        const animation = card.animate([
-          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
-          { opacity: 1, offset: 0.15 },
-          { opacity: 1, offset: 0.70 },
-          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
-        ], {
-          duration: 600,
-          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          fill: 'forwards'
-        });
+        // Prüfen, ob Element.animate unterstützt wird (Web Animations API)
+        if (typeof card.animate === 'function') {
+          const animation = card.animate([
+            { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
+            { opacity: 1, offset: 0.15 },
+            { opacity: 1, offset: 0.70 },
+            { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
+          ], {
+            duration: 600,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            fill: 'forwards'
+          });
 
-        this.playWhooshSound();
-        animation.onfinish = () => card.remove();
+          this.playWhooshSound();
+          animation.onfinish = () => card.remove();
+        } else {
+          // Fallback für ältere Browser
+          setTimeout(() => card.remove(), 600);
+        }
       }, i * (totalDuration / cardCount));
     }
   },
@@ -348,8 +358,8 @@ const IntroManager = {
     this.active = false;
 
     unlockAudio();
-    requestCompassPermission();
-    requestNotificationPermission();
+    if (typeof requestCompassPermission === 'function') requestCompassPermission();
+    if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
 
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
@@ -359,11 +369,12 @@ const IntroManager = {
       setTimeout(() => {
         introEl.style.display = 'none';
         if (gameScreen) gameScreen.classList.remove('hidden');
-        initApp();
+        if (typeof initApp === 'function') initApp();
       }, 500);
     }
   }
 };
+
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
