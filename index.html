@@ -161,6 +161,12 @@
           <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
         </div>
 
+        <!-- STÄNDIG GRIFFBEREITER POKÉBALL RECHTS NEBEN DEM GEGNER (IM KAMPF-MODUS) -->
+        <div id="battle-ready-ball" class="battle-ready-ball hidden" title="Pokéball greifen & werfen">
+          <img src="IMG_1122.jpeg" alt="Pokéball">
+          <span id="battle-balls-badge" class="ball-badge">10</span>
+        </div>
+
         <!-- HINWEISBOX MITTE -->
         <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon greift an!</div>
 
@@ -180,23 +186,24 @@
           <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
         </div>
 
-      </div>
+      </div> <!-- Hier wird die arena-stage sauber geschlossen -->
 
-      <!-- POKÉBALL -->
+      <!-- WURF-POKÉBALL FÜR DIE PHYSIK-ENGINE -->
       <div id="catch-throw-ball" class="catch-throw-ball hidden">
         <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
       </div>
 
-      <!-- BOTTOM HUD -->
+      <!-- BOTTOM HUD (NUR NOCH 3 GROSSE BUTTONS + FLIEHEN) -->
       <div class="arena-bottom-hud">
         <div class="battle-action-bar">
           <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
           <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-action btn-special">🔥 Spezial</button>
           <button type="button" onclick="openBattleTeamModal()" class="btn-action" style="background:#0284c7;">🐾 Team</button>
-          <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Werfen (<span id="battle-balls-count">10</span>)</button>
+          <button type="button" onclick="attemptEscape()" class="btn-action" style="background:#e74c3c;">🏃 Fliehen</button>
         </div>
       </div>
     </section>
+
 
 
     <!-- MODAL 1: SCAN & TRAINING WAHL -->
