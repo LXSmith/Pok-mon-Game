@@ -361,7 +361,7 @@ button:active { transform: scale(0.97); }
   color: var(--accent-yellow);
 }
 
-/* BÜHNE (OBEN GEGNER, UNTEN SPIELER OHNE PUFFER) */
+/* BÜHNE */
 .arena-stage {
   position: relative !important;
   z-index: 5;
@@ -424,8 +424,8 @@ button:active { transform: scale(0.97); }
 /* EIGENES POKÉMON (WEITER OBEN & GRÖSSER SKALIERT) */
 .player-sprite-wrapper {
   position: relative !important;
-  bottom: 60px !important; /* Schiebt das Pokémon und seine Leiste deutlich weiter nach oben */
-  transform: scale(1.85) !important; /* Macht es noch etwas größer */
+  bottom: 60px !important;
+  transform: scale(1.85) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -434,7 +434,6 @@ button:active { transform: scale(0.97); }
   pointer-events: none !important;
   filter: drop-shadow(0 15px 15px rgba(0,0,0,0.6));
 }
-
 
 .player-sprite-img {
   width: 140px;
@@ -686,18 +685,9 @@ button:active { transform: scale(0.97); }
   animation: dodgeLeftAnim 0.5s ease-in-out forwards !important;
 }
 
-.anim-dodge-right {
-  animation: dodgeRightAnim 0.5s ease-in-out forwards !important;
-}
-
 @keyframes dodgeLeftAnim {
   0% { transform: scale(1.85) translateX(0); }
   40% { transform: scale(1.85) translateX(-90px) rotate(-15deg); }
-  100% { transform: scale(1.85) translateX(0); }
-}
-@keyframes dodgeRightAnim {
-  0% { transform: scale(1.85) translateX(0); }
-  40% { transform: scale(1.85) translateX(90px) rotate(15deg); }
   100% { transform: scale(1.85) translateX(0); }
 }
 
@@ -723,6 +713,26 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 0 15px rgba(255, 203, 5, 0.5);
 }
 
+/* Grelles Aufleuchten während der Evolution */
+.evo-flash-bright {
+  animation: brightFlashAnim 2.2s ease-in-out forwards !important;
+}
+
+@keyframes brightFlashAnim {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 10px rgba(255, 203, 5, 0.5));
+    transform: scale(1);
+  }
+  40%, 60% {
+    filter: brightness(4) saturate(0.2) drop-shadow(0 0 40px #ffffff);
+    transform: scale(1.08);
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 0 25px var(--accent-yellow));
+    transform: scale(1);
+  }
+}
+
 /* =========================================================
    ELEMENTARE PROJEKTIL-ANIMATIONEN (RICHTUNGSSTEUERUNG)
    ========================================================= */
@@ -737,7 +747,6 @@ button:active { transform: scale(0.97); }
   filter: drop-shadow(0 0 15px rgba(255,255,255,0.9));
 }
 
-/* FLUG VON UNTEN NACH OBEN (Spieler -> Gegner) */
 @keyframes flyToEnemyFeuer {
   0% { bottom: 120px; transform: translateX(-50%) scale(0.5) rotate(0deg); opacity: 0; }
   20% { opacity: 1; transform: translateX(-50%) scale(1.5) rotate(180deg); }
@@ -765,7 +774,6 @@ button:active { transform: scale(0.97); }
   100% { bottom: 65vh; transform: translateX(-50%) scale(1); opacity: 0; }
 }
 
-/* FLUG VON OBEN NACH UNTEN (Gegner -> Spieler) */
 @keyframes flyToPlayerFeuer {
   0% { top: 120px; transform: translateX(-50%) scale(0.5) rotate(0deg); opacity: 0; }
   20% { opacity: 1; transform: translateX(-50%) scale(1.5) rotate(180deg); }
@@ -806,10 +814,8 @@ button:active { transform: scale(0.97); }
   100% { transform: scale(1.85); filter: brightness(1); }
 }
 
-
-direct-hit-flash {
+.direct-hit-flash {
   filter: brightness(3) saturate(2) drop-shadow(0 0 15px red) !important;
   transform: scale(1.95) translateX(6px) !important;
   transition: transform 0.05s ease, filter 0.05s ease !important;
 }
-
