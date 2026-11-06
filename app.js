@@ -384,6 +384,7 @@ let playerEnergy = 0;
 let isEnemyAttacking = false;
 let isPlayerTurn = true;
 let pendingEvoPokemon = null;
+let pendingLevelUpData = null;
 
 let dodgeTimer = null;
 let isDodgeWindowActive = false;
@@ -1605,6 +1606,8 @@ function winBattle() {
 
       document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
       document.getElementById('victory-item-text').innerText = `Beide Pokémon sind gewachsen!`;
+      window._pendingLevelUpInfo = pendingLevelUpData;
+      window._launchEvolutionAfterVictory = false;
       document.getElementById('victory-screen').classList.remove('hidden');
     } else {
       const earnedExp = 20;
@@ -1616,7 +1619,7 @@ function winBattle() {
       activeMon.hp = activeMon.maxHp;
       saveCurrentData();
 
-      // HIER WIRD DIE EVOLUTION IM HINTERGRUND GEPRÜFT
+      // Evolution im Hintergrund prüfen
       let triggeredEvo = false;
       if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
         const roll = Math.floor(Math.random() * 100) + 1;
@@ -1628,24 +1631,26 @@ function winBattle() {
         }
       }
 
-      // Sieg-Screen zeigt den Levelaufstieg an
-      let victoryText = `+${earnedExp} EXP`;
-      if (leveledUp) {
-        victoryText += ` | ✨ Auf Level ${activeMon.level}!`;
-      }
-      document.getElementById('victory-exp-text').innerText = victoryText;
+      // Sieg-Screen zeigt nur noch saubere EXP & Items (keinen Leveltext-Salat mehr)
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
       document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
 
+      window._pendingLevelUpInfo = leveledUp ? pendingLevelUpData : null;
       window._launchEvolutionAfterVictory = triggeredEvo;
       document.getElementById('victory-screen').classList.remove('hidden');
     }
   }, 1000);
 }
 
-
 function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
   if (!pokemon.maxExp) pokemon.maxExp = pokemon.level * 15;
+
+  // Alte Werte für den Vergleich merken, BEVOR sie steigen
+  const oldLevel = pokemon.level;
+  const oldMaxHp = pokemon.maxHp || pokemon.hp;
+  const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.8);
+  const oldSpecial = pokemon.specialAttack || Math.round(oldMaxHp * 1.2);
 
   pokemon.exp += amount;
   let didLevelUp = false;
@@ -1657,6 +1662,9 @@ function addPokemonExp(pokemon, amount) {
     pokemon.maxHp += 5;
     pokemon.hp = pokemon.maxHp;
     
+    pokemon.attack = Math.round(pokemon.maxHp * 0.8);
+    pokemon.specialAttack = Math.round(pokemon.maxHp * 1.2);
+
     if (pokemon.evoChance === undefined) pokemon.evoChance = 0;
     pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
     didLevelUp = true;
@@ -1664,9 +1672,84 @@ function addPokemonExp(pokemon, amount) {
 
   if (didLevelUp) {
     saveCurrentData();
+    pendingLevelUpData = {
+      pokemon: pokemon,
+      oldLevel: oldLevel,
+      newLevel: pokemon.level,
+      oldHp: oldMaxHp,
+      newHp: pokemon.maxHp,
+      oldAtk: oldAttack,
+      newAtk: pokemon.attack,
+      oldSpc: oldSpecial,
+      newSpc: pokemon.specialAttack
+    };
   }
 
   return didLevelUp;
+}
+
+function closeVictoryOverlay() {
+  document.getElementById('victory-screen').classList.add('hidden');
+
+  // 1. Wenn ein Level-Up stattfand -> Zuerst den großen Level-Up-Screen anzeigen
+  if (window._pendingLevelUpInfo) {
+    const info = window._pendingLevelUpInfo;
+    window._pendingLevelUpInfo = null;
+
+    document.getElementById('levelup-title').innerText = `${info.pokemon.name} erreicht Level ${info.newLevel}!`;
+    
+    const statsContainer = document.getElementById('levelup-stats-container');
+    statsContainer.innerHTML = `
+      <div class="stat-change-row">
+        <span class="stat-label">❤️ KP:</span>
+        <div class="stat-values">
+          <span class="stat-old">${info.oldHp}</span>
+          <span class="stat-arrow">➔</span>
+          <span class="stat-new">${info.newHp}</span>
+        </div>
+      </div>
+      <div class="stat-change-row">
+        <span class="stat-label">⚔️ Angriff:</span>
+        <div class="stat-values">
+          <span class="stat-old">${info.oldAtk}</span>
+          <span class="stat-arrow">➔</span>
+          <span class="stat-new">${info.newAtk}</span>
+        </div>
+      </div>
+      <div class="stat-change-row">
+        <span class="stat-label">🔥 Spezialangriff:</span>
+        <div class="stat-values">
+          <span class="stat-old">${info.oldSpc}</span>
+          <span class="stat-arrow">➔</span>
+          <span class="stat-new">${info.newSpc}</span>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('levelup-screen').classList.remove('hidden');
+    playBeep(880, 0.3);
+    return;
+  }
+
+  // 2. Ansonsten direkt zur Evolution oder zurück zum Radar
+  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
+    window._launchEvolutionAfterVictory = false;
+    triggerBackgroundEvolution(pendingEvoPokemon);
+  } else {
+    showScreen('screen-radar-hud');
+  }
+}
+
+function closeLevelUpOverlay() {
+  document.getElementById('levelup-screen').classList.add('hidden');
+
+  // Nach dem Level-Up-Screen direkt zur Evolution (falls getriggert) oder zurück zum Radar
+  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
+    window._launchEvolutionAfterVictory = false;
+    triggerBackgroundEvolution(pendingEvoPokemon);
+  } else {
+    showScreen('screen-radar-hud');
+  }
 }
 
 let isEvolutionFinished = false;
@@ -1682,7 +1765,6 @@ function triggerBackgroundEvolution(pokemon) {
   isEvolutionFinished = false;
   if (rollBtn) rollBtn.style.display = 'none';
 
-  // 1. Screen mit aktueller Karte öffnen
   document.getElementById('evo-title').innerText = `Was? ${pokemon.name} entwickelt sich!`;
   document.getElementById('evo-subtitle').innerText = `Magische Energie bricht hervor...`;
   evoImg.src = pokemon.cardUrl;
@@ -1690,13 +1772,11 @@ function triggerBackgroundEvolution(pokemon) {
   document.getElementById('evo-chance-info').innerText = `✨ EVOLUTION LÄUFT! ✨`;
   document.getElementById('evo-screen').classList.remove('hidden');
 
-  // 2. Grelles Leuchten starten
   setTimeout(() => {
     evoImg.classList.add('evo-flash-bright');
     playBeep(880, 0.4);
   }, 200);
 
-  // 3. Im Höhepunkt des Lichts zur neuen Karte wechseln
   setTimeout(() => {
     evoImg.src = evoData.cardUrl;
     pokemon.name = evoData.next;
@@ -1710,7 +1790,6 @@ function triggerBackgroundEvolution(pokemon) {
     document.getElementById('evo-subtitle').innerText = `Dein Pokémon wurde zu ${pokemon.name}!`;
     document.getElementById('evo-chance-info').innerText = `Neue maximale KP: ${pokemon.maxHp}`;
 
-    // 4. Tanzende Sterne erzeugen
     if (modalCard && !document.getElementById('active-evo-stars')) {
       const starsContainer = document.createElement('div');
       starsContainer.id = 'active-evo-stars';
@@ -1720,7 +1799,6 @@ function triggerBackgroundEvolution(pokemon) {
     }
   }, 1700);
 
-  // 5. Nach Abklingen erscheint der Weiter-Button
   setTimeout(() => {
     isEvolutionFinished = true;
     if (rollBtn) {
@@ -1741,17 +1819,6 @@ function rollEvolution() {
     const evoImg = document.getElementById('evo-card-img');
     if (evoImg) evoImg.classList.remove('evo-flash-bright');
 
-    showScreen('screen-radar-hud');
-  }
-}
-
-function closeVictoryOverlay() {
-  document.getElementById('victory-screen').classList.add('hidden');
-
-  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
-    window._launchEvolutionAfterVictory = false;
-    triggerBackgroundEvolution(pendingEvoPokemon);
-  } else {
     showScreen('screen-radar-hud');
   }
 }
