@@ -648,10 +648,10 @@ function forceDevSpawn() {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
-  targetPokemonCoords = { 
-    lat: currentPosition.lat, 
-    lon: currentPosition.lon 
-  };
+  // Spawnt nun im realistischen Umkreis von 2 bis 8 Metern (kein Sofort-Kampf mehr)
+  const randomDistance = Math.random() * 6 + 2; 
+  const randomBearing = Math.random() * 360;
+  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
 
   triggerSignalDetected();
 }
@@ -661,7 +661,7 @@ function triggerSignalDetected() {
 
   if (!targetPokemonCoords) {
     if (currentPosition) {
-      const randomDistance = Math.random() * (25 - 10) + 10;
+      const randomDistance = Math.random() * 6 + 2; // 2 bis 8 Meter
       const randomBearing = Math.random() * 360;
       targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
     } else {
@@ -681,7 +681,7 @@ function triggerSignalDetected() {
   
   if (scareBtn) scareBtn.classList.remove('hidden');
 
-  // 📳 HIER WIRD DIE VIBRATION AUSGELÖST (Ein markanter Rhythmus für den Fund)
+  // 📳 HIER WIRD DIE VIBRATION AUSGELÖST
   triggerVibration([400, 150, 400, 150, 600]);
 
   playBeep(880, 0.4);
@@ -690,6 +690,14 @@ function triggerSignalDetected() {
   updateBlipPosition();
 }
 
+function scarePokemon() {
+  if (!currentPosition) return;
+  const randomDistance = Math.random() * 6 + 2; // 2 bis 8 Meter
+  const randomBearing = Math.random() * 360;
+  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
+  playBeep(1000, 0.15);
+  updateBlipPosition();
+}
 
 function onGPSPositionUpdated() {
   if (targetPokemonCoords && currentPosition) {
@@ -736,6 +744,7 @@ function updateBlipPosition() {
   blip.style.top = y + "px";
 
   blip.onclick = () => {
+    triggerVibration([200, 100, 200]);
     blip.classList.add('hidden');
     targetPokemonCoords = null;
     startBattleFromScan();
@@ -1639,7 +1648,7 @@ function winBattle() {
         }
       }
 
-      // Sieg-Screen zeigt nur noch saubere EXP & Items (keinen Leveltext-Salat mehr)
+      // Sieg-Screen zeigt nur noch saubere EXP & Items
       document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
       document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
 
@@ -1654,7 +1663,6 @@ function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
   if (!pokemon.maxExp) pokemon.maxExp = pokemon.level * 15;
 
-  // Alte Werte für den Vergleich merken, BEVOR sie steigen
   const oldLevel = pokemon.level;
   const oldMaxHp = pokemon.maxHp || pokemon.hp;
   const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.8);
@@ -1699,7 +1707,6 @@ function addPokemonExp(pokemon, amount) {
 function closeVictoryOverlay() {
   document.getElementById('victory-screen').classList.add('hidden');
 
-  // 1. Wenn ein Level-Up stattfand -> Zuerst den großen Level-Up-Screen anzeigen
   if (window._pendingLevelUpInfo) {
     const info = window._pendingLevelUpInfo;
     window._pendingLevelUpInfo = null;
@@ -1739,7 +1746,6 @@ function closeVictoryOverlay() {
     return;
   }
 
-  // 2. Ansonsten direkt zur Evolution oder zurück zum Radar
   if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
     window._launchEvolutionAfterVictory = false;
     triggerBackgroundEvolution(pendingEvoPokemon);
@@ -1751,7 +1757,6 @@ function closeVictoryOverlay() {
 function closeLevelUpOverlay() {
   document.getElementById('levelup-screen').classList.add('hidden');
 
-  // Nach dem Level-Up-Screen direkt zur Evolution (falls getriggert) oder zurück zum Radar
   if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
     window._launchEvolutionAfterVictory = false;
     triggerBackgroundEvolution(pendingEvoPokemon);
