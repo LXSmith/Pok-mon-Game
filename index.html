@@ -275,6 +275,20 @@
       </div>
     </div>
 
+    <!-- MODAL: EPISCHER LEVEL-UP -->
+    <div id="levelup-screen" class="levelup-overlay hidden">
+      <div class="levelup-card">
+        <div style="font-size: 28px; font-weight: 900; color: var(--accent-yellow); margin-bottom: 5px; text-transform: uppercase;">✨ LEVEL UP! ✨</div>
+        <p id="levelup-title" style="color: #fff; font-size: 16px; font-weight: 800; margin: 0 0 10px 0;">Pokémon erreicht Level 2!</p>
+        
+        <div class="levelup-stats-box" id="levelup-stats-container">
+          <!-- Werte werden dynamisch via JS eingefügt -->
+        </div>
+
+        <button type="button" onclick="closeLevelUpOverlay()" class="btn-primary" style="margin-top: 10px;">WEITER</button>
+      </div>
+    </div>
+
     <div id="victory-screen" class="modal-overlay hidden">
       <div class="modal-card">
         <div style="font-size:24px; font-weight:900; color:var(--accent-yellow); margin-bottom:5px;">🏆 SIEG!</div>
