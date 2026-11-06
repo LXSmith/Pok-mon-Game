@@ -41,9 +41,7 @@ function triggerVibration(pattern = 50) {
   if ("vibrate" in navigator) {
     try {
       navigator.vibrate(pattern);
-    } catch (e) {
-      // Ignorieren falls vom Browser blockiert
-    }
+    } catch (e) {}
   }
 }
 
@@ -356,15 +354,15 @@ const IntroManager = {
 };
 
 /* =========================================================
-   2. SPEICHER & DATENBANKEN
+   2. SPEICHER & DATENBANKEN (Mit KP-Schwellenwert für Evolution)
    ========================================================= */
 const EVOLUTION_CHAINS = {
-  "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20 },
-  "Glutexo":  { next: "Glurak",  cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  hpBonus: 35 },
-  "Bisasam":  { next: "Bisaknosp", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png", hpBonus: 20 },
-  "Bisaknosp":{ next: "Bisaflor",  cardUrl: "https://images.pokemontcg.io/base1/15_hires.png", hpBonus: 35 },
-  "Schiggy":   { next: "Schillok", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png", hpBonus: 20 },
-  "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35 }
+  "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20, requiredMaxHp: 80 },
+  "Glutexo":  { next: "Glurak",  cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  hpBonus: 35, requiredMaxHp: 120 },
+  "Bisasam":  { next: "Bisaknosp", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png", hpBonus: 20, requiredMaxHp: 80 },
+  "Bisaknosp":{ next: "Bisaflor",  cardUrl: "https://images.pokemontcg.io/base1/15_hires.png", hpBonus: 35, requiredMaxHp: 120 },
+  "Schiggy":   { next: "Schillok", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png", hpBonus: 20, requiredMaxHp: 80 },
+  "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35, requiredMaxHp: 120 }
 };
 
 const COMMON_POKEMON = [
@@ -410,6 +408,7 @@ let currentSaveData = {
   maxExp: 100,
   pokeballs: 10,
   pokemonTeam: [],
+  pokemonBox: [], // Lagerbox für Pokémon über Team-Limit 6
   homePos: null
 };
 
@@ -517,13 +516,14 @@ function onSlotSelected(slotNum) {
   if (selectedFlowMode === 'continue') {
     if (saved) {
       currentSaveData = JSON.parse(saved);
+      if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
       loadDashboard();
       showScreen('screen-radar-hud');
     } else {
       alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
     }
   } else {
-    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [], homePos: null };
+    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [], pokemonBox: [], homePos: null };
     showScreen('screen-starter');
   }
 }
@@ -555,12 +555,13 @@ function chooseStarter(type, element) {
 
 function confirmStarter() {
   const starters = {
-    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", evoChance: 0, exp: 0, maxExp: 75, attack: 9, specialAttack: 14 },
-    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", evoChance: 0, exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
-    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", evoChance: 0, exp: 0, maxExp: 75, attack: 10, specialAttack: 16 }
+    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", exp: 0, maxExp: 75, attack: 9, specialAttack: 14 },
+    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
+    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 }
   };
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
+  currentSaveData.pokemonBox = [];
   currentSaveData.pokeballs = 10;
 
   if (currentPosition) {
@@ -586,31 +587,91 @@ function loadDashboard() {
   const expPct = Math.min(100, (currentSaveData.exp / currentSaveData.maxExp) * 100);
   document.getElementById('menu-trainer-exp-bar').style.width = expPct + "%";
   document.getElementById('menu-trainer-exp-text').innerText = `${currentSaveData.exp} / ${currentSaveData.maxExp} EXP`;
-  document.getElementById('menu-caught-count').innerText = currentSaveData.pokemonTeam.length;
+  document.getElementById('menu-caught-count').innerText = currentSaveData.pokemonTeam.length + currentSaveData.pokemonBox.length;
 
   renderPokemonTeam();
 }
 
+/* =========================================================
+   TEAM-MANAGEMENT & BOX LOGIK
+   ========================================================= */
 function renderPokemonTeam() {
   const container = document.getElementById('pokemon-team-list');
   if (!container) return;
-  container.innerHTML = "";
+  container.innerHTML = `
+    <h3 style="color:#ffcb05; margin-bottom:10px; font-size:16px;">Dein Team (Max. 6)</h3>
+    <div id="team-cards-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <h3 style="color:#ffcb05; margin:20px 0 10px 0; font-size:16px;">Lagerbox (${currentSaveData.pokemonBox.length})</h3>
+    <div id="box-cards-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+  `;
 
+  const teamContainer = document.getElementById('team-cards-container');
   currentSaveData.pokemonTeam.forEach((p, idx) => {
     const row = document.createElement('div');
     row.className = "pokemon-row";
+    row.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.08); padding:8px 12px; border-radius:8px;";
     row.innerHTML = `
       <div style="display:flex; align-items:center; gap:10px;">
         <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
         <div style="text-align:left;">
           <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
-          <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp} | Evo: ${p.evoChance || 0}%</div>
+          <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp}</div>
         </div>
       </div>
-      ${idx === 0 ? '<span class="tag-active">Aktiv</span>' : ''}
+      <div style="display:flex; gap:6px; align-items:center;">
+        ${idx === 0 ? '<span class="tag-active" style="background:#ffcb05; color:#000; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold;">Aktiv</span>' : `<button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="setActivePokemon(${idx})">Aktiv setzen</button>`}
+        ${currentSaveData.pokemonTeam.length > 1 && idx !== 0 ? `<button class="btn-primary" style="font-size:10px; padding:4px 8px; background:#e74c3c;" onclick="moveToBox(${idx})">In Box</button>` : ''}
+      </div>
     `;
-    container.appendChild(row);
+    teamContainer.appendChild(row);
   });
+
+  const boxContainer = document.getElementById('box-cards-container');
+  if (currentSaveData.pokemonBox.length === 0) {
+    boxContainer.innerHTML = `<p style="font-size:12px; color:#888; font-style:italic;">Box ist leer.</p>`;
+  } else {
+    currentSaveData.pokemonBox.forEach((p, idx) => {
+      const row = document.createElement('div');
+      row.className = "pokemon-row";
+      row.style.cssText = "display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.04); padding:8px 12px; border-radius:8px;";
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="${p.cardUrl}" alt="${p.name}" style="width:40px;">
+          <div style="text-align:left;">
+            <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
+            <div style="font-size:11px; color:#4cd137;">KP: ${p.hp}/${p.maxHp}</div>
+          </div>
+        </div>
+        <button class="btn-primary" style="font-size:10px; padding:4px 8px;" onclick="moveToTeam(${idx})">Ins Team</button>
+      `;
+      boxContainer.appendChild(row);
+    });
+  }
+}
+
+function setActivePokemon(index) {
+  const chosen = currentSaveData.pokemonTeam.splice(index, 1)[0];
+  currentSaveData.pokemonTeam.unshift(chosen);
+  saveCurrentData();
+  loadDashboard();
+}
+
+function moveToBox(index) {
+  const mon = currentSaveData.pokemonTeam.splice(index, 1)[0];
+  currentSaveData.pokemonBox.push(mon);
+  saveCurrentData();
+  loadDashboard();
+}
+
+function moveToTeam(index) {
+  if (currentSaveData.pokemonTeam.length >= 6) {
+    alert("Dein Team ist voll! (Maximal 6 Pokémon im Team).");
+    return;
+  }
+  const mon = currentSaveData.pokemonBox.splice(index, 1)[0];
+  currentSaveData.pokemonTeam.push(mon);
+  saveCurrentData();
+  loadDashboard();
 }
 
 /* =========================================================
@@ -658,7 +719,6 @@ function forceDevSpawn() {
 
 function triggerSignalDetected() {
   isScanning = false;
-  
   triggerVibration([300, 100, 300]); 
 
   if (!targetPokemonCoords) {
@@ -911,13 +971,9 @@ function triggerElementalFX(elementType, direction = 'up') {
       proj.style.marginLeft = (Math.random() * 80 - 40) + 'px';
       
       battleScreen.appendChild(proj);
-
       proj.style.animation = `${animName} 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards`;
 
-      setTimeout(() => {
-        proj.remove();
-      }, 1200);
-
+      setTimeout(() => { proj.remove(); }, 1200);
     }, i * 250);
   }
 }
@@ -946,7 +1002,6 @@ function startBattleFromScan() {
   const template = pool[Math.floor(Math.random() * pool.length)];
 
   const minHp = template.maxHp;
-  
   let calculatedHp = minHp;
   if (playerBattlePokemon && playerBattlePokemon.maxHp) {
     const playerHp = playerBattlePokemon.maxHp;
@@ -1016,7 +1071,6 @@ function executePlayerAttack() {
 
   const playerImg = document.getElementById('player-card-img');
   const enemyImg = document.getElementById('enemy-card-img');
-
   const enemyDodges = Math.random() <= 0.15;
 
   if (playerImg) playerImg.classList.add('anim-player-tackle');
@@ -1035,10 +1089,11 @@ function executePlayerAttack() {
 
       triggerElementalFX(currentEnemy.type, 'down');
       
-      const specDmg = Math.round(currentEnemy.maxHp * 0.60);
+      // Gegnerspezial bei Ausweichen
+      const specDmg = Math.round(currentEnemy.maxHp * 0.40);
       playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
 
-      document.getElementById('battle-warning-box').innerText = `🔥 GEGNER WEICHT AUS & KONTERT MIT SPEZIAL! (-${specDmg} KP)`;
+      document.getElementById('battle-warning-box').innerText = `🔥 GEGNER WEICHT AUS & KONTERT! (-${specDmg} KP)`;
 
       setTimeout(() => {
         isEnemyAttacking = false;
@@ -1049,12 +1104,11 @@ function executePlayerAttack() {
           updateBattleUI();
         }
       }, 700);
-
     }, 550);
 
   } else {
-    // Normaler Angriff: Nutzt den echten Status-Wert des Pokémon
-    let dmg = playerBattlePokemon.attack || Math.round(playerBattlePokemon.maxHp * 0.20);
+    // Normaler Angriff: 30% Max-KP
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.30);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     setTimeout(() => {
@@ -1087,12 +1141,11 @@ function executePlayerSpecial() {
   const type = playerBattlePokemon.type.toUpperCase();
 
   document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${type}) WIRD AUFGELADEN!`;
-  
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
-    // Spezialangriff: Nutzt den echten Status-Wert des Pokémon
-    let dmg = playerBattlePokemon.specialAttack || Math.round((playerBattlePokemon.maxHp * 0.30) + (playerBattlePokemon.level * 0.5));
+    // Spezialangriff: 50% Max-KP
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.50);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
@@ -1108,7 +1161,7 @@ function executePlayerSpecial() {
       setTimeout(scheduleEnemyAttack, 800);
     }, 600);
 
-  }, 3500);
+  }, 2500);
 }
 
 function scheduleEnemyAttack() {
@@ -1174,7 +1227,8 @@ function executeEnemyDamage() {
   document.getElementById('battle-warning-box').innerText = `⚠️ ${currentEnemy.name} greift an!`;
 
   setTimeout(() => {
-    let dmg = Math.round(currentEnemy.maxHp * 0.30);
+    // ⚖️ GEGNER-SCHADEN: Exakt 20% seiner maximalen KP
+    let dmg = Math.round(currentEnemy.maxHp * 0.20);
     playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
     updateBattleUI();
 
@@ -1212,15 +1266,11 @@ function handlePokemonKnockout() {
   const mon = playerBattlePokemon;
   const oldExp = mon.exp || 0;
   
-  // Halbiere die EXP im aktuellen Level
   const lostExp = Math.floor(oldExp / 2);
   mon.exp = oldExp - lostExp;
-  
-  // Pokémon erholt sich wieder auf volle KP
   mon.hp = mon.maxHp;
   saveCurrentData();
 
-  // Daten für den K.O.-Screen bereitstellen
   pendingKoInfo = {
     name: mon.name,
     lostExp: lostExp,
@@ -1228,7 +1278,6 @@ function handlePokemonKnockout() {
     maxExp: mon.maxExp
   };
 
-  // K.O. Screen einblenden
   document.getElementById('ko-loss-text').innerText = `-${lostExp} EXP verloren!`;
   document.getElementById('ko-remaining-text').innerText = `Verbleibende EXP: ${mon.exp} / ${mon.maxExp}`;
   document.getElementById('ko-screen').classList.remove('hidden');
@@ -1297,7 +1346,6 @@ const CatchEngine = {
 
   resetBall() {
     const b = this.ball;
-
     const playerImg = document.getElementById('player-card-img');
     const playerRect = playerImg ? playerImg.getBoundingClientRect() : null;
 
@@ -1360,12 +1408,10 @@ const CatchEngine = {
       if (this.touchHistory.length >= 4) {
         const h = this.touchHistory;
         const len = h.length;
-
         const v1x = h[len - 2].x - h[len - 4].x;
         const v1y = h[len - 2].y - h[len - 4].y;
         const v2x = h[len - 1].x - h[len - 2].x;
         const v2y = h[len - 1].y - h[len - 2].y;
-
         const cp = (v1x * v2y) - (v1y * v2x);
 
         if (Math.abs(cp) > 8) {
@@ -1374,7 +1420,6 @@ const CatchEngine = {
           this.ball.spinSpeed = this.ball.spinSpeed * 0.6 + targetSpeed * 0.4;
         }
       }
-
       this.updateBallElement();
     };
 
@@ -1395,7 +1440,6 @@ const CatchEngine = {
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
-            
             const swipeSpeed = Math.hypot(vx, vy);
             this.ball.vz = - (swipeSpeed * 0.0018); 
           } else {
@@ -1410,7 +1454,6 @@ const CatchEngine = {
     el.addEventListener('touchstart', onStart, { passive: false });
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onEnd, { passive: false });
-
     el.addEventListener('mousedown', onStart);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
@@ -1437,7 +1480,6 @@ const CatchEngine = {
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
       b.vy += 580 * 0.016;
-
       b.z += b.vz * 0.016;
       b.z = Math.max(0.12, b.z);
 
@@ -1502,12 +1544,6 @@ const CatchEngine = {
     const rotation = b.isSpinning ? `rotate(${b.spinAngle}deg)` : '';
     
     ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
-    
-    if (b.isSpinning) {
-      ballEl.classList.add('spinning');
-    } else {
-      ballEl.classList.remove('spinning');
-    }
   },
 
   evaluateHit(ballX, ballY, enemyRect) {
@@ -1566,16 +1602,11 @@ const CatchEngine = {
     const ring = document.getElementById('target-ring-outer');
     
     if (ring) ring.classList.add('hidden');
-
-    if (enemyImg) {
-      enemyImg.classList.add('anim-suck-in');
-    }
+    if (enemyImg) enemyImg.classList.add('anim-suck-in');
     playBeep(800, 0.2);
 
     setTimeout(() => {
-      if (ballEl) {
-        ballEl.classList.add('wobble');
-      }
+      if (ballEl) ballEl.classList.add('wobble');
 
       const baseChance = 0.80;
       const finalChance = Math.min(0.98, baseChance * throwBonus);
@@ -1606,8 +1637,7 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
-              // Neues gefangenes Pokémon startet auf Level 1 mit korrekten Stats
-              currentSaveData.pokemonTeam.push({
+              const newMon = {
                 name: currentEnemy.name,
                 type: currentEnemy.type,
                 level: 1,
@@ -1618,11 +1648,25 @@ const CatchEngine = {
                 maxExp: 75,
                 attack: Math.round(currentEnemy.maxHp * 0.20),
                 specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
-              });
+              };
+
+              // Ins Team einfügen wenn Platz ist (<6), sonst in die Lagerbox
+              if (currentSaveData.pokemonTeam.length < 6) {
+                currentSaveData.pokemonTeam.push(newMon);
+                alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
+              } else {
+                if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
+                currentSaveData.pokemonBox.push(newMon);
+                alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
+              }
+
+              // 💖 Aktives Pokémon voll heilen
+              if (currentSaveData.pokemonTeam.length > 0) {
+                currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
+              }
 
               addTrainerExp(35);
               saveCurrentData();
-              alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen!`);
               showScreen('screen-radar-hud');
             }, 600);
 
@@ -1651,7 +1695,6 @@ function attemptCatch() {
 
   currentSaveData.pokeballs--;
   updateBattleUI();
-
   CatchEngine.startCatchSession();
 }
 
@@ -1668,7 +1711,6 @@ function winBattle() {
 
   setTimeout(() => {
     if (isTrainingMode) {
-      // 🌟 EXP-FORMEL: Gegner-MaxKP * 0.5
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       addPokemonExp(playerBattlePokemon, earnedExp);
       if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
@@ -1681,7 +1723,6 @@ function winBattle() {
       window._launchEvolutionAfterVictory = false;
       document.getElementById('victory-screen').classList.remove('hidden');
     } else {
-      // 🌟 EXP-FORMEL: Gegner-MaxKP * 0.5
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       addTrainerExp(earnedExp);
       currentSaveData.pokeballs += 2;
@@ -1692,11 +1733,10 @@ function winBattle() {
       saveCurrentData();
 
       let triggeredEvo = false;
-      if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
-        const roll = Math.floor(Math.random() * 100) + 1;
-        const currentChance = activeMon.evoChance || 0;
-
-        if (roll <= currentChance) {
+      // 🧬 EVOLUTION CHECK NACH KP-SCHWELLENWERT
+      if (EVOLUTION_CHAINS[activeMon.name]) {
+        const evoData = EVOLUTION_CHAINS[activeMon.name];
+        if (activeMon.maxHp >= evoData.requiredMaxHp) {
           triggeredEvo = true;
           pendingEvoPokemon = activeMon;
         }
@@ -1714,8 +1754,6 @@ function winBattle() {
 
 function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
-  
-  // 🌟 Quadratische Level-Up-Kurve: 50 + (Level^2 * 25)
   if (!pokemon.maxExp) pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
 
   const oldLevel = pokemon.level;
@@ -1730,19 +1768,12 @@ function addPokemonExp(pokemon, amount) {
     pokemon.exp -= pokemon.maxExp;
     pokemon.level++;
     
-    // Neuer quadratischer Schwellenwert
     pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
-    
-    // 🌟 KP steigen um genau 2 pro Level
     pokemon.maxHp += 2;
     pokemon.hp = pokemon.maxHp;
     
-    // 🌟 Neue Attacken-Formeln: Normal = 20% Max-KP | Spezial = (30% Max-KP) + (Level * 0.5)
     pokemon.attack = Math.round(pokemon.maxHp * 0.20);
     pokemon.specialAttack = Math.round((pokemon.maxHp * 0.30) + (pokemon.level * 0.5));
-
-    if (pokemon.evoChance === undefined) pokemon.evoChance = 0;
-    pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
     didLevelUp = true;
   }
 
@@ -1775,30 +1806,9 @@ function closeVictoryOverlay() {
     
     const statsContainer = document.getElementById('levelup-stats-container');
     statsContainer.innerHTML = `
-      <div class="stat-change-row">
-        <span class="stat-label">❤️ KP:</span>
-        <div class="stat-values">
-          <span class="stat-old">${info.oldHp}</span>
-          <span class="stat-arrow">➔</span>
-          <span class="stat-new">${info.newHp}</span>
-        </div>
-      </div>
-      <div class="stat-change-row">
-        <span class="stat-label">⚔️ Angriff:</span>
-        <div class="stat-values">
-          <span class="stat-old">${info.oldAtk}</span>
-          <span class="stat-arrow">➔</span>
-          <span class="stat-new">${info.newAtk}</span>
-        </div>
-      </div>
-      <div class="stat-change-row">
-        <span class="stat-label">🔥 Spezialangriff:</span>
-        <div class="stat-values">
-          <span class="stat-old">${info.oldSpc}</span>
-          <span class="stat-arrow">➔</span>
-          <span class="stat-new">${info.newSpc}</span>
-        </div>
-      </div>
+      <div class="stat-change-row"><span class="stat-label">❤️ KP:</span><div class="stat-values"><span class="stat-old">${info.oldHp}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newHp}</span></div></div>
+      <div class="stat-change-row"><span class="stat-label">⚔️ Angriff:</span><div class="stat-values"><span class="stat-old">${info.oldAtk}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newAtk}</span></div></div>
+      <div class="stat-change-row"><span class="stat-label">🔥 Spezialangriff:</span><div class="stat-values"><span class="stat-old">${info.oldSpc}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newSpc}</span></div></div>
     `;
 
     document.getElementById('levelup-screen').classList.remove('hidden');
@@ -1856,7 +1866,6 @@ function triggerBackgroundEvolution(pokemon) {
     pokemon.cardUrl = evoData.cardUrl;
     pokemon.maxHp += evoData.hpBonus;
     pokemon.hp = pokemon.maxHp;
-    pokemon.evoChance = 0;
     saveCurrentData();
 
     document.getElementById('evo-title').innerText = `✨ GLÜCKWUNSCH! ✨`;
