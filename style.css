@@ -711,11 +711,12 @@ button:active { transform: scale(0.97); }
   margin: 10px auto;
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(255, 203, 5, 0.5);
+  transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-/* Grelles Aufleuchten während der Evolution */
+/* VERSTÄRKTES AUFLEUCHTEN FÜR DIE EVOLUTION */
 .evo-flash-bright {
-  animation: brightFlashAnim 2.2s ease-in-out forwards !important;
+  animation: brightFlashAnim 3s ease-in-out forwards !important;
 }
 
 @keyframes brightFlashAnim {
@@ -724,13 +725,48 @@ button:active { transform: scale(0.97); }
     transform: scale(1);
   }
   40%, 60% {
-    filter: brightness(4) saturate(0.2) drop-shadow(0 0 40px #ffffff);
-    transform: scale(1.08);
+    /* Extrem grelles Licht im Höhepunkt */
+    filter: brightness(8) saturate(0.2) drop-shadow(0 0 70px #ffffff) drop-shadow(0 0 120px #ffcb05);
+    transform: scale(1.12);
   }
   100% {
-    filter: brightness(1) drop-shadow(0 0 25px var(--accent-yellow));
-    transform: scale(1);
+    /* Sanftes Abklingen mit leichtem Zoom auf die neue Karte */
+    filter: brightness(1.15) drop-shadow(0 0 35px var(--accent-yellow));
+    transform: scale(1.08);
   }
+}
+
+/* TANZENDE STERNE UM DIE EVOLUTIONS-KARTE */
+.evo-dancing-stars {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  margin-top: -110px;
+  margin-left: -110px;
+  pointer-events: none;
+  z-index: 300;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.evo-dancing-stars span {
+  position: absolute;
+  font-size: 30px;
+  animation: orbitStar 1.5s linear infinite;
+}
+
+.evo-dancing-stars span:nth-child(1) { animation-delay: 0s; }
+.evo-dancing-stars span:nth-child(2) { animation-delay: 0.37s; }
+.evo-dancing-stars span:nth-child(3) { animation-delay: 0.74s; }
+.evo-dancing-stars span:nth-child(4) { animation-delay: 1.11s; }
+
+@keyframes orbitStar {
+  0% { transform: rotate(0deg) translateX(90px) rotate(0deg) scale(0.8); opacity: 0.5; }
+  50% { transform: rotate(180deg) translateX(120px) rotate(-180deg) scale(1.4); opacity: 1; text-shadow: 0 0 15px #ffcb05; }
+  100% { transform: rotate(360deg) translateX(90px) rotate(-360deg) scale(0.8); opacity: 0.5; }
 }
 
 /* =========================================================
