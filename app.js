@@ -681,8 +681,8 @@ function triggerSignalDetected() {
   
   if (scareBtn) scareBtn.classList.remove('hidden');
 
-    // 📳 Längeres, intensives Rüttel-Muster für den Radar-Fund
-  triggerVibration([500, 150, 500, 150, 800, 150, 800]);
+  // 📳 Lässt das Handy für ca. 3 Sekunden in kurzen, harten Impulsen vibrieren
+  triggerVibration([800, 200, 800, 200, 800]);
 
   playBeep(880, 0.4);
   sendNotification("Pokémon MOVE", "⚠️ Ein wildes Pokémon ist in deiner Nähe aufgetaucht!");
