@@ -681,21 +681,15 @@ function triggerSignalDetected() {
   
   if (scareBtn) scareBtn.classList.remove('hidden');
 
-  if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+  // 📳 HIER WIRD DIE VIBRATION AUSGELÖST (Ein markanter Rhythmus für den Fund)
+  triggerVibration([400, 150, 400, 150, 600]);
+
   playBeep(880, 0.4);
   sendNotification("Pokémon MOVE", "⚠️ Ein wildes Pokémon ist in deiner Nähe aufgetaucht!");
 
   updateBlipPosition();
 }
 
-function scarePokemon() {
-  if (!currentPosition) return;
-  const randomDistance = Math.random() * (25 - 10) + 10;
-  const randomBearing = Math.random() * 360;
-  targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
-  playBeep(1000, 0.15);
-  updateBlipPosition();
-}
 
 function onGPSPositionUpdated() {
   if (targetPokemonCoords && currentPosition) {
