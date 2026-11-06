@@ -192,7 +192,8 @@
         <div class="battle-action-bar">
           <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
           <button type="button" id="btn-special-attack" onclick="executePlayerSpecial()" class="btn-action btn-special">🔥 Spezial</button>
-          <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Pokéball Werfen (<span id="battle-balls-count">10</span>)</button>
+          <button type="button" onclick="openBattleTeamModal()" class="btn-action" style="background:#0284c7;">🐾 Team</button>
+          <button type="button" id="btn-catch-pokemon" onclick="attemptCatch()" class="btn-action btn-catch">🔴 Werfen (<span id="battle-balls-count">10</span>)</button>
         </div>
       </div>
     </section>
