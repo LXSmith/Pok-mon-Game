@@ -376,11 +376,11 @@ button:active { transform: scale(0.97); }
   box-sizing: border-box !important;
 }
 
-/* GEGNER POSITION (OBEN) */
+/* GEGNER POSITION (ETWAS WEITER UNTEN, DAMIT KP-LEISTE SICHTBAR IST) */
 .enemy-target-wrapper {
   position: relative !important;
-  top: 10px !important;
-  transform: scale(1.1) !important;
+  top: 45px !important; /* Vorher 10px, jetzt tiefer nach unten gerutscht */
+  transform: scale(1.0) !important;
   filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
   display: flex !important;
   flex-direction: column !important;
@@ -389,6 +389,7 @@ button:active { transform: scale(0.97); }
   z-index: 5 !important;
   width: 100%;
 }
+
 
 .enemy-sprite-img {
   width: 150px;
