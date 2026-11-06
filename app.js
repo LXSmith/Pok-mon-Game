@@ -887,8 +887,9 @@ function startTrainingMatch(partnerMon) {
   showScreen('screen-battle');
   updateBattleUI();
 
-  const catchBtn = document.getElementById('btn-catch-pokemon');
-  if (catchBtn) catchBtn.style.display = 'none';
+  const readyBallEl = document.getElementById('battle-ready-ball');
+  if (readyBallEl) readyBallEl.classList.add('hidden');
+
   document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
 }
 
@@ -986,8 +987,12 @@ function startBattleFromScan() {
   const dodgeBtn = document.getElementById('btn-dodge-action');
   if (dodgeBtn) dodgeBtn.classList.add('hidden');
 
-  const catchBtn = document.getElementById('btn-catch-pokemon');
-  if (catchBtn) catchBtn.style.display = 'block';
+  const readyBallEl = document.getElementById('battle-ready-ball');
+  if (readyBallEl) {
+    readyBallEl.classList.remove('hidden');
+    document.getElementById('battle-balls-badge').innerText = currentSaveData.pokeballs;
+    CatchEngine.initReadyBallEvents();
+  }
 
   const bottomHud = document.querySelector('.arena-bottom-hud');
   if (bottomHud) {
@@ -1040,7 +1045,8 @@ function updateBattleUI() {
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
   document.getElementById('player-hp-bar').style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
 
-  document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
+  const badge = document.getElementById('battle-balls-badge');
+  if (badge) badge.innerText = currentSaveData.pokeballs;
 
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
@@ -1089,7 +1095,6 @@ function executePlayerAttack() {
 
       triggerElementalFX(currentEnemy.type, 'down');
       
-      // Gegnerspezial bei Ausweichen
       const specDmg = Math.round(currentEnemy.maxHp * 0.40);
       playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
 
@@ -1107,7 +1112,6 @@ function executePlayerAttack() {
     }, 550);
 
   } else {
-    // Normaler Angriff: 30% Max-KP
     let dmg = Math.round(playerBattlePokemon.maxHp * 0.30);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
@@ -1144,7 +1148,6 @@ function executePlayerSpecial() {
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
-    // Spezialangriff: 50% Max-KP
     let dmg = Math.round(playerBattlePokemon.maxHp * 0.50);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
@@ -1227,7 +1230,6 @@ function executeEnemyDamage() {
   document.getElementById('battle-warning-box').innerText = `⚠️ ${currentEnemy.name} greift an!`;
 
   setTimeout(() => {
-    // ⚖️ GEGNER-SCHADEN: Exakt 20% seiner maximalen KP
     let dmg = Math.round(currentEnemy.maxHp * 0.20);
     playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
     updateBattleUI();
@@ -1260,7 +1262,7 @@ function executeEnemyDamage() {
 }
 
 /* =========================================================
-   KAMPF-TEAMWECHSEL LOGIK & ANIMATIONEN
+   KAMPF-TEAMWECHSEL & FLUCHT LOGIK
    ========================================================= */
 
 function openBattleTeamModal() {
@@ -1343,6 +1345,22 @@ function switchBattlePokemon(newTeamIndex) {
   }, 450);
 }
 
+function attemptEscape() {
+  if (isTrainingMode) {
+    alert("Aus dem Trainingskampf kann man nicht fliehen!");
+    return;
+  }
+  
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+  
+  const readyBallEl = document.getElementById('battle-ready-ball');
+  if (readyBallEl) readyBallEl.classList.add('hidden');
+
+  alert("💨 Du bist sicher vor dem wilden Pokémon geflohen!");
+  showScreen('screen-radar-hud');
+}
+
 /* =========================================================
    K.O. & EXP VERLUST HANDLER
    ========================================================= */
@@ -1396,28 +1414,48 @@ const CatchEngine = {
   ringShrinking: true,
   eventsBound: false,
 
-  startCatchSession() {
-    this.active = true;
-    clearTimeout(dodgeTimer);
-    isDodgeWindowActive = false;
-    
-    const ring = document.getElementById('target-ring-outer');
-    if (ring) ring.classList.remove('hidden');
+  initReadyBallEvents() {
+    const readyBall = document.getElementById('battle-ready-ball');
+    if (!readyBall || this.readyBallBound) return;
+    this.readyBallBound = true;
 
-    const ballEl = document.getElementById('catch-throw-ball');
-    if (ballEl) {
-      ballEl.classList.remove('hidden');
-      ballEl.style.display = 'block';
-      this.bindEvents(ballEl);
-    }
-    
-    this.resetBall();
-    this.startLoop();
+    const onStart = (e) => {
+      if (!this.active || currentSaveData.pokeballs <= 0) {
+        if (currentSaveData.pokeballs <= 0) alert("Keine Pokébälle mehr im Beutel!");
+        return;
+      }
+      if (e.cancelable) e.preventDefault();
+
+      currentSaveData.pokeballs--;
+      updateBattleUI();
+      readyBall.classList.add('hidden');
+
+      const pt = e.touches ? e.touches[0] : e;
+      const throwBallEl = document.getElementById('catch-throw-ball');
+      
+      if (throwBallEl) {
+        throwBallEl.classList.remove('hidden');
+        throwBallEl.style.display = 'block';
+        
+        this.ball.x = pt.clientX;
+        this.ball.y = pt.clientY;
+        this.ball.isDragging = true;
+        this.ball.isThrown = false;
+        this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
+        this.updateBallElement();
+        this.bindEvents(throwBallEl);
+      }
+    };
+
+    readyBall.addEventListener('touchstart', onStart, { passive: false });
+    readyBall.addEventListener('mousedown', onStart);
   },
 
   stopCatchSession() {
     this.active = false;
     cancelAnimationFrame(this.animId);
+    this.readyBallBound = false;
+
     const ring = document.getElementById('target-ring-outer');
     if (ring) ring.classList.add('hidden');
     
@@ -1426,55 +1464,31 @@ const CatchEngine = {
       ballEl.classList.add('hidden');
       ballEl.style.display = 'none';
     }
+
+    const readyBallEl = document.getElementById('battle-ready-ball');
+    if (readyBallEl) readyBallEl.classList.add('hidden');
   },
 
   resetBall() {
-    const b = this.ball;
-    const playerImg = document.getElementById('player-card-img');
-    const playerRect = playerImg ? playerImg.getBoundingClientRect() : null;
-
-    if (playerRect && playerRect.width > 0) {
-      b.x = playerRect.right + 45;
-      b.y = playerRect.top + (playerRect.height / 2);
-    } else {
-      b.x = window.innerWidth * 0.82;
-      b.y = window.innerHeight - 200;
+    const readyBallEl = document.getElementById('battle-ready-ball');
+    if (readyBallEl && currentSaveData.pokeballs > 0) {
+      readyBallEl.classList.remove('hidden');
     }
-
-    b.z = 1.0;
-    b.vx = 0; b.vy = 0; b.vz = 0;
-    b.isDragging = false;
-    b.isThrown = false;
-    b.isSpinning = false;
-    b.spinSpeed = 0;
-    b.spinAngle = 0;
 
     const ballEl = document.getElementById('catch-throw-ball');
     if (ballEl) {
-      ballEl.classList.remove('wobble');
-      ballEl.style.opacity = '1';
+      ballEl.classList.add('hidden');
+      ballEl.style.display = 'none';
     }
 
+    this.ball.isDragging = false;
+    this.ball.isThrown = false;
     this.touchHistory = [];
-    this.updateBallElement();
   },
 
   bindEvents(el) {
     if (this.eventsBound) return;
     this.eventsBound = true;
-
-    const onStart = (e) => {
-      if (!this.active || this.ball.isThrown) return;
-      if (e.cancelable) e.preventDefault();
-
-      const pt = e.touches ? e.touches[0] : e;
-      this.ball.isDragging = true;
-      this.ball.isSpinning = false;
-      this.ball.spinSpeed = 0;
-
-      this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
-      this.updateBallElement();
-    };
 
     const onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
@@ -1535,15 +1549,14 @@ const CatchEngine = {
       }
     };
 
-    el.addEventListener('touchstart', onStart, { passive: false });
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onEnd, { passive: false });
-    el.addEventListener('mousedown', onStart);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onEnd);
   },
 
   startLoop() {
+    this.active = true;
     const loop = () => {
       if (!this.active) return;
       this.updatePhysics();
@@ -1559,7 +1572,11 @@ const CatchEngine = {
     if (b.isThrown) {
       const enemyImg = document.getElementById('enemy-card-img');
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
-      const targetY = enemyRect.top + enemyRect.height / 2;
+      
+      // 🎯 EXAKTER KREIS-ZENTRUMS-CHECK (Verhindert Ecken-Treffer)
+      const circleCenterX = enemyRect.left + (enemyRect.width / 2);
+      const circleCenterY = enemyRect.top + (enemyRect.height / 2) + 10;
+      const exactRadius = 52; 
 
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
@@ -1575,22 +1592,17 @@ const CatchEngine = {
       this.updateBallElement();
 
       const isAtTargetDepth = (b.z <= 0.52 && b.z >= 0.38);
-      const isNearTargetY = Math.abs(b.y - targetY) < 45;
+      const distanceFromCircleCenter = Math.hypot(b.x - circleCenterX, b.y - circleCenterY);
 
-      if (isAtTargetDepth && isNearTargetY) {
-        const targetX = enemyRect.left + enemyRect.width / 2;
-        const hitRadius = (enemyRect.width / 2) + 18;
-
-        if (Math.abs(b.x - targetX) <= hitRadius) {
-          b.isThrown = false;
-          this.evaluateHit(b.x, b.y, enemyRect);
-          return;
-        }
+      if (isAtTargetDepth && distanceFromCircleCenter <= exactRadius) {
+        b.isThrown = false;
+        this.evaluateHit(b.x, b.y, enemyRect);
+        return;
       }
 
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
-        this.showFeedback("ZU STARK / DANEBEN!");
+        this.showFeedback("VOREIBEI AM KREIS!");
         setTimeout(() => this.resetBall(), 600);
       }
     } else if (b.isSpinning) {
@@ -1734,7 +1746,6 @@ const CatchEngine = {
                 specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
               };
 
-              // Ins Team einfügen wenn Platz ist (<6), sonst in die Lagerbox
               if (currentSaveData.pokemonTeam.length < 6) {
                 currentSaveData.pokemonTeam.push(newMon);
                 alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
@@ -1744,7 +1755,6 @@ const CatchEngine = {
                 alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
               }
 
-              // 💖 Aktives Pokémon voll heilen
               if (currentSaveData.pokemonTeam.length > 0) {
                 currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
               }
@@ -1773,19 +1783,13 @@ const CatchEngine = {
   }
 };
 
-function attemptCatch() {
-  if (isTrainingMode) return;
-  if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
-
-  currentSaveData.pokeballs--;
-  updateBattleUI();
-  CatchEngine.startCatchSession();
-}
-
 function winBattle() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
   
+  const readyBallEl = document.getElementById('battle-ready-ball');
+  if (readyBallEl) readyBallEl.classList.add('hidden');
+
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
   try {
     playBeep(523.25, 0.15);
@@ -1817,7 +1821,6 @@ function winBattle() {
       saveCurrentData();
 
       let triggeredEvo = false;
-      // 🧬 EVOLUTION CHECK NACH KP-SCHWELLENWERT
       if (EVOLUTION_CHAINS[activeMon.name]) {
         const evoData = EVOLUTION_CHAINS[activeMon.name];
         if (activeMon.maxHp >= evoData.requiredMaxHp) {
