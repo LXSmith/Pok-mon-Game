@@ -155,17 +155,19 @@
             <div id="enemy-hp-text" class="bar-text">40 / 40 KP</div>
           </div>
 
-          <div id="target-ring-outer" class="target-ring-outer hidden">
-            <div id="target-ring-inner" class="target-ring-inner"></div>
+          <div class="card-container">
+            <div id="target-ring-outer" class="target-ring-outer hidden">
+              <div id="target-ring-inner" class="target-ring-inner"></div>
+            </div>
+            <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
           </div>
-          <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
         </div>
 
-        <!-- STÄNDIG GRIFFBEREITER POKÉBALL RECHTS NEBEN DEM GEGNER (IM KAMPF-MODUS) -->
-        <div id="battle-ready-ball" class="battle-ready-ball hidden" title="Pokéball greifen & werfen">
+        <!-- GRIFFBEREITER POKÉBALL RECHTS NEBEN DEM GEGNER/SPIELER -->
+        <button type="button" id="battle-ready-ball" class="battle-ready-ball hidden" onclick="attemptCatch()" title="Pokéball greifen & werfen">
           <img src="IMG_1122.jpeg" alt="Pokéball">
           <span id="battle-balls-badge" class="ball-badge">10</span>
-        </div>
+        </button>
 
         <!-- HINWEISBOX MITTE -->
         <div id="battle-warning-box" class="battle-box-hud">Ein wildes Pokémon greift an!</div>
@@ -186,14 +188,14 @@
           <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
         </div>
 
-      </div> <!-- Hier wird die arena-stage sauber geschlossen -->
+      </div>
 
       <!-- WURF-POKÉBALL FÜR DIE PHYSIK-ENGINE -->
       <div id="catch-throw-ball" class="catch-throw-ball hidden">
         <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
       </div>
 
-      <!-- BOTTOM HUD (NUR NOCH 3 GROSSE BUTTONS + FLIEHEN) -->
+      <!-- BOTTOM HUD (NUR NOCH 4 GROSSE BUTTONS) -->
       <div class="arena-bottom-hud">
         <div class="battle-action-bar">
           <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
@@ -203,8 +205,6 @@
         </div>
       </div>
     </section>
-
-
 
     <!-- MODAL 1: SCAN & TRAINING WAHL -->
     <div id="modal-scan" class="modal-overlay hidden">
@@ -252,7 +252,6 @@
           <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
         </div>
         
-        <!-- Überarbeiteter Team & Box Tab mit Scrollfunktion -->
         <div id="mtab-content-pokemon" class="mtab-content" style="overflow-y: auto; max-height: 45vh; padding-right: 4px; margin-top: 5px;">
           <div id="pokemon-team-list"></div>
         </div>
@@ -288,7 +287,7 @@
       </div>
     </div>
 
-    <!-- MODAL: EPISCHER LEVEL-UP -->
+    <!-- MODAL: LEVEL-UP -->
     <div id="levelup-screen" class="levelup-overlay hidden">
       <div class="levelup-card">
         <div style="font-size: 28px; font-weight: 900; color: var(--accent-yellow); margin-bottom: 5px; text-transform: uppercase;">✨ LEVEL UP! ✨</div>
@@ -300,7 +299,7 @@
       </div>
     </div>
 
-    <!-- MODAL: K.O. / NIEDERLAGE VERLUST-SCREEN -->
+    <!-- MODAL: K.O. -->
     <div id="ko-screen" class="modal-overlay hidden">
       <div class="modal-card" style="border: 2px solid #e74c3c;">
         <div style="font-size: 24px; font-weight: 900; color: #e74c3c; margin-bottom: 5px;">💀 K.O. GESCHLAGEN!</div>
@@ -311,6 +310,7 @@
       </div>
     </div>
 
+    <!-- MODAL: VICTORY -->
     <div id="victory-screen" class="modal-overlay hidden">
       <div class="modal-card">
         <div style="font-size:24px; font-weight:900; color:var(--accent-yellow); margin-bottom:5px;">🏆 SIEG!</div>
@@ -331,10 +331,9 @@
       </div>
     </div>
 
-
   </main>
 
-  <!-- Leaflet JS & App Script v=47000 -->
+  <!-- Leaflet JS & App Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js?v=47000"></script>
 </body>
