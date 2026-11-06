@@ -399,6 +399,7 @@ let isEnemyAttacking = false;
 let isPlayerTurn = true;
 let pendingEvoPokemon = null;
 let pendingLevelUpData = null;
+let pendingKoInfo = null;
 
 let dodgeTimer = null;
 let isDodgeWindowActive = false;
@@ -554,9 +555,9 @@ function chooseStarter(type, element) {
 
 function confirmStarter() {
   const starters = {
-    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", evoChance: 0 },
-    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", evoChance: 0 },
-    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", evoChance: 0 }
+    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", evoChance: 0, exp: 0, maxExp: 75, attack: 9, specialAttack: 14 },
+    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", evoChance: 0, exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
+    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", evoChance: 0, exp: 0, maxExp: 75, attack: 10, specialAttack: 16 }
   };
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
@@ -648,7 +649,6 @@ function forceDevSpawn() {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
-  // Spawnt nun im realistischen Umkreis von 2 bis 8 Metern (kein Sofort-Kampf mehr)
   const randomDistance = Math.random() * 6 + 2; 
   const randomBearing = Math.random() * 360;
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
@@ -659,12 +659,11 @@ function forceDevSpawn() {
 function triggerSignalDetected() {
   isScanning = false;
   
-  // Direkter Vibrations-Befehl für den Vordergrund
   triggerVibration([300, 100, 300]); 
 
   if (!targetPokemonCoords) {
     if (currentPosition) {
-      const randomDistance = Math.random() * 6 + 2; // 2 bis 8 Meter
+      const randomDistance = Math.random() * 6 + 2; 
       const randomBearing = Math.random() * 360;
       targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
     } else {
@@ -684,7 +683,6 @@ function triggerSignalDetected() {
   
   if (scareBtn) scareBtn.classList.remove('hidden');
 
-  // 📳 Lässt das Handy für ca. 3 Sekunden in kurzen, harten Impulsen vibrieren
   triggerVibration([800, 200, 800, 200, 800]);
 
   playBeep(880, 0.4);
@@ -695,7 +693,7 @@ function triggerSignalDetected() {
 
 function scarePokemon() {
   if (!currentPosition) return;
-  const randomDistance = Math.random() * 6 + 2; // 2 bis 8 Meter
+  const randomDistance = Math.random() * 6 + 2; 
   const randomBearing = Math.random() * 360;
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   playBeep(1000, 0.15);
@@ -944,25 +942,19 @@ function startBattleFromScan() {
   resetRadarUI();
   showScreen('screen-battle');
 
-  // 1. Pokémon aus Pool wählen
   const pool = (currentScanType === 'power') ? RARE_POKEMON : COMMON_POKEMON;
   const template = pool[Math.floor(Math.random() * pool.length)];
 
-  // 2. Basis-Karten-KP als Minimum festlegen
   const minHp = template.maxHp;
   
-  // 3. Wenn ein Spieler-Pokémon aktiv ist, KP dynamisch anpassen (Spieler-KP +/- 15%)
   let calculatedHp = minHp;
   if (playerBattlePokemon && playerBattlePokemon.maxHp) {
     const playerHp = playerBattlePokemon.maxHp;
-    const variation = (Math.random() * 0.3) - 0.15; // Zwischen -15% und +15%
+    const variation = (Math.random() * 0.3) - 0.15; 
     calculatedHp = Math.round(playerHp * (1 + variation));
-    
-    // Nicht weniger als der aufgedruckte Kartenwert!
     calculatedHp = Math.max(minHp, calculatedHp);
   }
 
-  // Gegner mit den neuen skalierten KP erstellen
   currentEnemy = { 
     ...template, 
     maxHp: calculatedHp,
@@ -1051,10 +1043,7 @@ function executePlayerAttack() {
       setTimeout(() => {
         isEnemyAttacking = false;
         if (playerBattlePokemon.hp <= 0) {
-          playerBattlePokemon.hp = playerBattlePokemon.maxHp;
-          saveCurrentData();
-          alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
-          showScreen('screen-radar-hud');
+          handlePokemonKnockout();
         } else {
           isPlayerTurn = true;
           updateBattleUI();
@@ -1064,7 +1053,8 @@ function executePlayerAttack() {
     }, 550);
 
   } else {
-    let dmg = Math.round(playerBattlePokemon.maxHp * 0.30);
+    // Normaler Angriff: Nutzt den echten Status-Wert des Pokémon
+    let dmg = playerBattlePokemon.attack || Math.round(playerBattlePokemon.maxHp * 0.20);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     setTimeout(() => {
@@ -1101,7 +1091,8 @@ function executePlayerSpecial() {
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
-    let dmg = Math.round(playerBattlePokemon.maxHp * 0.60);
+    // Spezialangriff: Nutzt den echten Status-Wert des Pokémon
+    let dmg = playerBattlePokemon.specialAttack || Math.round((playerBattlePokemon.maxHp * 0.30) + (playerBattlePokemon.level * 0.5));
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
@@ -1204,10 +1195,7 @@ function executeEnemyDamage() {
 
     setTimeout(() => {
       if (playerBattlePokemon.hp <= 0) {
-        playerBattlePokemon.hp = playerBattlePokemon.maxHp;
-        saveCurrentData();
-        alert(`${playerBattlePokemon.name} wurde K.O. geschlagen! Es erholt sich wieder.`);
-        showScreen('screen-radar-hud');
+        handlePokemonKnockout();
       } else {
         isPlayerTurn = true;
         updateBattleUI();
@@ -1215,6 +1203,42 @@ function executeEnemyDamage() {
     }, 800);
 
   }, 400);
+}
+
+/* =========================================================
+   K.O. & EXP VERLUST HANDLER
+   ========================================================= */
+function handlePokemonKnockout() {
+  const mon = playerBattlePokemon;
+  const oldExp = mon.exp || 0;
+  
+  // Halbiere die EXP im aktuellen Level
+  const lostExp = Math.floor(oldExp / 2);
+  mon.exp = oldExp - lostExp;
+  
+  // Pokémon erholt sich wieder auf volle KP
+  mon.hp = mon.maxHp;
+  saveCurrentData();
+
+  // Daten für den K.O.-Screen bereitstellen
+  pendingKoInfo = {
+    name: mon.name,
+    lostExp: lostExp,
+    currentExp: mon.exp,
+    maxExp: mon.maxExp
+  };
+
+  // K.O. Screen einblenden
+  document.getElementById('ko-loss-text').innerText = `-${lostExp} EXP verloren!`;
+  document.getElementById('ko-remaining-text').innerText = `Verbleibende EXP: ${mon.exp} / ${mon.maxExp}`;
+  document.getElementById('ko-screen').classList.remove('hidden');
+  playBeep(150, 0.4);
+}
+
+function closeKoOverlay() {
+  document.getElementById('ko-screen').classList.add('hidden');
+  pendingKoInfo = null;
+  showScreen('screen-radar-hud');
 }
 
 /* =========================================================
@@ -1582,13 +1606,18 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
+              // Neues gefangenes Pokémon startet auf Level 1 mit korrekten Stats
               currentSaveData.pokemonTeam.push({
                 name: currentEnemy.name,
                 type: currentEnemy.type,
                 level: 1,
                 hp: currentEnemy.maxHp,
                 maxHp: currentEnemy.maxHp,
-                cardUrl: currentEnemy.cardUrl
+                cardUrl: currentEnemy.cardUrl,
+                exp: 0,
+                maxExp: 75,
+                attack: Math.round(currentEnemy.maxHp * 0.20),
+                specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
               });
 
               addTrainerExp(35);
@@ -1639,7 +1668,7 @@ function winBattle() {
 
   setTimeout(() => {
     if (isTrainingMode) {
-      // EXP nach neuer Formel (Gegner-MaxKP * 0.5)
+      // 🌟 EXP-FORMEL: Gegner-MaxKP * 0.5
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       addPokemonExp(playerBattlePokemon, earnedExp);
       if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
@@ -1652,7 +1681,7 @@ function winBattle() {
       window._launchEvolutionAfterVictory = false;
       document.getElementById('victory-screen').classList.remove('hidden');
     } else {
-      // 🌟 NEUE EXP-FORMEL: Gegner-MaxKP * 0.5
+      // 🌟 EXP-FORMEL: Gegner-MaxKP * 0.5
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       addTrainerExp(earnedExp);
       currentSaveData.pokeballs += 2;
@@ -1662,7 +1691,6 @@ function winBattle() {
       activeMon.hp = activeMon.maxHp;
       saveCurrentData();
 
-      // Evolution im Hintergrund prüfen
       let triggeredEvo = false;
       if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
         const roll = Math.floor(Math.random() * 100) + 1;
@@ -1687,13 +1715,13 @@ function winBattle() {
 function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
   
-  // 🌟 Neues, progressives Level-Up-System (quadratisch ansteigend)
+  // 🌟 Quadratische Level-Up-Kurve: 50 + (Level^2 * 25)
   if (!pokemon.maxExp) pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
 
   const oldLevel = pokemon.level;
   const oldMaxHp = pokemon.maxHp || pokemon.hp;
-  const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.8);
-  const oldSpecial = pokemon.specialAttack || Math.round(oldMaxHp * 1.2);
+  const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.20);
+  const oldSpecial = pokemon.specialAttack || Math.round((oldMaxHp * 0.30) + (oldLevel * 0.5));
 
   pokemon.exp += amount;
   let didLevelUp = false;
@@ -1702,14 +1730,16 @@ function addPokemonExp(pokemon, amount) {
     pokemon.exp -= pokemon.maxExp;
     pokemon.level++;
     
-    // Neuer Schwellenwert für das nächste Level
+    // Neuer quadratischer Schwellenwert
     pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
     
-    pokemon.maxHp += 5;
+    // 🌟 KP steigen um genau 2 pro Level
+    pokemon.maxHp += 2;
     pokemon.hp = pokemon.maxHp;
     
-    pokemon.attack = Math.round(pokemon.maxHp * 0.8);
-    pokemon.specialAttack = Math.round(pokemon.maxHp * 1.2);
+    // 🌟 Neue Attacken-Formeln: Normal = 20% Max-KP | Spezial = (30% Max-KP) + (Level * 0.5)
+    pokemon.attack = Math.round(pokemon.maxHp * 0.20);
+    pokemon.specialAttack = Math.round((pokemon.maxHp * 0.30) + (pokemon.level * 0.5));
 
     if (pokemon.evoChance === undefined) pokemon.evoChance = 0;
     pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
