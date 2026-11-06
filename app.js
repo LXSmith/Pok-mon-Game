@@ -1,16 +1,4 @@
-Bei einem direkten Code-Abgleich (Diff) zwischen dem ursprünglichen Skript und der Korrektur fallen drei kritische Fehler in der Korrektur auf.
-Die Unterschiede im Detail:
- * CatchEngine.resetBall() (Der Pokéball-Startpunkt):
-   * Ursprünglich (Funktionierte): Der Ball berechnet seine X/Y-Startkoordinaten relativ zur eigenen Pokémon-Karte (playerRect.right + 45).
-   * Korrektur (Fehlerhaft): Greift auf pt.clientX beim Klick zu, ohne dem Ball vorher eine Ausgangsposition auf dem Bildschirm zuzuweisen.
- * Fehlender Fang-Button (attemptCatch):
-   * Ursprünglich: Es gibt eine eigenständige Funktion attemptCatch(), die vom Fang-Button getriggert wird.
-   * Korrektur: Die Funktion wurde gelöscht und stattdessen direkt in startBattleFromScan gezwungen.
- * Event-Binding bei Drag & Drop (bindEvents):
-   * Ursprünglich: Der Touch-Event-Handler registriert touchstart direkt auf dem Ball-Element el.
-   * Korrektur: Es gab keine Bindung des touchstart-Events an das sichtbare Ball-Element mehr, was den Pokéball unbedienbar machte.
-Der korrigierte & geprüfte Code
-Hier ist die exakte Version, die auf der intakten Catch-Engine des ursprünglichen Codes aufbaut und nur die gezielten Bugfixes enthält:
+Hier ist die vollständige und aktualisierte app.js, in die die Logik für den Team-Wechsel im Kampf (openBattleTeamModal, switchBattlePokemon) direkt sauber integriert wurde:
 // SERVICE WORKER LÖSCHUNG FUER DEV-UPDATES
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -57,6 +45,7 @@ function triggerVibration(pattern = 50) {
     } catch (e) {}
   }
 }
+
 
 /* =========================================================
    GEO-LOCATIONAL MATH & GPS TRACKING
@@ -207,30 +196,27 @@ const IntroManager = {
 
     const triggerAudio = (e) => {
       unlockAudio();
-      if (typeof requestCompassPermission === 'function') requestCompassPermission();
+      requestCompassPermission();
       if (!this.canInteractiveFinish) {
-        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
       }
     };
 
-    container.addEventListener('touchstart', triggerAudio, { passive: false });
-    container.addEventListener('pointerdown', triggerAudio, { passive: false });
+    container.addEventListener('touchstart', triggerAudio, { passive: true });
+    container.addEventListener('pointerdown', triggerAudio, { passive: true });
 
     container.addEventListener('click', (e) => {
       if (!this.canInteractiveFinish) {
-        if (e.cancelable) e.preventDefault();
+        e.preventDefault();
+        e.stopPropagation();
         return false;
       }
       this.finishIntro();
     });
 
-    // Sicherheitshalber den Card-Rush starten
     this.startCardRush();
-
-    // Sound-Effekt nach Verzögerung
     setTimeout(() => this.playSlashSound(), 5300);
 
-    // Freigabe für Interaktion erzwingen (Fallback nach 7.3s)
     setTimeout(() => {
       this.canInteractiveFinish = true;
       const promptEl = document.querySelector('.start-prompt');
@@ -300,7 +286,6 @@ const IntroManager = {
     const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     if (!cardStream) return;
 
-    // Verwende zuverlässige PokeAPI-Fallback-Sprites, falls TCG-Server blockiert sind
     const tcgCards = [
       { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
       { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
@@ -330,25 +315,19 @@ const IntroManager = {
 
         cardStream.appendChild(card);
 
-        // Prüfen, ob Element.animate unterstützt wird (Web Animations API)
-        if (typeof card.animate === 'function') {
-          const animation = card.animate([
-            { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
-            { opacity: 1, offset: 0.15 },
-            { opacity: 1, offset: 0.70 },
-            { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
-          ], {
-            duration: 600,
-            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            fill: 'forwards'
-          });
+        const animation = card.animate([
+          { transform: `translate3d(${startX}px, ${startY}px, -600px) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(0.3)`, opacity: 0 },
+          { opacity: 1, offset: 0.15 },
+          { opacity: 1, offset: 0.70 },
+          { transform: `translate3d(${endX}px, ${endY}px, 400px) rotateY(${rotY * 1.5}deg) rotateZ(${rotZ * 1.5}deg) scale(1.6)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          fill: 'forwards'
+        });
 
-          this.playWhooshSound();
-          animation.onfinish = () => card.remove();
-        } else {
-          // Fallback für ältere Browser
-          setTimeout(() => card.remove(), 600);
-        }
+        this.playWhooshSound();
+        animation.onfinish = () => card.remove();
       }, i * (totalDuration / cardCount));
     }
   },
@@ -358,8 +337,8 @@ const IntroManager = {
     this.active = false;
 
     unlockAudio();
-    if (typeof requestCompassPermission === 'function') requestCompassPermission();
-    if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
+    requestCompassPermission();
+    requestNotificationPermission();
 
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
@@ -369,15 +348,14 @@ const IntroManager = {
       setTimeout(() => {
         introEl.style.display = 'none';
         if (gameScreen) gameScreen.classList.remove('hidden');
-        if (typeof initApp === 'function') initApp();
+        initApp();
       }, 500);
     }
   }
 };
 
-
 /* =========================================================
-   2. SPEICHER & DATENBANKEN
+   2. SPEICHER & DATENBANKEN (Mit KP-Schwellenwert für Evolution)
    ========================================================= */
 const EVOLUTION_CHAINS = {
   "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20, requiredMaxHp: 80 },
@@ -431,7 +409,7 @@ let currentSaveData = {
   maxExp: 100,
   pokeballs: 10,
   pokemonTeam: [],
-  pokemonBox: [],
+  pokemonBox: [], // Lagerbox für Pokémon über Team-Limit 6
   homePos: null
 };
 
@@ -698,7 +676,7 @@ function moveToTeam(index) {
 }
 
 /* =========================================================
-   4. RADAR & SCAN
+   4. RADAR, SCAN & EXAKTE BLIP-POSITIONSBERECHNUNG
    ========================================================= */
 function closeScanModal() {
   document.getElementById('modal-scan').classList.add('hidden');
@@ -1063,8 +1041,7 @@ function updateBattleUI() {
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
   document.getElementById('player-hp-bar').style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
 
-  const ballsCount = document.getElementById('battle-balls-count');
-  if (ballsCount) ballsCount.innerText = currentSaveData.pokeballs;
+  document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
 
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
@@ -1113,6 +1090,7 @@ function executePlayerAttack() {
 
       triggerElementalFX(currentEnemy.type, 'down');
       
+      // Gegnerspezial bei Ausweichen
       const specDmg = Math.round(currentEnemy.maxHp * 0.40);
       playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - specDmg);
 
@@ -1130,6 +1108,7 @@ function executePlayerAttack() {
     }, 550);
 
   } else {
+    // Normaler Angriff: 30% Max-KP
     let dmg = Math.round(playerBattlePokemon.maxHp * 0.30);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
@@ -1166,6 +1145,7 @@ function executePlayerSpecial() {
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
+    // Spezialangriff: 50% Max-KP
     let dmg = Math.round(playerBattlePokemon.maxHp * 0.50);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
@@ -1248,6 +1228,7 @@ function executeEnemyDamage() {
   document.getElementById('battle-warning-box').innerText = `⚠️ ${currentEnemy.name} greift an!`;
 
   setTimeout(() => {
+    // ⚖️ GEGNER-SCHADEN: Exakt 20% seiner maximalen KP
     let dmg = Math.round(currentEnemy.maxHp * 0.20);
     playerBattlePokemon.hp = Math.max(0, playerBattlePokemon.hp - dmg);
     updateBattleUI();
@@ -1280,7 +1261,7 @@ function executeEnemyDamage() {
 }
 
 /* =========================================================
-   KAMPF-TEAMWECHSEL & FLUCHT LOGIK
+   KAMPF-TEAMWECHSEL LOGIK & ANIMATIONEN
    ========================================================= */
 
 function openBattleTeamModal() {
@@ -1290,7 +1271,6 @@ function openBattleTeamModal() {
   }
 
   const container = document.getElementById('battle-team-list');
-  if (!container) return;
   container.innerHTML = "";
 
   currentSaveData.pokemonTeam.forEach((p, idx) => {
@@ -1312,13 +1292,11 @@ function openBattleTeamModal() {
     container.appendChild(div);
   });
 
-  const modal = document.getElementById('modal-battle-team');
-  if (modal) modal.classList.remove('hidden');
+  document.getElementById('modal-battle-team').classList.remove('hidden');
 }
 
 function closeBattleTeamModal() {
-  const modal = document.getElementById('modal-battle-team');
-  if (modal) modal.classList.add('hidden');
+  document.getElementById('modal-battle-team').classList.add('hidden');
 }
 
 function switchBattlePokemon(newTeamIndex) {
@@ -1366,25 +1344,10 @@ function switchBattlePokemon(newTeamIndex) {
   }, 450);
 }
 
-function attemptEscape() {
-  if (isTrainingMode) {
-    alert("Aus dem Trainingskampf kann man nicht fliehen!");
-    return;
-  }
-  
-  clearTimeout(dodgeTimer);
-  isDodgeWindowActive = false;
-  CatchEngine.stopCatchSession();
-
-  alert("💨 Du bist sicher vor dem wilden Pokémon geflohen!");
-  showScreen('screen-radar-hud');
-}
-
 /* =========================================================
    K.O. & EXP VERLUST HANDLER
    ========================================================= */
 function handlePokemonKnockout() {
-  CatchEngine.stopCatchSession();
   const mon = playerBattlePokemon;
   const oldExp = mon.exp || 0;
   
@@ -1597,11 +1560,7 @@ const CatchEngine = {
     if (b.isThrown) {
       const enemyImg = document.getElementById('enemy-card-img');
       const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
-      
-      // EXAKTER KREIS-ZENTRUMS-CHECK
-      const circleCenterX = enemyRect.left + (enemyRect.width / 2);
-      const circleCenterY = enemyRect.top + (enemyRect.height / 2);
-      const exactRadius = 55; 
+      const targetY = enemyRect.top + enemyRect.height / 2;
 
       b.x += b.vx * 0.016;
       b.y += b.vy * 0.016;
@@ -1617,17 +1576,22 @@ const CatchEngine = {
       this.updateBallElement();
 
       const isAtTargetDepth = (b.z <= 0.52 && b.z >= 0.38);
-      const distanceFromCircleCenter = Math.hypot(b.x - circleCenterX, b.y - circleCenterY);
+      const isNearTargetY = Math.abs(b.y - targetY) < 45;
 
-      if (isAtTargetDepth && distanceFromCircleCenter <= exactRadius) {
-        b.isThrown = false;
-        this.evaluateHit(b.x, b.y, enemyRect);
-        return;
+      if (isAtTargetDepth && isNearTargetY) {
+        const targetX = enemyRect.left + enemyRect.width / 2;
+        const hitRadius = (enemyRect.width / 2) + 18;
+
+        if (Math.abs(b.x - targetX) <= hitRadius) {
+          b.isThrown = false;
+          this.evaluateHit(b.x, b.y, enemyRect);
+          return;
+        }
       }
 
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
-        this.showFeedback("VORBEI AM KREIS!");
+        this.showFeedback("ZU STARK / DANEBEN!");
         setTimeout(() => this.resetBall(), 600);
       }
     } else if (b.isSpinning) {
@@ -1771,6 +1735,7 @@ const CatchEngine = {
                 specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
               };
 
+              // Ins Team einfügen wenn Platz ist (<6), sonst in die Lagerbox
               if (currentSaveData.pokemonTeam.length < 6) {
                 currentSaveData.pokemonTeam.push(newMon);
                 alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
@@ -1780,6 +1745,7 @@ const CatchEngine = {
                 alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
               }
 
+              // 💖 Aktives Pokémon voll heilen
               if (currentSaveData.pokemonTeam.length > 0) {
                 currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
               }
@@ -1820,7 +1786,6 @@ function attemptCatch() {
 function winBattle() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
-  CatchEngine.stopCatchSession();
   
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
   try {
@@ -1853,6 +1818,7 @@ function winBattle() {
       saveCurrentData();
 
       let triggeredEvo = false;
+      // 🧬 EVOLUTION CHECK NACH KP-SCHWELLENWERT
       if (EVOLUTION_CHAINS[activeMon.name]) {
         const evoData = EVOLUTION_CHAINS[activeMon.name];
         if (activeMon.maxHp >= evoData.requiredMaxHp) {
@@ -2075,7 +2041,6 @@ function switchMenuTab(tabName) {
 function exitToMainMenu() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
-  CatchEngine.stopCatchSession();
   closeMenuModal();
   cancelScan();
   saveCurrentData();
