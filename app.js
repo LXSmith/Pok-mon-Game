@@ -35,6 +35,20 @@ function unlockAudio() {
 }
 
 /* =========================================================
+   ZENTRALE HAPTIC FEEDBACK (VIBRATION) FUNKTION
+   ========================================================= */
+function triggerVibration(pattern = 50) {
+  if ("vibrate" in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      // Ignorieren falls vom Browser blockiert
+    }
+  }
+}
+
+
+/* =========================================================
    GEO-LOCATIONAL MATH & GPS TRACKING
    ========================================================= */
 function calculateDistance(lat1, lon1, lat2, lon2) {
