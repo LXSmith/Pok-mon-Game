@@ -177,7 +177,7 @@ function sendNotification(title, body) {
 }
 
 /* =========================================================
-   1. CINEMATIC INTRO ENGINE (FEHLERSICHER GEHÄRTET)
+   1. CINEMATIC INTRO ENGINE (GARANTIERT OHNE BLOCKADE)
    ========================================================= */
 const IntroManager = {
   active: true,
@@ -192,30 +192,33 @@ const IntroManager = {
       return;
     }
 
+    // Audio & Kompass sicher im Hintergrund aufrufen, OHNE das Intro zu blockieren
+    const safeUnlock = () => {
+      try { if (typeof unlockAudio === 'function') unlockAudio(); } catch(e){}
+      try { if (typeof requestCompassPermission === 'function') requestCompassPermission(); } catch(e){}
+    };
+
     const triggerAudio = (e) => {
-      if (typeof unlockAudio === 'function') unlockAudio();
-      if (typeof requestCompassPermission === 'function') requestCompassPermission();
-      if (!this.canInteractiveFinish) {
-        if (e && e.cancelable) e.preventDefault();
+      safeUnlock();
+      // Wenn das Intro noch läuft, Tippen erlauben, aber nicht abbrechen
+      if (this.canInteractiveFinish) {
+        this.finishIntro();
       }
     };
 
-    container.addEventListener('touchstart', triggerAudio, { passive: false });
-    container.addEventListener('pointerdown', triggerAudio, { passive: false });
+    container.addEventListener('touchstart', triggerAudio, { passive: true });
+    container.addEventListener('pointerdown', triggerAudio, { passive: true });
+    container.addEventListener('click', triggerAudio, { passive: true });
 
-    container.addEventListener('click', (e) => {
-      if (!this.canInteractiveFinish) {
-        if (e && e.cancelable) e.preventDefault();
-        return false;
-      }
-      this.finishIntro();
-    });
-
+    // Karten-Stream starten & Sound abspielen
     this.startCardRush();
     setTimeout(() => this.playSlashSound(), 5300);
 
+    // ERZWUNGENER TIMER: Nach 7,3 Sek. MUSS der Text kommen & Klick aktiviert werden
     setTimeout(() => {
+      if (!this.active) return;
       this.canInteractiveFinish = true;
+      
       const promptEl = document.querySelector('.start-prompt');
       if (promptEl) {
         promptEl.innerText = "TIPPE AUF DEN BILDSCHIRM";
@@ -225,10 +228,9 @@ const IntroManager = {
   },
 
   playWhooshSound() {
-    if (typeof getAudioContext !== 'function') return;
-    const ctx = getAudioContext();
-    if (!ctx) return;
     try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.10;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -253,10 +255,9 @@ const IntroManager = {
   },
 
   playSlashSound() {
-    if (typeof getAudioContext !== 'function') return;
-    const ctx = getAudioContext();
-    if (!ctx) return;
     try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
       const now = ctx.currentTime;
       const bufferSize = ctx.sampleRate * 0.28;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -339,10 +340,6 @@ const IntroManager = {
     if (!this.active) return;
     this.active = false;
 
-    if (typeof unlockAudio === 'function') unlockAudio();
-    if (typeof requestCompassPermission === 'function') requestCompassPermission();
-    if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
-
     const introEl = document.getElementById('intro-screen');
     const gameScreen = document.getElementById('game-screen');
 
@@ -356,6 +353,7 @@ const IntroManager = {
     }
   }
 };
+
 
 /* =========================================================
    2. SPEICHER & DATENBANKEN
