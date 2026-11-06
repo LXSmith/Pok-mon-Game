@@ -934,3 +934,47 @@ button:active { transform: scale(0.97); }
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* =========================================================
+   PAGEDOWN / UP ANIMATIONEN FÜR POKÉMON-WECHSEL IM KAMPF
+   ========================================================= */
+
+.anim-pokemon-retreat {
+  animation: pokemonRetreatAnim 0.45s cubic-bezier(0.5, 0, 0.75, 1) forwards !important;
+}
+
+@keyframes pokemonRetreatAnim {
+  0% {
+    transform: scale(1.85) translateY(0) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(0.4) translateY(180px) rotate(-25deg);
+    opacity: 0;
+    filter: brightness(2) drop-shadow(0 20px 10px rgba(0,0,0,0.8));
+  }
+}
+
+.anim-pokemon-enter {
+  animation: pokemonEnterAnim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+@keyframes pokemonEnterAnim {
+  0% {
+    transform: scale(0.2) translateY(-150px) rotate(20deg);
+    opacity: 0;
+    filter: brightness(3);
+  }
+  70% {
+    transform: scale(1.95) translateY(15px) rotate(-5deg);
+    opacity: 0.9;
+    filter: brightness(1.4);
+  }
+  100% {
+    transform: scale(1.85) translateY(0) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
