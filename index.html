@@ -289,6 +289,17 @@
       </div>
     </div>
 
+    <!-- MODAL: K.O. / NIEDERLAGE VERLUST-SCREEN -->
+    <div id="ko-screen" class="modal-overlay hidden">
+      <div class="modal-card" style="border: 2px solid #e74c3c;">
+        <div style="font-size: 24px; font-weight: 900; color: #e74c3c; margin-bottom: 5px;">💀 K.O. GESCHLAGEN!</div>
+        <p id="ko-subtitle" style="color: #aaa; font-size: 13px; margin: 0 0 10px 0;">Dein Pokémon wurde im Kampf besiegt.</p>
+        <div id="ko-loss-text" style="font-size: 16px; font-weight: bold; color: #ff6b6b; margin-bottom: 5px;">-25 EXP verloren!</div>
+        <div id="ko-remaining-text" style="font-size: 13px; color: #fff; margin-bottom: 15px;">Verbleibende EXP: 25 / 100</div>
+        <button type="button" onclick="closeKoOverlay()" class="btn-primary" style="background: #e74c3c;">ERHOLEN</button>
+      </div>
+    </div>
+
     <div id="victory-screen" class="modal-overlay hidden">
       <div class="modal-card">
         <div style="font-size:24px; font-weight:900; color:var(--accent-yellow); margin-bottom:5px;">🏆 SIEG!</div>
