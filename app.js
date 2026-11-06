@@ -658,6 +658,10 @@ function forceDevSpawn() {
 
 function triggerSignalDetected() {
   isScanning = false;
+  
+  // Direkter Vibrations-Befehl für den Vordergrund
+triggerVibration([300, 100, 300]); 
+
 
   if (!targetPokemonCoords) {
     if (currentPosition) {
