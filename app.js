@@ -953,8 +953,6 @@ function updateBattleUI() {
 
   document.getElementById('battle-balls-count').innerText = currentSaveData.pokeballs;
 
-
-
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
     playerCardImg.src = playerBattlePokemon.cardUrl;
@@ -1001,7 +999,6 @@ function executePlayerAttack() {
       if (playerImg) playerImg.classList.remove('anim-player-tackle');
       if (enemyImg) enemyImg.classList.remove('anim-dodge-right');
 
-      // GEGNER KONTERT MIT SEINEM SPEZIALANGRIFF (PROJEKTILIEN FLIEGEN VON OBEN NACH UNTEN -> 'down')
       triggerElementalFX(currentEnemy.type, 'down');
       
       const specDmg = Math.round(currentEnemy.maxHp * 0.60);
@@ -1059,7 +1056,6 @@ function executePlayerSpecial() {
 
   document.getElementById('battle-warning-box').innerText = `🔥 SPEZIALANGRIFF (${type}) WIRD AUFGELADEN!`;
   
-  // SPEZIALANGRIFF DES SPIELERS FLIEGT NACH OBEN ZUM GEGNER ('up')
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
@@ -1655,9 +1651,14 @@ function addPokemonExp(pokemon, amount) {
 
 function showEvolutionScreen(pokemon) {
   const evoData = EVOLUTION_CHAINS[pokemon.name];
-  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} ist bereit!`;
+  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} entwickelt sich!`;
   document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
-  document.getElementById('evo-card-img').src = evoData ? evoData.cardUrl : pokemon.cardUrl;
+  
+  // Zeigt ZUERST die AKTUELLE Karte an
+  const evoImg = document.getElementById('evo-card-img');
+  evoImg.src = pokemon.cardUrl;
+  evoImg.classList.remove('evo-flash-bright');
+
   document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
   document.getElementById('evo-screen').classList.remove('hidden');
 }
@@ -1667,22 +1668,38 @@ function rollEvolution() {
   const roll = Math.floor(Math.random() * 100) + 1;
   const evoData = EVOLUTION_CHAINS[pendingEvoPokemon.name];
   const currentChance = pendingEvoPokemon.evoChance || 0;
+  const evoImg = document.getElementById('evo-card-img');
 
   if (roll <= currentChance && evoData) {
-    pendingEvoPokemon.name = evoData.next;
-    pendingEvoPokemon.cardUrl = evoData.cardUrl;
-    pendingEvoPokemon.maxHp += evoData.hpBonus;
-    pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
-    pendingEvoPokemon.evoChance = 0;
-    saveCurrentData();
-    alert(`🎉 Glückwunsch! Dein Pokémon hat sich zu ${pendingEvoPokemon.name} entwickelt!`);
+    // Grelles Leuchten starten
+    evoImg.classList.add('evo-flash-bright');
+    playBeep(880, 0.4);
+
+    // Nach 1 Sekunde (während es grell leuchtet) das Bild im Hintergrund auf die neue Karte umschalten
+    setTimeout(() => {
+      evoImg.src = evoData.cardUrl;
+      pendingEvoPokemon.name = evoData.next;
+      pendingEvoPokemon.cardUrl = evoData.cardUrl;
+      pendingEvoPokemon.maxHp += evoData.hpBonus;
+      pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
+      pendingEvoPokemon.evoChance = 0;
+      saveCurrentData();
+      document.getElementById('evo-title').innerText = `Glückwunsch! Zu ${pendingEvoPokemon.name} entwickelt!`;
+    }, 1000);
+
+    // Nach dem Abklingen des Lichts (2.2 Sekunden) das Fenster nach einer kurzen Verzögerung schließen
+    setTimeout(() => {
+      document.getElementById('evo-screen').classList.add('hidden');
+      evoImg.classList.remove('evo-flash-bright');
+      showScreen('screen-radar-hud');
+    }, 2800);
+
   } else {
     playBeep(300, 0.3);
     alert(`Fast geschafft! Die Entwicklung hat noch nicht geklappt.`);
+    document.getElementById('evo-screen').classList.add('hidden');
+    showScreen('screen-radar-hud');
   }
-
-  document.getElementById('evo-screen').classList.add('hidden');
-  showScreen('screen-radar-hud');
 }
 
 function closeVictoryOverlay() {
