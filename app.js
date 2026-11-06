@@ -1260,6 +1260,90 @@ function executeEnemyDamage() {
 }
 
 /* =========================================================
+   KAMPF-TEAMWECHSEL LOGIK & ANIMATIONEN
+   ========================================================= */
+
+function openBattleTeamModal() {
+  if (isEnemyAttacking || !isPlayerTurn) {
+    alert("Du kannst jetzt nicht mitten im Zug wechseln!");
+    return;
+  }
+
+  const container = document.getElementById('battle-team-list');
+  container.innerHTML = "";
+
+  currentSaveData.pokemonTeam.forEach((p, idx) => {
+    const isCurrent = (idx === 0);
+    const div = document.createElement('div');
+    div.className = "pokemon-row";
+    div.style.cssText = `display:flex; align-items:center; justify-content:space-between; background:${isCurrent ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.05)'}; padding:8px 12px; border-radius:10px; margin-bottom:6px; border: ${isCurrent ? '1px solid #38bdf8' : 'none'};`;
+    
+    div.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${p.cardUrl}" alt="${p.name}" style="width:38px; height:38px; object-fit:contain;">
+        <div style="text-align:left;">
+          <strong>${p.name}</strong> <span style="font-size:11px; color:#aaa;">Lv. ${p.level}</span>
+          <div style="font-size:11px; color:${p.hp > 0 ? '#4cd137' : '#e74c3c'};">KP: ${p.hp}/${p.maxHp} ${isCurrent ? '(Aktiv)' : ''}</div>
+        </div>
+      </div>
+      ${!isCurrent && p.hp > 0 ? `<button type="button" class="btn-primary" style="font-size:10px; width:auto; padding:6px 10px;" onclick="switchBattlePokemon(${idx})">Einsetzen</button>` : ''}
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('modal-battle-team').classList.remove('hidden');
+}
+
+function closeBattleTeamModal() {
+  document.getElementById('modal-battle-team').classList.add('hidden');
+}
+
+function switchBattlePokemon(newTeamIndex) {
+  closeBattleTeamModal();
+
+  const newActive = currentSaveData.pokemonTeam.splice(newTeamIndex, 1)[0];
+  currentSaveData.pokemonTeam.unshift(newActive);
+  saveCurrentData();
+
+  isPlayerTurn = false;
+  isEnemyAttacking = true;
+
+  const playerImg = document.getElementById('player-card-img');
+  const warnBox = document.getElementById('battle-warning-box');
+
+  if (warnBox) warnBox.innerText = `🔄 ${playerBattlePokemon.name}, komm zurück!`;
+  playBeep(400, 0.15);
+
+  if (playerImg) {
+    playerImg.classList.add('anim-pokemon-retreat');
+  }
+
+  setTimeout(() => {
+    playerBattlePokemon = currentSaveData.pokemonTeam[0];
+    updateBattleUI();
+
+    if (warnBox) warnBox.innerText = `✨ Los, ${playerBattlePokemon.name}!`;
+    playBeep(650, 0.2);
+
+    if (playerImg) {
+      playerImg.classList.remove('anim-pokemon-retreat');
+      playerImg.classList.add('anim-pokemon-enter');
+    }
+
+    setTimeout(() => {
+      if (playerImg) playerImg.classList.remove('anim-pokemon-enter');
+      
+      setTimeout(() => {
+        isEnemyAttacking = false;
+        scheduleEnemyAttack();
+      }, 400);
+
+    }, 500);
+
+  }, 450);
+}
+
+/* =========================================================
    K.O. & EXP VERLUST HANDLER
    ========================================================= */
 function handlePokemonKnockout() {
