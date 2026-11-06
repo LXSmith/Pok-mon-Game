@@ -1642,6 +1642,7 @@ function winBattle() {
   }, 1000);
 }
 
+
 function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
   if (!pokemon.maxExp) pokemon.maxExp = pokemon.level * 15;
