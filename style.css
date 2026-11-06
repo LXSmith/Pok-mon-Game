@@ -855,3 +855,80 @@ button:active { transform: scale(0.97); }
   transform: scale(1.95) translateX(6px) !important;
   transition: transform 0.05s ease, filter 0.05s ease !important;
 }
+
+/* EPISCHER LEVEL-UP VOLLBILD-SCREEN */
+.levelup-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(3, 7, 18, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 20px !important;
+  animation: fadeInModal 0.3s ease forwards;
+}
+
+.levelup-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 2px solid var(--accent-yellow) !important;
+  border-radius: 24px !important;
+  padding: 25px !important;
+  width: 100% !important;
+  max-width: 340px !important;
+  text-align: center !important;
+  box-shadow: 0 0 50px rgba(255, 203, 5, 0.3), 0 20px 40px rgba(0,0,0,0.8) !important;
+  color: #fff !important;
+}
+
+.levelup-stats-box {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  padding: 15px !important;
+  margin: 15px 0 !important;
+  text-align: left !important;
+}
+
+.stat-change-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  margin: 8px 0 !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.stat-label {
+  color: var(--text-sub) !important;
+}
+
+.stat-values {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.stat-old {
+  color: #94a3b8 !important; /* Ersetzt Schwarz, da Schwarz auf dunklem Grund unsichtbar wäre */
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
+.stat-arrow {
+  color: var(--accent-yellow);
+}
+
+.stat-new {
+  color: #ff3b5c !important; /* Knalliges Rot für den neuen Wert */
+  font-size: 16px !important;
+  text-shadow: 0 0 10px rgba(255, 59, 92, 0.5);
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
