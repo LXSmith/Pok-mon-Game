@@ -1604,7 +1604,7 @@ function winBattle() {
       saveCurrentData();
 
       document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
-      document.getElementById('victory-item-text').innerText = `Beide Pokémon haben gelernt!`;
+      document.getElementById('victory-item-text').innerText = `Beide Pokémon sind gewachsen!`;
       document.getElementById('victory-screen').classList.remove('hidden');
     } else {
       const earnedExp = 20;
@@ -1616,14 +1616,28 @@ function winBattle() {
       activeMon.hp = activeMon.maxHp;
       saveCurrentData();
 
+      // HIER WIRD DIE EVOLUTION IM HINTERGRUND GEPRÜFT
+      let triggeredEvo = false;
       if (leveledUp && EVOLUTION_CHAINS[activeMon.name]) {
-        pendingEvoPokemon = activeMon;
-        showEvolutionScreen(activeMon);
-      } else {
-        document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
-        document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
-        document.getElementById('victory-screen').classList.remove('hidden');
+        const roll = Math.floor(Math.random() * 100) + 1;
+        const currentChance = activeMon.evoChance || 0;
+
+        if (roll <= currentChance) {
+          triggeredEvo = true;
+          pendingEvoPokemon = activeMon;
+        }
       }
+
+      // Sieg-Screen zeigt den Levelaufstieg an
+      let victoryText = `+${earnedExp} EXP`;
+      if (leveledUp) {
+        victoryText += ` | ✨ Auf Level ${activeMon.level}!`;
+      }
+      document.getElementById('victory-exp-text').innerText = victoryText;
+      document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
+
+      window._launchEvolutionAfterVictory = triggeredEvo;
+      document.getElementById('victory-screen').classList.remove('hidden');
     }
   }, 1000);
 }
@@ -1646,65 +1660,99 @@ function addPokemonExp(pokemon, amount) {
     pokemon.evoChance = Math.min(100, pokemon.evoChance + 5);
     didLevelUp = true;
   }
+
+  if (didLevelUp) {
+    saveCurrentData();
+  }
+
   return didLevelUp;
 }
 
-function showEvolutionScreen(pokemon) {
+let isEvolutionFinished = false;
+
+function triggerBackgroundEvolution(pokemon) {
   const evoData = EVOLUTION_CHAINS[pokemon.name];
-  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} entwickelt sich!`;
-  document.getElementById('evo-subtitle').innerText = `${pokemon.name} (Lv. ${pokemon.level})`;
-  
-  // Zeigt ZUERST die AKTUELLE Karte an
+  if (!evoData) return;
+
   const evoImg = document.getElementById('evo-card-img');
+  const modalCard = document.querySelector('#evo-screen .modal-card');
+  const rollBtn = document.getElementById('evo-roll-btn');
+
+  isEvolutionFinished = false;
+  if (rollBtn) rollBtn.style.display = 'none';
+
+  // 1. Screen mit aktueller Karte öffnen
+  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} entwickelt sich!`;
+  document.getElementById('evo-subtitle').innerText = `Magische Energie bricht hervor...`;
   evoImg.src = pokemon.cardUrl;
   evoImg.classList.remove('evo-flash-bright');
-
-  document.getElementById('evo-chance-info').innerText = `Entwicklungschance: ${pokemon.evoChance || 0}%`;
+  document.getElementById('evo-chance-info').innerText = `✨ EVOLUTION LÄUFT! ✨`;
   document.getElementById('evo-screen').classList.remove('hidden');
+
+  // 2. Grelles Leuchten starten
+  setTimeout(() => {
+    evoImg.classList.add('evo-flash-bright');
+    playBeep(880, 0.4);
+  }, 200);
+
+  // 3. Im Höhepunkt des Lichts zur neuen Karte wechseln
+  setTimeout(() => {
+    evoImg.src = evoData.cardUrl;
+    pokemon.name = evoData.next;
+    pokemon.cardUrl = evoData.cardUrl;
+    pokemon.maxHp += evoData.hpBonus;
+    pokemon.hp = pokemon.maxHp;
+    pokemon.evoChance = 0;
+    saveCurrentData();
+
+    document.getElementById('evo-title').innerText = `✨ GLÜCKWUNSCH! ✨`;
+    document.getElementById('evo-subtitle').innerText = `Dein Pokémon wurde zu ${pokemon.name}!`;
+    document.getElementById('evo-chance-info').innerText = `Neue maximale KP: ${pokemon.maxHp}`;
+
+    // 4. Tanzende Sterne erzeugen
+    if (modalCard && !document.getElementById('active-evo-stars')) {
+      const starsContainer = document.createElement('div');
+      starsContainer.id = 'active-evo-stars';
+      starsContainer.className = 'evo-dancing-stars';
+      starsContainer.innerHTML = `<span>⭐</span><span>✨</span><span>🌟</span><span>💫</span>`;
+      modalCard.appendChild(starsContainer);
+    }
+  }, 1700);
+
+  // 5. Nach Abklingen erscheint der Weiter-Button
+  setTimeout(() => {
+    isEvolutionFinished = true;
+    if (rollBtn) {
+      rollBtn.innerText = "✨ WEITER ✨";
+      rollBtn.style.display = 'block';
+    }
+  }, 3200);
 }
 
 function rollEvolution() {
-  if (!pendingEvoPokemon) return;
-  const roll = Math.floor(Math.random() * 100) + 1;
-  const evoData = EVOLUTION_CHAINS[pendingEvoPokemon.name];
-  const currentChance = pendingEvoPokemon.evoChance || 0;
-  const evoImg = document.getElementById('evo-card-img');
-
-  if (roll <= currentChance && evoData) {
-    // Grelles Leuchten starten
-    evoImg.classList.add('evo-flash-bright');
-    playBeep(880, 0.4);
-
-    // Nach 1 Sekunde (während es grell leuchtet) das Bild im Hintergrund auf die neue Karte umschalten
-    setTimeout(() => {
-      evoImg.src = evoData.cardUrl;
-      pendingEvoPokemon.name = evoData.next;
-      pendingEvoPokemon.cardUrl = evoData.cardUrl;
-      pendingEvoPokemon.maxHp += evoData.hpBonus;
-      pendingEvoPokemon.hp = pendingEvoPokemon.maxHp;
-      pendingEvoPokemon.evoChance = 0;
-      saveCurrentData();
-      document.getElementById('evo-title').innerText = `Glückwunsch! Zu ${pendingEvoPokemon.name} entwickelt!`;
-    }, 1000);
-
-    // Nach dem Abklingen des Lichts (2.2 Sekunden) das Fenster nach einer kurzen Verzögerung schließen
-    setTimeout(() => {
-      document.getElementById('evo-screen').classList.add('hidden');
-      evoImg.classList.remove('evo-flash-bright');
-      showScreen('screen-radar-hud');
-    }, 2800);
-
-  } else {
-    playBeep(300, 0.3);
-    alert(`Fast geschafft! Die Entwicklung hat noch nicht geklappt.`);
+  if (isEvolutionFinished) {
+    isEvolutionFinished = false;
     document.getElementById('evo-screen').classList.add('hidden');
+    
+    const stars = document.getElementById('active-evo-stars');
+    if (stars) stars.remove();
+
+    const evoImg = document.getElementById('evo-card-img');
+    if (evoImg) evoImg.classList.remove('evo-flash-bright');
+
     showScreen('screen-radar-hud');
   }
 }
 
 function closeVictoryOverlay() {
   document.getElementById('victory-screen').classList.add('hidden');
-  showScreen('screen-radar-hud');
+
+  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
+    window._launchEvolutionAfterVictory = false;
+    triggerBackgroundEvolution(pendingEvoPokemon);
+  } else {
+    showScreen('screen-radar-hud');
+  }
 }
 
 function addTrainerExp(amount) {
