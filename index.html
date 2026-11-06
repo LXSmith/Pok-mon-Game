@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- Externe CSS -->
-  <link rel="stylesheet" href="style.css?v=46000">
+  <link rel="stylesheet" href="style.css?v=46001">
 </head>
 <body>
 
@@ -166,7 +166,6 @@
 
         <!-- EIGENES POKÉMON + KP-LEISTE DRÜBER -->
         <div class="player-sprite-wrapper">
-          <!-- KP-Leiste kommt im HTML ZUERST, damit sie oben sitzt -->
           <div class="hp-overlay player-hp-overlay" style="margin-bottom: 6px;">
             <div id="player-title" style="font-weight:bold; font-size:12px; color:#fff;">Dein Pokémon</div>
             <div class="bar-bg" style="margin-top:4px;">
@@ -178,7 +177,6 @@
             </div>
           </div>
 
-          <!-- Pokémon Bild kommt DANACH -->
           <img id="player-card-img" class="player-sprite-img" src="" alt="Dein Pokémon">
         </div>
 
@@ -189,7 +187,7 @@
         <img src="IMG_1122.jpeg" alt="3D Pokéball Rückseite">
       </div>
 
-      <!-- BOTTOM HUD (NUR DIE BUTTONS, DA KP JETZT BEIM POKÉMON SIND) -->
+      <!-- BOTTOM HUD -->
       <div class="arena-bottom-hud">
         <div class="battle-action-bar">
           <button type="button" onclick="executePlayerAttack()" class="btn-action">⚔️ Angriff</button>
@@ -238,19 +236,25 @@
 
     <!-- MODAL 2: HAUPTMENÜ OVERLAY -->
     <div id="modal-menu" class="modal-overlay hidden">
-      <div class="modal-card">
+      <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column;">
         <h3>Hauptmenü</h3>
         <div class="menu-tab-buttons">
-          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team</button>
+          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team & Box</button>
           <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
           <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
         </div>
-        <div id="mtab-content-pokemon" class="mtab-content"><div id="pokemon-team-list"></div></div>
+        
+        <!-- Überarbeiteter Team & Box Tab mit Scrollfunktion -->
+        <div id="mtab-content-pokemon" class="mtab-content" style="overflow-y: auto; max-height: 45vh; padding-right: 4px; margin-top: 5px;">
+          <div id="pokemon-team-list"></div>
+        </div>
+
         <div id="mtab-content-items" class="mtab-content hidden">
           <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:10px; border-radius:12px;">
             <span>🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:16px; color:var(--accent-yellow);">10</strong>
           </div>
         </div>
+
         <div id="mtab-content-exp" class="mtab-content hidden">
           <div class="trainer-card-inner" style="text-align:left;">
             <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 5px 0;">Level 1</h4>
@@ -259,6 +263,7 @@
             <div class="stat-line" style="margin-top:10px; font-size:12px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
+
         <button type="button" onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
         <button type="button" onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
       </div>
@@ -270,8 +275,8 @@
         <h2 id="evo-title" style="color:var(--accent-yellow);">Was? ...</h2>
         <p id="evo-subtitle" style="color:#aaa; font-size:13px;">Dein Pokémon entwickelt sich!</p>
         <img id="evo-card-img" class="battle-card-img evo-pulse" src="" alt="Evo Card">
-        <div id="evo-chance-info" style="font-size:15px; font-weight:bold; color:#3498db; margin:10px 0;">Chance: 35%</div>
-        <button type="button" id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary">🎲 JETZT WÜRFELN!</button>
+        <div id="evo-chance-info" style="font-size:15px; font-weight:bold; color:#3498db; margin:10px 0;">✨ EVOLUTION LÄUFT! ✨</div>
+        <button type="button" id="evo-roll-btn" onclick="rollEvolution()" class="btn-primary" style="display:none;">🎲 WEITER</button>
       </div>
     </div>
 
@@ -281,9 +286,7 @@
         <div style="font-size: 28px; font-weight: 900; color: var(--accent-yellow); margin-bottom: 5px; text-transform: uppercase;">✨ LEVEL UP! ✨</div>
         <p id="levelup-title" style="color: #fff; font-size: 16px; font-weight: 800; margin: 0 0 10px 0;">Pokémon erreicht Level 2!</p>
         
-        <div class="levelup-stats-box" id="levelup-stats-container">
-          <!-- Werte werden dynamisch via JS eingefügt -->
-        </div>
+        <div class="levelup-stats-box" id="levelup-stats-container"></div>
 
         <button type="button" onclick="closeLevelUpOverlay()" class="btn-primary" style="margin-top: 10px;">WEITER</button>
       </div>
@@ -312,8 +315,8 @@
 
   </main>
 
-  <!-- Leaflet JS & App Script v=46000 -->
+  <!-- Leaflet JS & App Script v=46001 -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=46000"></script>
+  <script src="app.js?v=46001"></script>
 </body>
 </html>
