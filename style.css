@@ -397,14 +397,14 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-/* ZIELRING */
+/* ZIELRING - VIEL KLEINER & SCHWERER ZU TREFFEN */
 .target-ring-outer {
   position: absolute;
-  top: 50%;
+  top: 55%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 160px;
-  height: 160px;
+  width: 105px !important; /* Deutlich kleiner gemacht */
+  height: 105px !important;
   border: 2px dashed rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   display: flex;
@@ -421,6 +421,7 @@ button:active { transform: scale(0.97); }
   border-radius: 50%;
   box-shadow: 0 0 15px #10b981, inset 0 0 10px rgba(0,0,0,0.4);
 }
+
 
 /* EIGENES POKÉMON (WEITER OBEN & GRÖSSER SKALIERT) */
 .player-sprite-wrapper {
