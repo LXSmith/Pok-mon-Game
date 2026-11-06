@@ -977,4 +977,68 @@ button:active { transform: scale(0.97); }
     filter: brightness(1);
   }
 }
+/* GRÖSSERE & BESSERE SCHRIFT FÜR DIE 4 KAMPF-BUTTONS */
+.battle-action-bar {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 8px !important;
+}
+
+.btn-action {
+  width: 100% !important;
+  padding: 12px 6px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  border-radius: 14px !important;
+  text-align: center !important;
+}
+
+/* VERHINDERT, DASS KARTEN-ECKEN DIE HITBOX VERFÄLSCHEN */
+.enemy-sprite-img {
+  pointer-events: none !important;
+}
+
+/* STÄNDIG GRIFFBEREITER POKÉBALL RECHTS NEBEN DEM GEGNER */
+.battle-ready-ball {
+  position: absolute;
+  top: 45%;
+  right: 18px;
+  width: 62px;
+  height: 62px;
+  background: transparent;
+  border-radius: 50%;
+  cursor: grab;
+  z-index: 100;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.6));
+  animation: floatBall 2s ease-in-out infinite alternate;
+  touch-action: none;
+}
+
+.battle-ready-ball img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ball-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ff3b5c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 2px solid #fff;
+}
+
+@keyframes floatBall {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-6px) scale(1.06); }
+}
+
+
 
