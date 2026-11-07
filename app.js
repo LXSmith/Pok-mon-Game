@@ -891,10 +891,11 @@ function startTrainingMatch(partnerMon) {
   showScreen('screen-battle');
   updateBattleUI();
 
-  const catchBtn = document.getElementById('btn-catch-pokemon');
-  if (catchBtn) catchBtn.style.display = 'none';
+    const catchBtn = document.getElementById('battle-ready-ball');
+  if (catchBtn) catchBtn.classList.add('hidden');
   document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
 }
+
 
 
 /* =========================================================
@@ -909,8 +910,8 @@ function startBattleFromScan() {
   const dodgeBtn = document.getElementById('btn-dodge-action');
   if (dodgeBtn) dodgeBtn.classList.add('hidden');
 
-  const catchBtn = document.getElementById('btn-catch-pokemon');
-  if (catchBtn) catchBtn.style.display = 'block';
+  const catchBtn = document.getElementById('battle-ready-ball');
+  if (catchBtn) catchBtn.classList.remove('hidden');
 
   const bottomHud = document.querySelector('.arena-bottom-hud');
   if (bottomHud) {
