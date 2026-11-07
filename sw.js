@@ -6,8 +6,9 @@ const ASSETS_TO_CACHE = [
   './style.css?v=2',
   './app.js?v=2',
   './manifest.json',
-  './IMG_1122.jpeg'
+  './pokeball.PNG'
 ];
+
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
