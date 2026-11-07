@@ -1020,19 +1020,26 @@ function playElementalSound(type) {
 
 function triggerElementalFX(elementType, direction = 'up') {
   const battleScreen = document.getElementById('screen-battle') || document.body;
-  const rawType = elementType ? elementType.toLowerCase() : 'feuer';
+  const rawType = elementType ? elementType.toLowerCase() : 'normal';
   
-  let symbol = '🔥';
-  let animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
+  // Standard-Werte (Fallback für Normal-Attacken)
+  let symbol = '⭐';
+  let animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
   
   if (rawType === 'wasser' || rawType === 'schiggy') {
-    symbol = '💧🫧'; animName = (direction === 'down') ? 'flyToPlayerWasser' : 'flyToEnemyWasser';
+    symbol = '🫧'; animName = (direction === 'down') ? 'flyToPlayerWasser' : 'flyToEnemyWasser';
   } else if (rawType === 'pflanze' || rawType === 'bisasam') {
-    symbol = '🍃🌿'; animName = (direction === 'down') ? 'flyToPlayerPflanze' : 'flyToEnemyPflanze';
+    symbol = '🍃'; animName = (direction === 'down') ? 'flyToPlayerPflanze' : 'flyToEnemyPflanze';
   } else if (rawType === 'elektro') {
-    symbol = '⚡💥'; animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
+    symbol = '⚡'; animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
   } else if (rawType === 'feuer' || rawType === 'glumanda') {
-    symbol = '🔥☄️'; animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
+    symbol = '🔥'; animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
+  } else if (rawType === 'käfer') {
+    symbol = '🕸️'; animName = (direction === 'down') ? 'flyToPlayerPflanze' : 'flyToEnemyPflanze';
+  } else if (rawType === 'gestein') {
+    symbol = '🪨'; animName = (direction === 'down') ? 'flyToPlayerFeuer' : 'flyToEnemyFeuer';
+  } else if (rawType === 'normal') {
+    symbol = '⭐'; animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
   }
 
   playElementalSound(rawType);
@@ -1049,6 +1056,7 @@ function triggerElementalFX(elementType, direction = 'up') {
     }, i * 250);
   }
 }
+
 
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
