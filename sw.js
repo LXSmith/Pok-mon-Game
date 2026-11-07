@@ -1,14 +1,14 @@
-const CACHE_NAME = 'pokemon-move-v17000';
+const CACHE_NAME = 'pokemon-move-v2';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=17000',
-  './app.js?v=17000',
-  './manifest.json'
+  './style.css?v=2',
+  './app.js?v=2',
+  './manifest.json',
+  './IMG_1122.jpeg'
 ];
 
-// Installation & altes Cache-Löschen (dein Ansatz + Offline Support)
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -28,7 +28,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Network-First: Versucht immer erst die frischeste Datei zu holen
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
