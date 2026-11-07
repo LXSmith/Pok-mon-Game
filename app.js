@@ -1367,3 +1367,656 @@ function runFromBattle() {
   showScreen('screen-radar-hud');
 }
 
+/* =========================================================
+   8. FANG-ENGINE (CATCH)
+   ========================================================= */
+
+const CatchEngine = {
+  active: false,
+  animId: null,
+
+  ball: {
+    x: 0, y: 0, z: 1.0,
+    vx: 0, vy: 0, vz: 0,
+    isDragging: false,
+    isThrown: false,
+    isSpinning: false,
+    spinAngle: 0,
+    spinSpeed: 0
+  },
+
+  touchHistory: [],
+  ringScale: 1.0,
+  ringShrinking: true,
+  eventsBound: false,
+
+  startCatchSession() {
+    this.active = true;
+    clearTimeout(dodgeTimer);
+    isDodgeWindowActive = false;
+    
+    const ring = document.getElementById('target-ring-outer');
+    if (ring) ring.classList.remove('hidden');
+
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.remove('hidden');
+      ballEl.style.display = 'block';
+      ballEl.style.opacity = '1';
+      ballEl.style.visibility = 'visible';
+      this.bindEvents(ballEl);
+    }
+    
+    this.resetBall();
+    this.startLoop();
+  },
+
+  stopCatchSession() {
+    this.active = false;
+    cancelAnimationFrame(this.animId);
+    const ring = document.getElementById('target-ring-outer');
+    if (ring) ring.classList.add('hidden');
+    
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.add('hidden');
+      ballEl.style.display = 'none';
+    }
+  },
+
+  resetBall() {
+    const b = this.ball;
+    b.x = window.innerWidth / 2;
+    b.y = window.innerHeight - 140;
+    b.z = 1.0;
+    b.vx = 0; b.vy = 0; b.vz = 0;
+    b.isDragging = false;
+    b.isThrown = false;
+    b.isSpinning = false;
+    b.spinSpeed = 0;
+    b.spinAngle = 0;
+
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.remove('wobble');
+      ballEl.style.opacity = '1';
+      ballEl.style.display = 'block';
+      ballEl.style.visibility = 'visible';
+    }
+
+    this.touchHistory = [];
+    this.updateBallElement();
+  },
+
+  bindEvents(el) {
+    if (this.eventsBound) return;
+    this.eventsBound = true;
+
+    const onStart = (e) => {
+      if (!this.active || this.ball.isThrown) return;
+      if (e.cancelable) e.preventDefault();
+
+      const pt = e.touches ? e.touches[0] : e;
+      this.ball.isDragging = true;
+      this.ball.isSpinning = false;
+      this.ball.spinSpeed = 0;
+      this.touchHistory = [{ x: pt.clientX, y: pt.clientY, time: performance.now() }];
+      this.updateBallElement();
+    };
+
+    const onMove = (e) => {
+      if (!this.active || !this.ball.isDragging) return;
+      if (e.cancelable) e.preventDefault();
+
+      const pt = e.touches ? e.touches[0] : e;
+      const now = performance.now();
+      this.ball.x = pt.clientX;
+      this.ball.y = pt.clientY;
+
+      this.touchHistory.push({ x: pt.clientX, y: pt.clientY, time: now });
+      if (this.touchHistory.length > 8) this.touchHistory.shift();
+
+      if (this.touchHistory.length >= 4) {
+        const h = this.touchHistory;
+        const len = h.length;
+        const v1x = h[len - 2].x - h[len - 4].x;
+        const v1y = h[len - 2].y - h[len - 4].y;
+        const v2x = h[len - 1].x - h[len - 2].x;
+        const v2y = h[len - 1].y - h[len - 2].y;
+        const cp = (v1x * v2y) - (v1y * v2x);
+
+        if (Math.abs(cp) > 8) {
+          this.ball.isSpinning = true;
+          const targetSpeed = cp > 0 ? 14 : -14;
+          this.ball.spinSpeed = this.ball.spinSpeed * 0.6 + targetSpeed * 0.4;
+        }
+      }
+      this.updateBallElement();
+    };
+
+    const onEnd = (e) => {
+      if (!this.active || !this.ball.isDragging) return;
+      this.ball.isDragging = false;
+
+      if (this.touchHistory.length >= 2) {
+        const last = this.touchHistory[this.touchHistory.length - 1];
+        const first = this.touchHistory[0];
+        const dt = (last.time - first.time) / 1000;
+
+        if (dt > 0.01) {
+          const vx = (last.x - first.x) / dt * 0.45;
+          const vy = (last.y - first.y) / dt * 0.55;
+
+          if (vy < -120) {
+            this.ball.isThrown = true;
+            this.ball.vx = vx;
+            this.ball.vy = vy;
+            const swipeSpeed = Math.hypot(vx, vy);
+            this.ball.vz = - (swipeSpeed * 0.0018); 
+          } else {
+            this.resetBall();
+          }
+        }
+      } else {
+        this.resetBall();
+      }
+    };
+
+    el.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onEnd, { passive: false });
+    el.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+  },
+
+  startLoop() {
+    const loop = () => {
+      if (!this.active) return;
+      this.updatePhysics();
+      this.updateRing();
+      this.animId = requestAnimationFrame(loop);
+    };
+    this.animId = requestAnimationFrame(loop);
+  },
+
+  updatePhysics() {
+    const b = this.ball;
+
+    if (b.isThrown) {
+      const enemyImg = document.getElementById('enemy-card-img');
+      const enemyRect = enemyImg ? enemyImg.getBoundingClientRect() : { left: window.innerWidth / 2 - 60, top: 180, width: 120, height: 160 };
+      
+      const circleCenterX = enemyRect.left + (enemyRect.width / 2);
+      const circleCenterY = enemyRect.top + (enemyRect.height / 2);
+      const exactRadius = 55; 
+
+      b.x += b.vx * 0.016;
+      b.y += b.vy * 0.016;
+      b.vy += 580 * 0.016;
+      b.z += b.vz * 0.016;
+      b.z = Math.max(0.12, b.z);
+
+      if (b.isSpinning) {
+        b.vx += (b.spinSpeed * 4.2) * 0.016;
+        b.spinAngle += b.spinSpeed * 1.5;
+      }
+
+      this.updateBallElement();
+
+      const isAtTargetDepth = (b.z <= 0.52 && b.z >= 0.38);
+      const distanceFromCircleCenter = Math.hypot(b.x - circleCenterX, b.y - circleCenterY);
+
+      if (isAtTargetDepth && distanceFromCircleCenter <= exactRadius) {
+        b.isThrown = false;
+        this.evaluateHit(b.x, b.y, enemyRect);
+        return;
+      }
+
+      if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
+        b.isThrown = false;
+        this.showFeedback("VORBEI AM KREIS!");
+        setTimeout(() => this.resetBall(), 600);
+      }
+    } else if (b.isSpinning) {
+      b.spinAngle += b.spinSpeed;
+      this.updateBallElement();
+    }
+  },
+
+  updateRing() {
+    if (this.ball.isThrown) return;
+    const innerRing = document.getElementById('target-ring-inner');
+    if (!innerRing) return;
+
+    if (this.ringShrinking) {
+      this.ringScale -= 0.015;
+      if (this.ringScale <= 0.2) this.ringShrinking = false;
+    } else {
+      this.ringScale += 0.015;
+      if (this.ringScale >= 1.0) this.ringShrinking = true;
+    }
+
+    innerRing.style.transform = `scale(${this.ringScale})`;
+    innerRing.style.borderColor = this.ringScale < 0.4 ? '#ff2e55' : (this.ringScale < 0.7 ? '#ffcb05' : '#10b981');
+  },
+
+  updateBallElement() {
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (!ballEl) return;
+    const b = this.ball;
+    ballEl.style.left = b.x + 'px';
+    ballEl.style.top = b.y + 'px';
+    
+    const scale = b.z * (b.isDragging ? 1.3 : 1.2);
+    const rotation = b.isSpinning ? `rotate(${b.spinAngle}deg)` : '';
+    ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
+  },
+
+  evaluateHit(ballX, ballY, enemyRect) {
+    let throwBonus = 1.0;
+    let feedbackText = "TREFFER!";
+
+    if (this.ringScale < 0.4) {
+      throwBonus = 1.8;
+      feedbackText = "FABELHAFT!";
+    } else if (this.ringScale < 0.7) {
+      throwBonus = 1.4;
+      feedbackText = "GROSSARTIG!";
+    }
+
+    if (this.ball.isSpinning) {
+      throwBonus *= 1.5;
+      feedbackText += " (CURVE)";
+    }
+
+    this.showFeedback(feedbackText);
+    this.triggerCatchSequence(throwBonus);
+  },
+
+  showFeedback(text) {
+    const fb = document.getElementById('throw-feedback');
+    if (!fb) return;
+    fb.innerText = text;
+    fb.classList.remove('hidden');
+    setTimeout(() => fb.classList.add('hidden'), 1200);
+  },
+
+  playFanfareSound() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now + idx * 0.1); osc.stop(now + idx * 0.1 + 0.25);
+      });
+    } catch(e){}
+  },
+
+  triggerCatchSequence(throwBonus) {
+    const ballEl = document.getElementById('catch-throw-ball');
+    const enemyImg = document.getElementById('enemy-card-img');
+    const ring = document.getElementById('target-ring-outer');
+    
+    if (ring) ring.classList.add('hidden');
+    if (enemyImg) enemyImg.classList.add('anim-suck-in');
+    try { playBeep(800, 0.2); } catch(e){}
+
+    setTimeout(() => {
+      if (ballEl) ballEl.classList.add('wobble');
+
+      const baseChance = 0.80;
+      const finalChance = Math.min(0.98, baseChance * throwBonus);
+      let wobbles = 0;
+
+      const wobbleInterval = setInterval(() => {
+        wobbles++;
+        try { playBeep(450 + (wobbles * 140), 0.15); } catch(e){}
+
+        if (wobbles >= 3) {
+          clearInterval(wobbleInterval);
+          if (ballEl) ballEl.classList.remove('wobble');
+
+          if (Math.random() <= finalChance) {
+            this.playFanfareSound();
+            
+            const stars = document.createElement('div');
+            stars.className = 'catch-stars-overlay';
+            stars.innerText = '✨⭐✨';
+            document.getElementById('screen-battle').appendChild(stars);
+            setTimeout(() => stars.remove(), 1000);
+
+            setTimeout(() => {
+              this.stopCatchSession();
+              if (enemyImg) {
+                enemyImg.classList.remove('anim-suck-in');
+                enemyImg.style.transform = '';
+                enemyImg.style.opacity = '1';
+              }
+
+              const newMon = {
+                name: currentEnemy.name, type: currentEnemy.type, level: 1,
+                hp: currentEnemy.maxHp, maxHp: currentEnemy.maxHp, cardUrl: currentEnemy.cardUrl,
+                exp: 0, maxExp: 75, attack: Math.round(currentEnemy.maxHp * 0.20),
+                specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
+              };
+
+              if (currentSaveData.pokemonTeam.length < 6) {
+                currentSaveData.pokemonTeam.push(newMon);
+                alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
+              } else {
+                if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
+                currentSaveData.pokemonBox.push(newMon);
+                alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
+              }
+
+              if (currentSaveData.pokemonTeam.length > 0) {
+                currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
+              }
+
+              addTrainerExp(35);
+              saveCurrentData();
+              showScreen('screen-radar-hud');
+            }, 600);
+
+          } else {
+            try { playBeep(220, 0.4); } catch(e){}
+            if (enemyImg) {
+              enemyImg.classList.remove('anim-suck-in');
+              enemyImg.classList.add('anim-puff-out');
+            }
+
+            setTimeout(() => {
+              if (enemyImg) enemyImg.classList.remove('anim-puff-out');
+              this.resetBall();
+              alert(`${currentEnemy.name} ist ausgebrochen!`);
+            }, 700);
+          }
+        }
+      }, 700);
+    }, 450);
+  }
+};
+
+function attemptCatch() {
+  if (isTrainingMode) return;
+  if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
+  currentSaveData.pokeballs--;
+  updateBattleUI();
+  CatchEngine.startCatchSession();
+}
+
+
+/* =========================================================
+   9. BELOHNUNGEN & PROGRESSION (EXP & LEVEL-UP)
+   ========================================================= */
+
+function winBattle() {
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+  CatchEngine.stopCatchSession();
+  
+  document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
+  try {
+    playBeep(523.25, 0.15);
+    setTimeout(() => playBeep(659.25, 0.15), 150);
+    setTimeout(() => playBeep(783.99, 0.4), 300);
+  } catch(e){}
+
+  setTimeout(() => {
+    if (isTrainingMode) {
+      const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
+      addPokemonExp(playerBattlePokemon, earnedExp);
+      if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
+      playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+      saveCurrentData();
+
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
+      document.getElementById('victory-item-text').innerText = `Beide Pokémon sind gewachsen!`;
+      window._pendingLevelUpInfo = pendingLevelUpData;
+      window._launchEvolutionAfterVictory = false;
+      document.getElementById('victory-screen').classList.remove('hidden');
+    } else {
+      const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
+      addTrainerExp(earnedExp);
+      currentSaveData.pokeballs += 2;
+
+      const activeMon = playerBattlePokemon;
+      const leveledUp = addPokemonExp(activeMon, earnedExp);
+      activeMon.hp = activeMon.maxHp;
+      saveCurrentData();
+
+      let triggeredEvo = false;
+      if (EVOLUTION_CHAINS[activeMon.name]) {
+        const evoData = EVOLUTION_CHAINS[activeMon.name];
+        if (activeMon.maxHp >= evoData.requiredMaxHp) {
+          triggeredEvo = true;
+          pendingEvoPokemon = activeMon;
+        }
+      }
+
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP`;
+      document.getElementById('victory-item-text').innerText = `+2 Pokébälle`;
+
+      window._pendingLevelUpInfo = leveledUp ? pendingLevelUpData : null;
+      window._launchEvolutionAfterVictory = triggeredEvo;
+      document.getElementById('victory-screen').classList.remove('hidden');
+    }
+  }, 1000);
+}
+
+function addPokemonExp(pokemon, amount) {
+  if (!pokemon.exp) pokemon.exp = 0;
+  if (!pokemon.maxExp) pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
+
+  const oldLevel = pokemon.level;
+  const oldMaxHp = pokemon.maxHp || pokemon.hp;
+  const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.20);
+  const oldSpecial = pokemon.specialAttack || Math.round((oldMaxHp * 0.30) + (oldLevel * 0.5));
+
+  pokemon.exp += amount;
+  let didLevelUp = false;
+
+  while (pokemon.exp >= pokemon.maxExp) {
+    pokemon.exp -= pokemon.maxExp;
+    pokemon.level++;
+    
+    pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
+    pokemon.maxHp += 2;
+    pokemon.hp = pokemon.maxHp;
+    
+    pokemon.attack = Math.round(pokemon.maxHp * 0.20);
+    pokemon.specialAttack = Math.round((pokemon.maxHp * 0.30) + (pokemon.level * 0.5));
+    didLevelUp = true;
+  }
+
+  if (didLevelUp) {
+    saveCurrentData();
+    pendingLevelUpData = {
+      pokemon: pokemon,
+      oldLevel: oldLevel,
+      newLevel: pokemon.level,
+      oldHp: oldMaxHp,
+      newHp: pokemon.maxHp,
+      oldAtk: oldAttack,
+      newAtk: pokemon.attack,
+      oldSpc: oldSpecial,
+      newSpc: pokemon.specialAttack
+    };
+  }
+  return didLevelUp;
+}
+
+function closeVictoryOverlay() {
+  document.getElementById('victory-screen').classList.add('hidden');
+
+  if (window._pendingLevelUpInfo) {
+    const info = window._pendingLevelUpInfo;
+    window._pendingLevelUpInfo = null;
+
+    document.getElementById('levelup-title').innerText = `${info.pokemon.name} erreicht Level ${info.newLevel}!`;
+    const statsContainer = document.getElementById('levelup-stats-container');
+    statsContainer.innerHTML = `
+      <div class="stat-change-row"><span class="stat-label">❤️ KP:</span><div class="stat-values"><span class="stat-old">${info.oldHp}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newHp}</span></div></div>
+      <div class="stat-change-row"><span class="stat-label">⚔️ Angriff:</span><div class="stat-values"><span class="stat-old">${info.oldAtk}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newAtk}</span></div></div>
+      <div class="stat-change-row"><span class="stat-label">🔥 Spezialangriff:</span><div class="stat-values"><span class="stat-old">${info.oldSpc}</span><span class="stat-arrow">➔</span><span class="stat-new">${info.newSpc}</span></div></div>
+    `;
+
+    document.getElementById('levelup-screen').classList.remove('hidden');
+    try { playBeep(880, 0.3); } catch(e){}
+    return;
+  }
+
+  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
+    window._launchEvolutionAfterVictory = false;
+    triggerBackgroundEvolution(pendingEvoPokemon);
+  } else {
+    showScreen('screen-radar-hud');
+  }
+}
+
+function closeLevelUpOverlay() {
+  document.getElementById('levelup-screen').classList.add('hidden');
+
+  if (window._launchEvolutionAfterVictory && pendingEvoPokemon) {
+    window._launchEvolutionAfterVictory = false;
+    triggerBackgroundEvolution(pendingEvoPokemon);
+  } else {
+    showScreen('screen-radar-hud');
+  }
+}
+
+function triggerBackgroundEvolution(pokemon) {
+  const evoData = EVOLUTION_CHAINS[pokemon.name];
+  if (!evoData) return;
+
+  const evoImg = document.getElementById('evo-card-img');
+  const modalCard = document.querySelector('#evo-screen .modal-card');
+  const rollBtn = document.getElementById('evo-roll-btn');
+
+  isEvolutionFinished = false;
+  if (rollBtn) rollBtn.style.display = 'none';
+
+  document.getElementById('evo-title').innerText = `Was? ${pokemon.name} entwickelt sich!`;
+  document.getElementById('evo-subtitle').innerText = `Magische Energie bricht hervor...`;
+  evoImg.src = pokemon.cardUrl;
+  evoImg.classList.remove('evo-flash-bright');
+  document.getElementById('evo-chance-info').innerText = `✨ EVOLUTION LÄUFT! ✨`;
+  document.getElementById('evo-screen').classList.remove('hidden');
+
+  setTimeout(() => {
+    evoImg.classList.add('evo-flash-bright');
+    try { playBeep(880, 0.4); } catch(e){}
+  }, 200);
+
+  setTimeout(() => {
+    evoImg.src = evoData.cardUrl;
+    pokemon.name = evoData.next;
+    pokemon.cardUrl = evoData.cardUrl;
+    pokemon.maxHp += evoData.hpBonus;
+    pokemon.hp = pokemon.maxHp;
+    saveCurrentData();
+
+    document.getElementById('evo-title').innerText = `✨ GLÜCKWUNSCH! ✨`;
+    document.getElementById('evo-subtitle').innerText = `Dein Pokémon wurde zu ${pokemon.name}!`;
+    document.getElementById('evo-chance-info').innerText = `Neue maximale KP: ${pokemon.maxHp}`;
+
+    if (modalCard && !document.getElementById('active-evo-stars')) {
+      const starsContainer = document.createElement('div');
+      starsContainer.id = 'active-evo-stars';
+      starsContainer.className = 'evo-dancing-stars';
+      starsContainer.innerHTML = `<span>⭐</span><span>✨</span><span>🌟</span><span>💫</span>`;
+      modalCard.appendChild(starsContainer);
+    }
+  }, 1700);
+
+  setTimeout(() => {
+    isEvolutionFinished = true;
+    if (rollBtn) {
+      rollBtn.innerText = "✨ WEITER ✨";
+      rollBtn.style.display = 'block';
+    }
+  }, 3200);
+}
+
+function rollEvolution() {
+  if (isEvolutionFinished) {
+    isEvolutionFinished = false;
+    document.getElementById('evo-screen').classList.add('hidden');
+    const stars = document.getElementById('active-evo-stars');
+    if (stars) stars.remove();
+    const evoImg = document.getElementById('evo-card-img');
+    if (evoImg) evoImg.classList.remove('evo-flash-bright');
+    showScreen('screen-radar-hud');
+  }
+}
+
+function addTrainerExp(amount) {
+  currentSaveData.exp += amount;
+  if (currentSaveData.exp >= currentSaveData.maxExp) {
+    currentSaveData.level++;
+    currentSaveData.exp -= currentSaveData.maxExp;
+    currentSaveData.maxExp = Math.round(currentSaveData.maxExp * 1.5);
+    alert(`🎉 LEVEL UP! Du bist jetzt Trainer Level ${currentSaveData.level}!`);
+  }
+}
+
+
+/* =========================================================
+   10. BACKUP-SYSTEM & INIT
+   ========================================================= */
+
+function exportSaveGame() {
+  const backup = {
+    slot1: localStorage.getItem('pokemon_rl_slot_1'),
+    slot2: localStorage.getItem('pokemon_rl_slot_2'),
+    slot3: localStorage.getItem('pokemon_rl_slot_3')
+  };
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pokemon_rpg_backup.json';
+  a.click();
+}
+
+function triggerImport() {
+  document.getElementById('import-file-input').click();
+}
+
+function importSaveGame(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data.slot1) localStorage.setItem('pokemon_rl_slot_1', data.slot1);
+      if (data.slot2) localStorage.setItem('pokemon_rl_slot_2', data.slot2);
+      if (data.slot3) localStorage.setItem('pokemon_rl_slot_3', data.slot3);
+      alert("Spielstand erfolgreich wiederhergestellt!");
+      location.reload();
+    } catch (err) { alert("Fehlerhafte Datei."); }
+  };
+  reader.readAsText(file);
+}
+
+// App-Start (Wartet bis DOM geladen ist)
+const safeStartIntro = () => {
+  requestAnimationFrame(() => {
+    IntroManager.init();
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', safeStartIntro);
+} else {
+  safeStartIntro();
+}
