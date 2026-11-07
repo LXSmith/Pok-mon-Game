@@ -932,3 +932,49 @@ button:active { transform: scale(0.97); }
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* =========================================================
+   DER GREIFBARE POKÉBALL (RECHTS IM BATTLE)
+   ========================================================= */
+.battle-ready-ball {
+  position: absolute !important;
+  bottom: 120px;
+  right: 20px;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  padding: 0;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.battle-ready-ball:active {
+  transform: scale(0.9);
+}
+
+.battle-ready-ball img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ball-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff3b5c;
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
