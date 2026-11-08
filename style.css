@@ -317,7 +317,6 @@ button:active { transform: scale(0.97); }
   height: 100dvh !important;
   max-width: 100vw !important;
   margin: 0 !important;
-  /* Dynamischer Schutzabstand für Notch (Homescreen) & Browserleiste */
   padding-top: calc(env(safe-area-inset-top, 20px) + 12px) !important;
   padding-bottom: calc(env(safe-area-inset-bottom, 15px) + 10px) !important;
   z-index: 9999 !important;
@@ -328,7 +327,6 @@ button:active { transform: scale(0.97); }
   justify-content: space-between !important;
   box-sizing: border-box !important;
 }
-
 
 /* GRÜNER NATUR HINTERGRUND */
 .arena-background {
@@ -371,20 +369,17 @@ button:active { transform: scale(0.97); }
   width: 100%;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-evenly !important; /* Verteilt Gegner oben, Box in der Mitte und Spieler unten gleichmäßig */
+  justify-content: space-evenly !important;
   align-items: center !important;
   perspective: 700px;
   padding: 10px 0 !important;
-  box-sizing: border-box !important;
-}
-;
   box-sizing: border-box !important;
 }
 
 /* GEGNER CONTAINER WEITER NACH UNTEN VERSCHIEBEN */
 .enemy-target-wrapper {
   position: relative !important;
-  top: 0 !important; /* Kein manueller Offset mehr */
+  top: 0 !important;
   margin-top: 5px !important;
   transform: scale(1.05) !important;
   filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
@@ -395,7 +390,6 @@ button:active { transform: scale(0.97); }
   z-index: 5 !important;
   width: 100%;
 }
-
 
 .enemy-sprite-img {
   width: 150px;
@@ -409,7 +403,7 @@ button:active { transform: scale(0.97); }
   top: auto !important;
   left: auto !important;
   transform: none !important;
-  margin: auto auto !important; /* Platziert die Box flexibel genau im freien Mittelraum */
+  margin: auto auto !important;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
@@ -422,10 +416,6 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   max-width: 85%;
 }
-
-
-
-
 
 /* ZIELRING */
 .target-ring-outer {
@@ -563,24 +553,6 @@ button:active { transform: scale(0.97); }
 .btn-catch {
   background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
 }
-
-.battle-box-hud {
-  position: absolute;
-  top: 140px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #fff;
-  z-index: 20;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
 
 .throw-feedback {
   position: absolute;
@@ -746,7 +718,6 @@ button:active { transform: scale(0.97); }
   transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-/* VERSTÄRKTES AUFLEUCHTEN FÜR DIE EVOLUTION */
 .evo-flash-bright {
   animation: brightFlashAnim 3s ease-in-out forwards !important;
 }
@@ -757,18 +728,15 @@ button:active { transform: scale(0.97); }
     transform: scale(1);
   }
   40%, 60% {
-    /* Extrem grelles Licht im Höhepunkt */
     filter: brightness(8) saturate(0.2) drop-shadow(0 0 70px #ffffff) drop-shadow(0 0 120px #ffcb05);
     transform: scale(1.12);
   }
   100% {
-    /* Sanftes Abklingen mit leichtem Zoom auf die neue Karte */
     filter: brightness(1.15) drop-shadow(0 0 35px var(--accent-yellow));
     transform: scale(1.08);
   }
 }
 
-/* TANZENDE STERNE UM DIE EVOLUTIONS-KARTE */
 .evo-dancing-stars {
   position: absolute;
   top: 50%;
@@ -945,7 +913,7 @@ button:active { transform: scale(0.97); }
 }
 
 .stat-old {
-  color: #94a3b8 !important; /* Ersetzt Schwarz, da Schwarz auf dunklem Grund unsichtbar wäre */
+  color: #94a3b8 !important;
   text-decoration: line-through;
   font-weight: 600;
 }
@@ -955,7 +923,7 @@ button:active { transform: scale(0.97); }
 }
 
 .stat-new {
-  color: #ff3b5c !important; /* Knalliges Rot für den neuen Wert */
+  color: #ff3b5c !important;
   font-size: 16px !important;
   text-shadow: 0 0 10px rgba(255, 59, 92, 0.5);
 }
@@ -1010,6 +978,7 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
+
 /* =========================================================
    FULLSCREEN MENÜ (FÜR BROWSER & PWA OPTIMIERT)
    ========================================================= */
@@ -1019,18 +988,17 @@ button:active { transform: scale(0.97); }
   top: 0 !important;
   left: 0 !important;
   width: 100vw !important;
-  height: 100dvh !important; /* Passt sich automatisch an Safari-Leisten an */
+  height: 100dvh !important;
   background-color: #0f172a !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
   align-items: center !important;
-  /* Berücksichtigt die Notch oben und die untere iPhone-Home-Leiste sicher */
   padding: calc(env(safe-area-inset-top, 20px) + 20px) 20px calc(env(safe-area-inset-bottom, 20px) + 20px) 20px !important;
   box-sizing: border-box !important;
   z-index: 100 !important;
   pointer-events: auto !important;
-  overflow-y: auto !important; /* Falls es auf kleinen Handys eng wird, scrollbar machen */
+  overflow-y: auto !important;
 }
 
 .menu-center-content {
@@ -1039,7 +1007,7 @@ button:active { transform: scale(0.97); }
   align-items: center !important;
   width: 100% !important;
   max-width: 350px !important;
-  margin: auto 0 !important; /* Zentriert den Inhalt perfekt im verbleibenden Raum */
+  margin: auto 0 !important;
 }
 
 .menu-actions {
@@ -1056,7 +1024,7 @@ button:active { transform: scale(0.97); }
   gap: 15px;
   align-items: center;
   justify-content: center;
-  opacity: 0.5; /* Macht den Text unauffällig */
+  opacity: 0.5;
   font-size: 11px;
   color: #fff;
   font-weight: 600;
@@ -1073,4 +1041,3 @@ button:active { transform: scale(0.97); }
 .footer-divider {
   color: #475569;
 }
-
