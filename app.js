@@ -659,14 +659,24 @@ function initApp() {
   showScreen('screen-main-menu');
 }
 
+/* =========================================================
+   ABGESICHERTE MENÜ- & SLOT-LOGIK (TEIL 2 ERSETZEN)
+   ========================================================= */
+
 function updateSlotUI() {
   for (let i = 1; i <= 3; i++) {
     const data = localStorage.getItem('pokemon_rl_slot_' + i);
     const infoDiv = document.getElementById(`slot-${i}-info`);
     if (infoDiv) {
       if (data) {
-        const parsed = JSON.parse(data);
-        infoDiv.innerText = `Trainer Lv. ${parsed.level} | ${parsed.pokemonTeam[0]?.name || 'Kein Pokémon'}`;
+        try {
+          const parsed = JSON.parse(data);
+          const activeMonName = parsed.pokemonTeam?.[0]?.name || 'Kein Pokémon';
+          infoDiv.innerText = `Trainer Lv. ${parsed.level || 1} | ${activeMonName}`;
+        } catch (e) {
+          console.error(`Fehler beim Lesen von Slot ${i}:`, e);
+          infoDiv.innerText = "Fehlerhafter Speicherstand";
+        }
       } else {
         infoDiv.innerText = "Leer";
       }
@@ -688,10 +698,15 @@ function onSlotSelected(slotNum) {
 
   if (selectedFlowMode === 'continue') {
     if (saved) {
-      currentSaveData = JSON.parse(saved);
-      if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
-      loadDashboard();
-      showScreen('screen-radar-hud');
+      try {
+        currentSaveData = JSON.parse(saved);
+        if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
+        loadDashboard();
+        showScreen('screen-radar-hud');
+      } catch (e) {
+        console.error("Fehler beim Laden des Spielstands:", e);
+        alert("Der Speicherstand in diesem Slot ist beschädigt und konnte nicht geladen werden.");
+      }
     } else {
       alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
     }
