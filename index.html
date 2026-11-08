@@ -43,28 +43,35 @@
   <!-- HAUPT-GAME CONTAINER -->
   <main id="game-screen" class="app-viewport hidden">
 
-    <!-- SCREEN 1: HAUPTMENÜ -->
-    <section id="screen-main-menu" class="card-ui screen-panel hidden">
-      <div class="hud-logo-wrapper" style="margin-bottom: 20px;">
-        <div class="brand-logo-container">
-          <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
-          <div class="brand-move-badge">MOVE</div>
+        <!-- SCREEN 1: HAUPTMENÜ (FULLSCREEN) -->
+    <section id="screen-main-menu" class="fullscreen-menu hidden">
+      
+      <!-- OBERER BEREICH: Logo & Buttons -->
+      <div class="menu-center-content">
+        <div class="hud-logo-wrapper" style="margin-bottom: 40px;">
+          <div class="brand-logo-container">
+            <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
+            <div class="brand-move-badge">MOVE</div>
+          </div>
+        </div>
+        
+        <div class="menu-actions">
+          <button type="button" onclick="selectFlow('continue')" class="btn-primary btn-xl">▶️ Spiel Fortsetzen</button>
+          <button type="button" onclick="selectFlow('new')" class="btn-secondary btn-lg">➕ Neues Spiel</button>
+          <button type="button" onclick="openHomeMapModal()" class="btn-secondary btn-lg" style="background:#0284c7; margin-top:10px;">🏠 Ort als Zuhause festlegen</button>
         </div>
       </div>
-      
-      <div class="menu-actions">
-        <button type="button" onclick="selectFlow('continue')" class="btn-primary">▶️ Spiel Fortsetzen</button>
-        <button type="button" onclick="selectFlow('new')" class="btn-secondary">➕ Neues Spiel</button>
-        <button type="button" onclick="openHomeMapModal()" class="btn-secondary" style="background:#0284c7; margin-top:10px;">🏠 Ort als Zuhause festlegen</button>
+
+      <!-- UNTERER BEREICH: Dezenter Backup-Footer -->
+      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
+      <div class="menu-footer-links">
+        <span class="footer-link" onclick="triggerImport()">Backup laden</span>
+        <span class="footer-divider">|</span>
+        <span class="footer-link" onclick="exportSaveGame()">Backup sichern</span>
       </div>
 
-      <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importSaveGame(event)">
-      <div class="backup-bar">
-        <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 13px;">💾 Spielstand-Sicherung</h4>
-        <button type="button" onclick="exportSaveGame()" class="btn-secondary" style="font-size: 12px; margin-bottom: 6px; background: #27ae60;">Backup Download</button>
-        <button type="button" onclick="triggerImport()" class="btn-secondary" style="font-size: 12px;">Backup Import</button>
-      </div>
     </section>
+
 
     <!-- SCREEN 2: SPEICHERSLOTS -->
     <section id="screen-slots" class="card-ui screen-panel hidden">
