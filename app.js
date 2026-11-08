@@ -1,13 +1,9 @@
 /* =========================================================
-   POKÉMON REAL-LIFE RPG - APP.JS
-   Zentrale Logik-Datei (Strukturiert)
+   POKÉMON REAL-LIFE RPG - APP.JS (TEIL 1 VON 4)
+   1. SETUP, SYSTEM & DATENBANK (151 KANTO POKÉMON)
    ========================================================= */
 
-/* =========================================================
-   1. SETUP & SYSTEM
-   ========================================================= */
-
-// Service Worker Registrierung (PWA Caching aktivieren)
+// Service Worker Registrierung
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -43,7 +39,6 @@ function unlockAudio() {
   }
 }
 
-// Zentrale Haptic Feedback (Vibration) Funktion
 function triggerVibration(pattern = 50) {
   if ("vibrate" in navigator) {
     try {
@@ -64,33 +59,252 @@ function sendNotification(title, body) {
   }
 }
 
-
 /* =========================================================
-   2. DATENBANKEN & VARIABLEN
+   EVOLUTIONS-REGELN & SCHWELLENWERTE
+   isTwoStage: true -> 2-Stufen-Kette (+20 SpcAtk, +10 MaxHP)
+   isTwoStage: false -> 3-Stufen-Kette (+10 SpcAtk)
    ========================================================= */
-
 const EVOLUTION_CHAINS = {
-  "Glumanda": { next: "Glutexo", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", hpBonus: 20, requiredMaxHp: 80 },
-  "Glutexo":  { next: "Glurak",  cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  hpBonus: 35, requiredMaxHp: 120 },
-  "Bisasam":  { next: "Bisaknosp", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png", hpBonus: 20, requiredMaxHp: 80 },
-  "Bisaknosp":{ next: "Bisaflor",  cardUrl: "https://images.pokemontcg.io/base1/15_hires.png", hpBonus: 35, requiredMaxHp: 120 },
-  "Schiggy":   { next: "Schillok", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png", hpBonus: 20, requiredMaxHp: 80 },
-  "Schillok":  { next: "Turtok",   cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  hpBonus: 35, requiredMaxHp: 120 }
+  // Starter
+  "Bisasam":   { next: "Bisaknosp", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png", requiredMaxHp: 77, isTwoStage: false },
+  "Bisaknosp": { next: "Bisaflor",  cardUrl: "https://images.pokemontcg.io/base1/15_hires.png", requiredMaxHp: 115, isTwoStage: false },
+  "Glumanda":  { next: "Glutexo",   cardUrl: "https://images.pokemontcg.io/base1/24_hires.png", requiredMaxHp: 77, isTwoStage: false },
+  "Glutexo":   { next: "Glurak",    cardUrl: "https://images.pokemontcg.io/base1/4_hires.png",  requiredMaxHp: 115, isTwoStage: false },
+  "Schiggy":   { next: "Schillok",  cardUrl: "https://images.pokemontcg.io/base1/42_hires.png", requiredMaxHp: 77, isTwoStage: false },
+  "Schillok":  { next: "Turtok",    cardUrl: "https://images.pokemontcg.io/base1/2_hires.png",  requiredMaxHp: 115, isTwoStage: false },
+
+  // 3-Stufen Gewöhnlich & Rare
+  "Raupy":     { next: "Safcon",    cardUrl: "https://images.pokemontcg.io/base1/48_hires.png", requiredMaxHp: 53, isTwoStage: false },
+  "Safcon":    { next: "Smettbo",   cardUrl: "https://images.pokemontcg.io/base1/33_hires.png", requiredMaxHp: 94, isTwoStage: false },
+  "Hornliu":   { next: "Kokuna",    cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", requiredMaxHp: 53, isTwoStage: false },
+  "Kokuna":    { next: "Bibor",     cardUrl: "https://images.pokemontcg.io/base1/17_hires.png", requiredMaxHp: 94, isTwoStage: false },
+  "Taubsi":    { next: "Tauboga",   cardUrl: "https://images.pokemontcg.io/base1/22_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Tauboga":   { next: "Tauboss",   cardUrl: "https://images.pokemontcg.io/base1/18_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Nidoran♀":  { next: "Nidorina",  cardUrl: "https://images.pokemontcg.io/base1/36_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Nidorina":  { next: "Nidoqueen", cardUrl: "https://images.pokemontcg.io/base1/7_hires.png",  requiredMaxHp: 99, isTwoStage: false },
+  "Nidoran♂":  { next: "Nidorino",  cardUrl: "https://images.pokemontcg.io/base1/37_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Nidorino":  { next: "Nidoking",  cardUrl: "https://images.pokemontcg.io/base1/11_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Myrapla":   { next: "Duflor",    cardUrl: "https://images.pokemontcg.io/base1/49_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Duflor":    { next: "Giflor",    cardUrl: "https://images.pokemontcg.io/base1/20_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Quapsel":   { next: "Quaputzi",  cardUrl: "https://images.pokemontcg.io/base1/59_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Quaputzi":  { next: "Quappo",    cardUrl: "https://images.pokemontcg.io/base1/13_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Abra":      { next: "Kadabra",   cardUrl: "https://images.pokemontcg.io/base1/32_hires.png", requiredMaxHp: 77, isTwoStage: false },
+  "Kadabra":   { next: "Simsala",   cardUrl: "https://images.pokemontcg.io/base1/1_hires.png",  requiredMaxHp: 115, isTwoStage: false },
+  "Machollo":  { next: "Maschock",  cardUrl: "https://images.pokemontcg.io/base1/52_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Maschock":  { next: "Machomei",  cardUrl: "https://images.pokemontcg.io/base1/8_hires.png",  requiredMaxHp: 99, isTwoStage: false },
+  "Knofensa":  { next: "Ultrigaria",cardUrl: "https://images.pokemontcg.io/base1/41_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Ultrigaria":{ next: "Sarzenia",  cardUrl: "https://images.pokemontcg.io/base1/21_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Kleinstein":{ next: "Georok",    cardUrl: "https://images.pokemontcg.io/base1/35_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Georok":    { next: "Geowaz",    cardUrl: "https://images.pokemontcg.io/base1/27_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Nebulak":   { next: "Alpollo",   cardUrl: "https://images.pokemontcg.io/base1/50_hires.png", requiredMaxHp: 61, isTwoStage: false },
+  "Alpollo":   { next: "Gengar",    cardUrl: "https://images.pokemontcg.io/fossil/5_hires.png", requiredMaxHp: 99, isTwoStage: false },
+  "Dratini":   { next: "Dragonir",  cardUrl: "https://images.pokemontcg.io/base1/26_hires.png", requiredMaxHp: 80, isTwoStage: false },
+  "Dragonir":  { next: "Dragoran",  cardUrl: "https://images.pokemontcg.io/fossil/4_hires.png", requiredMaxHp: 120, isTwoStage: false },
+
+  // 2-Stufen-Ketten (Überspringen Phase 1 -> Direkt Endstufe mit +20 SpcAtk & +10 KP)
+  "Rattfratz": { next: "Rattikarl", cardUrl: "https://images.pokemontcg.io/base1/39_hires.png", requiredMaxHp: 65, isTwoStage: true },
+  "Habitak":  { next: "Ibitak",    cardUrl: "https://images.pokemontcg.io/jungle/21_hires.png",requiredMaxHp: 65, isTwoStage: true },
+  "Rettan":    { next: "Arbok",     cardUrl: "https://images.pokemontcg.io/jungle/31_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Pikachu":  { next: "Raichu",    cardUrl: "https://images.pokemontcg.io/base1/14_hires.png", requiredMaxHp: 80, isTwoStage: true },
+  "Sandan":    { next: "Sandamer",  cardUrl: "https://images.pokemontcg.io/fossil/27_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Piepi":     { next: "Pixi",      cardUrl: "https://images.pokemontcg.io/jungle/17_hires.png",requiredMaxHp: 80, isTwoStage: true },
+  "Vulpix":    { next: "Vulnona",   cardUrl: "https://images.pokemontcg.io/base1/12_hires.png", requiredMaxHp: 80, isTwoStage: true },
+  "Pummeluff": { next: "Knuddeluff",cardUrl: "https://images.pokemontcg.io/jungle/16_hires.png",requiredMaxHp: 70, isTwoStage: true },
+  "Zubat":     { next: "Golbat",    cardUrl: "https://images.pokemontcg.io/fossil/34_hires.png",requiredMaxHp: 65, isTwoStage: true },
+  "Paras":     { next: "Parasek",   cardUrl: "https://images.pokemontcg.io/jungle/41_hires.png",requiredMaxHp: 65, isTwoStage: true },
+  "Bluzuk":    { next: "Omot",      cardUrl: "https://images.pokemontcg.io/jungle/13_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Digda":     { next: "Digdri",    cardUrl: "https://images.pokemontcg.io/base1/19_hires.png", requiredMaxHp: 65, isTwoStage: true },
+  "Mauzi":     { next: "Snobilikat",cardUrl: "https://images.pokemontcg.io/jungle/42_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Enton":     { next: "Entoron",   cardUrl: "https://images.pokemontcg.io/fossil/20_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Menki":     { next: "Rasaff",    cardUrl: "https://images.pokemontcg.io/jungle/43_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Fukano":    { next: "Arkani",    cardUrl: "https://images.pokemontcg.io/base1/23_hires.png", requiredMaxHp: 80, isTwoStage: true },
+  "Tentacha":  { next: "Tentoxa",   cardUrl: "https://images.pokemontcg.io/fossil/19_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Ponita":    { next: "Gallopa",   cardUrl: "https://images.pokemontcg.io/jungle/44_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Flegmon":   { next: "Lahmus",    cardUrl: "https://images.pokemontcg.io/fossil/43_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Magnetilo": { next: "Magneton",  cardUrl: "https://images.pokemontcg.io/base1/9_hires.png",  requiredMaxHp: 65, isTwoStage: true },
+  "Dodu":      { next: "Dodri",     cardUrl: "https://images.pokemontcg.io/jungle/34_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Jurob":     { next: "Jugong",    cardUrl: "https://images.pokemontcg.io/base1/25_hires.png", requiredMaxHp: 67, isTwoStage: true },
+  "Sleima":    { next: "Sleimok",   cardUrl: "https://images.pokemontcg.io/fossil/13_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Muschas":   { next: "Austos",    cardUrl: "https://images.pokemontcg.io/fossil/15_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Traumato":  { next: "Hypno",     cardUrl: "https://images.pokemontcg.io/fossil/8_hires.png",  requiredMaxHp: 67, isTwoStage: true },
+  "Krabby":    { next: "Kingler",   cardUrl: "https://images.pokemontcg.io/fossil/38_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Voltobal":  { next: "Lektrobal", cardUrl: "https://images.pokemontcg.io/base1/21_hires.png", requiredMaxHp: 65, isTwoStage: true },
+  "Owei":      { next: "Kokowei",   cardUrl: "https://images.pokemontcg.io/jungle/18_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Tragosso":  { next: "Knogga",    cardUrl: "https://images.pokemontcg.io/jungle/39_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Smogon":    { next: "Smogmog",   cardUrl: "https://images.pokemontcg.io/fossil/51_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Rihorn":    { next: "Rizeros",   cardUrl: "https://images.pokemontcg.io/jungle/45_hires.png",requiredMaxHp: 72, isTwoStage: true },
+  "Seeper":    { next: "Seemon",    cardUrl: "https://images.pokemontcg.io/dragon/40_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Goldini":   { next: "Golking",   cardUrl: "https://images.pokemontcg.io/jungle/38_hires.png",requiredMaxHp: 67, isTwoStage: true },
+  "Sterndu":   { next: "Starmie",   cardUrl: "https://images.pokemontcg.io/base1/65_hires.png", requiredMaxHp: 67, isTwoStage: true },
+  "Karpador":  { next: "Garados",   cardUrl: "https://images.pokemontcg.io/base1/6_hires.png",  requiredMaxHp: 60, isTwoStage: true },
+  "Evoli":     { next: "Aquana",    cardUrl: "https://images.pokemontcg.io/jungle/12_hires.png",requiredMaxHp: 80, isTwoStage: true },
+  "Amonitas":  { next: "Amoroso",   cardUrl: "https://images.pokemontcg.io/fossil/40_hires.png",requiredMaxHp: 80, isTwoStage: true },
+  "Kabuto":    { next: "Kabutops",  cardUrl: "https://images.pokemontcg.io/fossil/9_hires.png",  requiredMaxHp: 80, isTwoStage: true }
 };
 
-const COMMON_POKEMON = [
-  { name: "Taubsi", type: "normal", hp: 40, maxHp: 40, cardUrl: "https://images.pokemontcg.io/base1/57_hires.png", weakness: "elektro" },
-  { name: "Rattfratz", type: "normal", hp: 30, maxHp: 30, cardUrl: "https://images.pokemontcg.io/base1/61_hires.png", weakness: "kampf" },
-  { name: "Raupy", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/45_hires.png", weakness: "feuer" },
-  { name: "Hornliu", type: "käfer", hp: 35, maxHp: 35, cardUrl: "https://images.pokemontcg.io/base1/69_hires.png", weakness: "feuer" }
+/* =========================================================
+   VOLLSTÄNDIGE 151 POKÉMON DATENBANK (KANTO REGION)
+   stage: 0 = Basic, 1 = Stage 1, 2 = Stage 2
+   isSingleStage: true -> Ohne Entwicklung (+4 KP pro Lvl)
+   ========================================================= */
+const POKEMON_DATABASE = [
+  { id: 1, name: "Bisasam", type: "pflanze", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/44_hires.png" },
+  { id: 2, name: "Bisaknosp", type: "pflanze", stage: 1, isRare: true, isSingleStage: false, baseHp: 85, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/30_hires.png" },
+  { id: 3, name: "Bisaflor", type: "pflanze", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/15_hires.png" },
+  { id: 4, name: "Glumanda", type: "feuer", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/46_hires.png" },
+  { id: 5, name: "Glutexo", type: "feuer", stage: 1, isRare: true, isSingleStage: false, baseHp: 85, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/24_hires.png" },
+  { id: 6, name: "Glurak", type: "feuer", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/4_hires.png" },
+  { id: 7, name: "Schiggy", type: "wasser", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/base1/63_hires.png" },
+  { id: 8, name: "Schillok", type: "wasser", stage: 1, isRare: true, isSingleStage: false, baseHp: 85, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png" },
+  { id: 9, name: "Turtok", type: "wasser", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/base1/2_hires.png" },
+  { id: 10, name: "Raupy", type: "käfer", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/45_hires.png" },
+  { id: 11, name: "Safcon", type: "käfer", stage: 1, isRare: false, isSingleStage: false, baseHp: 70, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/48_hires.png" },
+  { id: 12, name: "Smettbo", type: "käfer", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/33_hires.png" },
+  { id: 13, name: "Hornliu", type: "käfer", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/69_hires.png" },
+  { id: 14, name: "Kokuna", type: "käfer", stage: 1, isRare: false, isSingleStage: false, baseHp: 70, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/69_hires.png" },
+  { id: 15, name: "Bibor", type: "käfer", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/17_hires.png" },
+  { id: 16, name: "Taubsi", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/57_hires.png" },
+  { id: 17, name: "Tauboga", type: "normal", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/22_hires.png" },
+  { id: 18, name: "Tauboss", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/18_hires.png" },
+  { id: 19, name: "Rattfratz", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/base1/61_hires.png" },
+  { id: 20, name: "Rattikarl", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/base1/39_hires.png" },
+  { id: 21, name: "Habitak", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/62_hires.png" },
+  { id: 22, name: "Ibitak", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/21_hires.png" },
+  { id: 23, name: "Rettan", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/52_hires.png" },
+  { id: 24, name: "Arbok", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/31_hires.png" },
+  { id: 25, name: "Pikachu", type: "elektro", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/58_hires.png" },
+  { id: 26, name: "Raichu", type: "elektro", stage: 2, isRare: true, isSingleStage: false, baseHp: 125, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/14_hires.png" },
+  { id: 27, name: "Sandan", type: "boden", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/62_hires.png" },
+  { id: 28, name: "Sandamer", type: "boden", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/27_hires.png" },
+  { id: 29, name: "Nidoran♀", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/57_hires.png" },
+  { id: 30, name: "Nidorina", type: "gift", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/36_hires.png" },
+  { id: 31, name: "Nidoqueen", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/7_hires.png" },
+  { id: 32, name: "Nidoran♂", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/56_hires.png" },
+  { id: 33, name: "Nidorino", type: "gift", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/37_hires.png" },
+  { id: 34, name: "Nidoking", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/11_hires.png" },
+  { id: 35, name: "Piepi", type: "fee", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "stahl", cardUrl: "https://images.pokemontcg.io/base1/26_hires.png" },
+  { id: 36, name: "Pixi", type: "fee", stage: 2, isRare: true, isSingleStage: false, baseHp: 125, weakness: "stahl", cardUrl: "https://images.pokemontcg.io/jungle/17_hires.png" },
+  { id: 37, name: "Vulpix", type: "feuer", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/68_hires.png" },
+  { id: 38, name: "Vulnona", type: "feuer", stage: 2, isRare: true, isSingleStage: false, baseHp: 130, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/12_hires.png" },
+  { id: 39, name: "Pummeluff", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/54_hires.png" },
+  { id: 40, name: "Knuddeluff", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/16_hires.png" },
+  { id: 41, name: "Zubat", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/57_hires.png" },
+  { id: 42, name: "Golbat", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/34_hires.png" },
+  { id: 43, name: "Myrapla", type: "pflanze", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/49_hires.png" },
+  { id: 44, name: "Duflor", type: "pflanze", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/36_hires.png" },
+  { id: 45, name: "Giflor", type: "pflanze", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/15_hires.png" },
+  { id: 46, name: "Paras", type: "käfer", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/59_hires.png" },
+  { id: 47, name: "Parasek", type: "käfer", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/41_hires.png" },
+  { id: 48, name: "Bluzuk", type: "käfer", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/63_hires.png" },
+  { id: 49, name: "Omot", type: "käfer", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/13_hires.png" },
+  { id: 50, name: "Digda", type: "boden", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/47_hires.png" },
+  { id: 51, name: "Digdri", type: "boden", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/19_hires.png" },
+  { id: 52, name: "Mauzi", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/56_hires.png" },
+  { id: 53, name: "Snobilikat", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/42_hires.png" },
+  { id: 54, name: "Enton", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/53_hires.png" },
+  { id: 55, name: "Entoron", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/20_hires.png" },
+  { id: 56, name: "Menki", type: "kampf", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/55_hires.png" },
+  { id: 57, name: "Rasaff", type: "kampf", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/jungle/43_hires.png" },
+  { id: 58, name: "Fukano", type: "feuer", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/28_hires.png" },
+  { id: 59, name: "Arkani", type: "feuer", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/23_hires.png" },
+  { id: 60, name: "Quapsel", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/59_hires.png" },
+  { id: 61, name: "Quaputzi", type: "wasser", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/38_hires.png" },
+  { id: 62, name: "Quappo", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/13_hires.png" },
+  { id: 63, name: "Abra", type: "psycho", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/43_hires.png" },
+  { id: 64, name: "Kadabra", type: "psycho", stage: 1, isRare: true, isSingleStage: false, baseHp: 85, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/32_hires.png" },
+  { id: 65, name: "Simsala", type: "psycho", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/1_hires.png" },
+  { id: 66, name: "Machollo", type: "kampf", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/52_hires.png" },
+  { id: 67, name: "Maschock", type: "kampf", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/34_hires.png" },
+  { id: 68, name: "Machomei", type: "kampf", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/8_hires.png" },
+  { id: 69, name: "Knofensa", type: "pflanze", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/49_hires.png" },
+  { id: 70, name: "Ultrigaria", type: "pflanze", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/41_hires.png" },
+  { id: 71, name: "Sarzenia", type: "pflanze", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/30_hires.png" },
+  { id: 72, name: "Tentacha", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/56_hires.png" },
+  { id: 73, name: "Tentoxa", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/19_hires.png" },
+  { id: 74, name: "Kleinstein", type: "gestein", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/47_hires.png" },
+  { id: 75, name: "Georok", type: "gestein", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/36_hires.png" },
+  { id: 76, name: "Geowaz", type: "gestein", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/36_hires.png" },
+  { id: 77, name: "Ponita", type: "feuer", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/60_hires.png" },
+  { id: 78, name: "Gallopa", type: "feuer", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/44_hires.png" },
+  { id: 79, name: "Flegmon", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/55_hires.png" },
+  { id: 80, name: "Lahmus", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/43_hires.png" },
+  { id: 81, name: "Magnetilo", type: "elektro", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/53_hires.png" },
+  { id: 82, name: "Magneton", type: "elektro", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/9_hires.png" },
+  { id: 83, name: "Porenta", type: "normal", stage: 0, isRare: false, isSingleStage: true, baseHp: 105, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/27_hires.png" },
+  { id: 84, name: "Dodu", type: "normal", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/52_hires.png" },
+  { id: 85, name: "Dodri", type: "normal", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/34_hires.png" },
+  { id: 86, name: "Jurob", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/41_hires.png" },
+  { id: 87, name: "Jugong", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/25_hires.png" },
+  { id: 88, name: "Sleima", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/48_hires.png" },
+  { id: 89, name: "Sleimok", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/13_hires.png" },
+  { id: 90, name: "Muschas", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/54_hires.png" },
+  { id: 91, name: "Austos", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/15_hires.png" },
+  { id: 92, name: "Nebulak", type: "geist", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/50_hires.png" },
+  { id: 93, name: "Alpollo", type: "geist", stage: 1, isRare: false, isSingleStage: false, baseHp: 75, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/29_hires.png" },
+  { id: 94, name: "Gengar", type: "geist", stage: 2, isRare: false, isSingleStage: false, baseHp: 120, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/fossil/5_hires.png" },
+  { id: 95, name: "Onix", type: "gestein", stage: 0, isRare: false, isSingleStage: true, baseHp: 115, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/base1/56_hires.png" },
+  { id: 96, name: "Traumato", type: "psycho", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/49_hires.png" },
+  { id: 97, name: "Hypno", type: "psycho", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/fossil/8_hires.png" },
+  { id: 98, name: "Krabby", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/51_hires.png" },
+  { id: 99, name: "Kingler", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/38_hires.png" },
+  { id: 100, name: "Voltobal", type: "elektro", stage: 0, isRare: false, isSingleStage: false, baseHp: 35, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/67_hires.png" },
+  { id: 101, name: "Lektrobal", type: "elektro", stage: 2, isRare: false, isSingleStage: false, baseHp: 105, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/21_hires.png" },
+  { id: 102, name: "Owei", type: "pflanze", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/53_hires.png" },
+  { id: 103, name: "Kokowei", type: "pflanze", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/18_hires.png" },
+  { id: 104, name: "Tragosso", type: "boden", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/50_hires.png" },
+  { id: 105, name: "Knogga", type: "boden", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/39_hires.png" },
+  { id: 106, name: "Kicklee", type: "kampf", stage: 0, isRare: false, isSingleStage: true, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/7_hires.png" },
+  { id: 107, name: "Nockchan", type: "kampf", stage: 0, isRare: false, isSingleStage: true, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/7_hires.png" },
+  { id: 108, name: "Schlurp", type: "normal", stage: 0, isRare: false, isSingleStage: true, baseHp: 110, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/38_hires.png" },
+  { id: 109, name: "Smogon", type: "gift", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/base1/51_hires.png" },
+  { id: 110, name: "Smogmog", type: "gift", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "psycho", cardUrl: "https://images.pokemontcg.io/fossil/51_hires.png" },
+  { id: 111, name: "Rihorn", type: "boden", stage: 0, isRare: false, isSingleStage: false, baseHp: 45, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/61_hires.png" },
+  { id: 112, name: "Rizeros", type: "boden", stage: 2, isRare: false, isSingleStage: false, baseHp: 120, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/45_hires.png" },
+  { id: 113, name: "Chaneira", type: "normal", stage: 0, isRare: true, isSingleStage: true, baseHp: 140, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/base1/3_hires.png" },
+  { id: 114, name: "Tangela", type: "pflanze", stage: 0, isRare: false, isSingleStage: true, baseHp: 105, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/66_hires.png" },
+  { id: 115, name: "Kangama", type: "normal", stage: 0, isRare: false, isSingleStage: true, baseHp: 115, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/5_hires.png" },
+  { id: 116, name: "Seeper", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/42_hires.png" },
+  { id: 117, name: "Seemon", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/dragon/40_hires.png" },
+  { id: 118, name: "Goldini", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/53_hires.png" },
+  { id: 119, name: "Golking", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 110, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/38_hires.png" },
+  { id: 120, name: "Sterndu", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 40, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/65_hires.png" },
+  { id: 121, name: "Starmie", type: "wasser", stage: 2, isRare: false, isSingleStage: false, baseHp: 115, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/65_hires.png" },
+  { id: 122, name: "Pantimos", type: "psycho", stage: 0, isRare: true, isSingleStage: true, baseHp: 110, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/jungle/6_hires.png" },
+  { id: 123, name: "Sichlor", type: "käfer", stage: 0, isRare: true, isSingleStage: true, baseHp: 115, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/10_hires.png" },
+  { id: 124, name: "Rossana", type: "eis", stage: 0, isRare: true, isSingleStage: true, baseHp: 110, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/base1/31_hires.png" },
+  { id: 125, name: "Elektek", type: "elektro", stage: 0, isRare: true, isSingleStage: true, baseHp: 115, weakness: "boden", cardUrl: "https://images.pokemontcg.io/base1/20_hires.png" },
+  { id: 126, name: "Magmar", type: "feuer", stage: 0, isRare: true, isSingleStage: true, baseHp: 115, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/39_hires.png" },
+  { id: 127, name: "Pinsir", type: "käfer", stage: 0, isRare: true, isSingleStage: true, baseHp: 115, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/jungle/9_hires.png" },
+  { id: 128, name: "Tauros", type: "normal", stage: 0, isRare: true, isSingleStage: true, baseHp: 115, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/47_hires.png" },
+  { id: 129, name: "Karpador", type: "wasser", stage: 0, isRare: false, isSingleStage: false, baseHp: 30, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/35_hires.png" },
+  { id: 130, name: "Garados", type: "wasser", stage: 2, isRare: true, isSingleStage: false, baseHp: 140, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/base1/6_hires.png" },
+  { id: 131, name: "Lapras", type: "wasser", stage: 0, isRare: true, isSingleStage: true, baseHp: 130, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/fossil/10_hires.png" },
+  { id: 132, name: "Ditto", type: "normal", stage: 0, isRare: true, isSingleStage: true, baseHp: 100, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/fossil/3_hires.png" },
+  { id: 133, name: "Evoli", type: "normal", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/51_hires.png" },
+  { id: 134, name: "Aquana", type: "wasser", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "elektro", cardUrl: "https://images.pokemontcg.io/jungle/12_hires.png" },
+  { id: 135, name: "Blitza", type: "elektro", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "boden", cardUrl: "https://images.pokemontcg.io/jungle/4_hires.png" },
+  { id: 136, name: "Flamara", type: "feuer", stage: 2, isRare: true, isSingleStage: false, baseHp: 135, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/jungle/3_hires.png" },
+  { id: 137, name: "Porygon", type: "normal", stage: 0, isRare: true, isSingleStage: true, baseHp: 105, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/base1/39_hires.png" },
+  { id: 138, name: "Amonitas", type: "gestein", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/fossil/40_hires.png" },
+  { id: 139, name: "Amoroso", type: "gestein", stage: 2, isRare: true, isSingleStage: false, baseHp: 125, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/fossil/26_hires.png" },
+  { id: 140, name: "Kabuto", type: "gestein", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/fossil/50_hires.png" },
+  { id: 141, name: "Kabutops", type: "gestein", stage: 2, isRare: true, isSingleStage: false, baseHp: 125, weakness: "pflanze", cardUrl: "https://images.pokemontcg.io/fossil/9_hires.png" },
+  { id: 142, name: "Aerodactyl", type: "gestein", stage: 0, isRare: true, isSingleStage: true, baseHp: 130, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/1_hires.png" },
+  { id: 143, name: "Relaxo", type: "normal", stage: 0, isRare: true, isSingleStage: true, baseHp: 140, weakness: "kampf", cardUrl: "https://images.pokemontcg.io/jungle/11_hires.png" },
+  { id: 144, name: "Arktos", type: "eis", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 160, weakness: "feuer", cardUrl: "https://images.pokemontcg.io/fossil/2_hires.png" },
+  { id: 145, name: "Zapdos", type: "elektro", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 160, weakness: "gestein", cardUrl: "https://images.pokemontcg.io/base1/16_hires.png" },
+  { id: 146, name: "Lavados", type: "feuer", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 160, weakness: "wasser", cardUrl: "https://images.pokemontcg.io/fossil/12_hires.png" },
+  { id: 147, name: "Dratini", type: "drache", stage: 0, isRare: true, isSingleStage: false, baseHp: 50, weakness: "eis", cardUrl: "https://images.pokemontcg.io/base1/26_hires.png" },
+  { id: 148, name: "Dragonir", type: "drache", stage: 1, isRare: true, isSingleStage: false, baseHp: 85, weakness: "eis", cardUrl: "https://images.pokemontcg.io/base1/18_hires.png" },
+  { id: 149, name: "Dragoran", type: "drache", stage: 2, isRare: true, isSingleStage: false, baseHp: 145, weakness: "eis", cardUrl: "https://images.pokemontcg.io/fossil/4_hires.png" },
+  { id: 150, name: "Mewtu", type: "psycho", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 200, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/base1/10_hires.png" },
+  { id: 151, name: "Mew", type: "psycho", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 200, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/promo/9_hires.png" }
 ];
 
-const RARE_POKEMON = [
-  { name: "Pikachu", type: "elektro", hp: 45, maxHp: 45, cardUrl: "https://images.pokemontcg.io/base1/58_hires.png", weakness: "boden" },
-  { name: "Fukano", type: "feuer", hp: 55, maxHp: 55, cardUrl: "https://images.pokemontcg.io/base1/28_hires.png", weakness: "wasser" },
-  { name: "Kleinstein", type: "gestein", hp: 60, maxHp: 60, cardUrl: "https://images.pokemontcg.io/base1/47_hires.png", weakness: "wasser" },
-  { name: "Pinsir", type: "käfer", hp: 70, maxHp: 70, cardUrl: "https://images.pokemontcg.io/base1/9_hires.png", weakness: "feuer" }
-];
+/* =========================================================
+   POKÉMON REAL-LIFE RPG - APP.JS (TEIL 2 VON 4)
+   2. STATE, GPS, MENÜS & STARTER-INITIALISIERUNG
+   ========================================================= */
 
 // Menü & UI State
 let selectedFlowMode = 'continue';
@@ -117,6 +331,7 @@ let pendingLevelUpData = null;
 let pendingKoInfo = null;
 let dodgeTimer = null;
 let isDodgeWindowActive = false;
+let isEvolutionFinished = false;
 
 // Spieler Daten
 let currentSaveData = {
@@ -138,11 +353,7 @@ let homeMap = null;
 let homeMarker = null;
 let tempHomeCoords = null;
 
-
-/* =========================================================
-   3. GEO-LOGIK & KARTE
-   ========================================================= */
-
+/* GEO & MAP LOGIK */
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -221,7 +432,6 @@ function handleOrientation(event) {
   }
 }
 
-// Leaflet Home Map Logik
 function openHomeMapModal() {
   document.getElementById('modal-home-map').classList.remove('hidden');
   const startLat = (currentSaveData && currentSaveData.homePos) ? currentSaveData.homePos.lat : (currentPosition ? currentPosition.lat : 51.1657);
@@ -254,7 +464,7 @@ function openHomeMapModal() {
 function searchAddressOnMap() {
   const query = document.getElementById('map-search-input').value;
   if (!query) return;
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&contact=deine_app_email@example.com`) // Optional: Contact Header
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
     .then(res => res.json())
     .then(data => {
       if (data && data.length > 0) {
@@ -282,11 +492,7 @@ function closeHomeMapModal() {
   document.getElementById('modal-home-map').classList.add('hidden');
 }
 
-
-/* =========================================================
-   4. CINEMATIC INTRO
-   ========================================================= */
-
+/* CINEMATIC INTRO */
 const IntroManager = {
   active: true,
   canInteractiveFinish: false,
@@ -445,10 +651,7 @@ const IntroManager = {
   }
 };
 
-/* =========================================================
-   5. MENÜS & SPIELSTART
-   ========================================================= */
-
+/* MENÜS & SPIELSTART LOGIK */
 function initApp() {
   updateSlotUI();
   initGPSLiveTracking();
@@ -523,11 +726,12 @@ function chooseStarter(type, element) {
   document.getElementById('confirm-starter-btn').disabled = false;
 }
 
+/* STARTER POKÉMON INITIALISIERUNG (EXAKT 50 KP RARE BASIC) */
 function confirmStarter() {
   const starters = {
-    bisasam: { name: "Bisasam", type: "pflanze", level: 1, hp: 44, maxHp: 44, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", exp: 0, maxExp: 75, attack: 9, specialAttack: 14 },
-    glumanda: { name: "Glumanda", type: "feuer", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
-    schiggy: { name: "Schiggy", type: "wasser", level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 }
+    bisasam:  { name: "Bisasam", type: "pflanze", stage: 0, isRare: true, isSingleStage: false, level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/44_hires.png", weakness: "feuer", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
+    glumanda: { name: "Glumanda", type: "feuer", stage: 0, isRare: true, isSingleStage: false, level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/46_hires.png", weakness: "wasser", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 },
+    schiggy:  { name: "Schiggy", type: "wasser", stage: 0, isRare: true, isSingleStage: false, level: 1, hp: 50, maxHp: 50, cardUrl: "https://images.pokemontcg.io/base1/63_hires.png", weakness: "pflanze", exp: 0, maxExp: 75, attack: 10, specialAttack: 16 }
   };
 
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
@@ -670,11 +874,109 @@ function exitToMainMenu() {
   showScreen('screen-main-menu');
 }
 
-
 /* =========================================================
-   6. RADAR & SCAN
+   POKÉMON REAL-LIFE RPG - APP.JS (TEIL 3 VON 4)
+   3. SPAWN-LOGIK, RADAR, KAMPFSYSTEM & FANG-ENGINE
    ========================================================= */
 
+/* DYNAMISCHE SPAWN-WAHRSCHEINLICHKEIT NACH TEAM-ZUSAMMENSETZUNG
+   - Single-Stage (ohne Evo) zählen als Phase 2
+   - Phase 1: +10% pro Slot
+   - Phase 2: +10% pro Slot
+   - Mindestens 40% Chance auf Basic bleibt erhalten
+*/
+function determineSpawnStage(team) {
+  let phase1Count = 0;
+  let phase2Count = 0;
+
+  team.forEach(mon => {
+    // Falls ein Pokémon keine Entwicklungsstufe hat (Single-Stage), wird es wie Phase 2 gewertet
+    if (mon.isSingleStage) {
+      phase2Count++;
+    } else if (mon.stage === 1) {
+      phase1Count++;
+    } else if (mon.stage === 2) {
+      phase2Count++;
+    }
+  });
+
+  if (phase1Count === 0 && phase2Count === 0) {
+    return 0; // 100% Basic (Phase 0)
+  }
+
+  let chancePhase2 = phase2Count * 10;
+  let chancePhase1 = phase1Count * 10;
+
+  if (phase2Count > 0 && chancePhase1 > 50) {
+    chancePhase1 = 50;
+  }
+
+  // Basic Chance auf mindestens 40% deckeln (Pokédex Komplettierung)
+  if ((chancePhase1 + chancePhase2) > 60) {
+    const totalEvo = chancePhase1 + chancePhase2;
+    chancePhase1 = Math.round((chancePhase1 / totalEvo) * 60);
+    chancePhase2 = 60 - chancePhase1;
+  }
+
+  const roll = Math.random() * 100;
+
+  if (roll < chancePhase2) {
+    return 2; // Phase 2 (Endstufe)
+  } else if (roll < (chancePhase2 + chancePhase1)) {
+    return 1; // Phase 1 (Erste Entwicklung)
+  } else {
+    return 0; // Phase 0 (Basic)
+  }
+}
+
+/* WILDES POKÉMON GENERIEREN (FESTE KP LAUT TABELLE, POWER SCAN +60% RARE) */
+function generateWildPokemon(scanType = 'quick') {
+  const team = currentSaveData.pokemonTeam || [];
+  const targetStage = determineSpawnStage(team);
+
+  // Power Scan erhöht Rare-Wahrscheinlichkeit um +60%
+  let baseRareChance = 15;
+  if (scanType === 'power') {
+    baseRareChance *= 1.6; // 24% Rare Chance
+  }
+  const isRareRoll = (Math.random() * 100) < baseRareChance;
+
+  let candidates = POKEMON_DATABASE.filter(p => {
+    if (p.isLegendary) return false; // Legendäre nur per Spezial-Events
+    
+    if (p.isSingleStage) {
+      return isRareRoll ? p.isRare : !p.isRare;
+    }
+    return p.stage === targetStage && (p.isRare === isRareRoll);
+  });
+
+  // Fallback, falls gefilteter Pool leer sein sollte
+  if (candidates.length === 0) {
+    candidates = POKEMON_DATABASE.filter(p => p.stage === 0 && !p.isLegendary);
+  }
+
+  const template = candidates[Math.floor(Math.random() * candidates.length)];
+
+  // Exakte Basis-KP laut 151er-Tabelle (keine Stauchung/Entstellung)
+  return {
+    name: template.name,
+    type: template.type,
+    stage: template.stage,
+    isRare: template.isRare,
+    isSingleStage: template.isSingleStage || false,
+    level: 1,
+    hp: template.baseHp,
+    maxHp: template.baseHp,
+    cardUrl: template.cardUrl,
+    weakness: template.weakness,
+    exp: 0,
+    maxExp: 75,
+    attack: Math.round(template.baseHp * 0.20),
+    specialAttack: Math.round(template.baseHp * 0.30)
+  };
+}
+
+/* RADAR-STEUERUNG */
 function openScanModal() {
   requestCompassPermission();
   if (isScanning || targetPokemonCoords) {
@@ -891,18 +1193,12 @@ function startTrainingMatch(partnerMon) {
   showScreen('screen-battle');
   updateBattleUI();
 
-    const catchBtn = document.getElementById('battle-ready-ball');
+  const catchBtn = document.getElementById('battle-ready-ball');
   if (catchBtn) catchBtn.classList.add('hidden');
   document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
 }
 
-
-
-/* =========================================================
-   7. KAMPFSYSTEM (BATTLE)
-   ========================================================= */
-
-/* 7.1 Kampf-Setup & UI-Updates */
+/* KAMPFSYSTEM LOGIK */
 function startBattleFromScan() {
   isTrainingMode = false;
   clearTimeout(dodgeTimer);
@@ -922,19 +1218,8 @@ function startBattleFromScan() {
   resetRadarUI();
   showScreen('screen-battle');
 
-  const pool = (currentScanType === 'power') ? RARE_POKEMON : COMMON_POKEMON;
-  const template = pool[Math.floor(Math.random() * pool.length)];
-
-  const minHp = template.maxHp;
-  let calculatedHp = minHp;
-  if (playerBattlePokemon && playerBattlePokemon.maxHp) {
-    const playerHp = playerBattlePokemon.maxHp;
-    const variation = (Math.random() * 0.3) - 0.15; 
-    calculatedHp = Math.round(playerHp * (1 + variation));
-    calculatedHp = Math.max(minHp, calculatedHp);
-  }
-
-  currentEnemy = { ...template, maxHp: calculatedHp, hp: calculatedHp };
+  // Wildes Pokémon mit dynamischer Team-Logik & exakten Tabellen-KP generieren
+  currentEnemy = generateWildPokemon(currentScanType);
   playerBattlePokemon = currentSaveData.pokemonTeam[0];
   playerEnergy = 0;
   isPlayerTurn = true;
@@ -942,7 +1227,7 @@ function startBattleFromScan() {
 
   updateBattleUI();
   const warnBox = document.getElementById('battle-warning-box');
-  if (warnBox) warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${calculatedHp}) greift an!`;
+  if (warnBox) warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) greift an!`;
 }
 
 function updateBattleUI() {
@@ -982,7 +1267,6 @@ function updateBattleUI() {
   }
 }
 
-/* 7.2 Angriffe, Spezial & Ausweichen */
 function playPunchSound() {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -1022,7 +1306,6 @@ function triggerElementalFX(elementType, direction = 'up') {
   const battleScreen = document.getElementById('screen-battle') || document.body;
   const rawType = elementType ? elementType.toLowerCase() : 'normal';
   
-  // Standard-Werte (Fallback für Normal-Attacken)
   let symbol = '⭐';
   let animName = (direction === 'down') ? 'flyToPlayerElektro' : 'flyToEnemyElektro';
   
@@ -1056,7 +1339,6 @@ function triggerElementalFX(elementType, direction = 'up') {
     }, i * 250);
   }
 }
-
 
 function executePlayerAttack() {
   if (!isPlayerTurn || isEnemyAttacking || currentEnemy.hp <= 0) return;
@@ -1138,7 +1420,7 @@ function executePlayerSpecial() {
   triggerElementalFX(playerBattlePokemon.type, 'up');
 
   setTimeout(() => {
-    let dmg = Math.round(playerBattlePokemon.maxHp * 0.50);
+    let dmg = Math.round(playerBattlePokemon.maxHp * 0.50) + (playerBattlePokemon.specialAttack || 0);
     if (currentEnemy.weakness === playerBattlePokemon.type) dmg = Math.round(dmg * 1.5);
 
     currentEnemy.hp = Math.max(0, currentEnemy.hp - dmg);
@@ -1252,7 +1534,6 @@ function executeEnemyDamage() {
   }, 400);
 }
 
-/* 7.3 Teamwechsel im Kampf */
 function openBattleTeamModal() {
   if (isEnemyAttacking || !isPlayerTurn) {
     alert("Du kannst jetzt nicht mitten im Zug wechseln!");
@@ -1334,7 +1615,6 @@ function switchBattlePokemon(newTeamIndex) {
   }, 450);
 }
 
-/* 7.4 K.O. & EXP-Verlust */
 function handlePokemonKnockout() {
   if(typeof CatchEngine !== 'undefined') CatchEngine.stopCatchSession();
   const mon = playerBattlePokemon;
@@ -1376,10 +1656,7 @@ function runFromBattle() {
   showScreen('screen-radar-hud');
 }
 
-/* =========================================================
-   8. FANG-ENGINE (CATCH)
-   ========================================================= */
-
+/* FANG-ENGINE LOGIK */
 const CatchEngine = {
   active: false,
   animId: null,
@@ -1712,10 +1989,20 @@ const CatchEngine = {
               }
 
               const newMon = {
-                name: currentEnemy.name, type: currentEnemy.type, level: 1,
-                hp: currentEnemy.maxHp, maxHp: currentEnemy.maxHp, cardUrl: currentEnemy.cardUrl,
-                exp: 0, maxExp: 75, attack: Math.round(currentEnemy.maxHp * 0.20),
-                specialAttack: Math.round((currentEnemy.maxHp * 0.30) + (1 * 0.5))
+                name: currentEnemy.name,
+                type: currentEnemy.type,
+                stage: currentEnemy.stage,
+                isRare: currentEnemy.isRare,
+                isSingleStage: currentEnemy.isSingleStage,
+                level: 1,
+                hp: currentEnemy.maxHp,
+                maxHp: currentEnemy.maxHp,
+                cardUrl: currentEnemy.cardUrl,
+                weakness: currentEnemy.weakness,
+                exp: 0,
+                maxExp: 75,
+                attack: Math.round(currentEnemy.maxHp * 0.20),
+                specialAttack: Math.round(currentEnemy.maxHp * 0.30)
               };
 
               if (currentSaveData.pokemonTeam.length < 6) {
@@ -1763,9 +2050,9 @@ function attemptCatch() {
   CatchEngine.startCatchSession();
 }
 
-
 /* =========================================================
-   9. BELOHNUNGEN & PROGRESSION (EXP & LEVEL-UP)
+   POKÉMON REAL-LIFE RPG - APP.JS (TEIL 4 VON 4)
+   4. PROGRESSION (EXP/LEVEL-UP), EVOLUTION (+10/+20 BONI) & BACKUP
    ========================================================= */
 
 function winBattle() {
@@ -1803,6 +2090,7 @@ function winBattle() {
       activeMon.hp = activeMon.maxHp;
       saveCurrentData();
 
+      // Evolutionsprüfung über den organischen requiredMaxHp Schwellenwert
       let triggeredEvo = false;
       if (EVOLUTION_CHAINS[activeMon.name]) {
         const evoData = EVOLUTION_CHAINS[activeMon.name];
@@ -1822,6 +2110,10 @@ function winBattle() {
   }, 1000);
 }
 
+/* POKÉMON EXP & LEVEL-UP STAT-ZUWACHS
+   - Single-Stage (ohne Evo): +4 Max-KP pro Level
+   - Normale Pokémon: +3 Max-KP pro Level
+*/
 function addPokemonExp(pokemon, amount) {
   if (!pokemon.exp) pokemon.exp = 0;
   if (!pokemon.maxExp) pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
@@ -1829,7 +2121,7 @@ function addPokemonExp(pokemon, amount) {
   const oldLevel = pokemon.level;
   const oldMaxHp = pokemon.maxHp || pokemon.hp;
   const oldAttack = pokemon.attack || Math.round(oldMaxHp * 0.20);
-  const oldSpecial = pokemon.specialAttack || Math.round((oldMaxHp * 0.30) + (oldLevel * 0.5));
+  const oldSpecial = pokemon.specialAttack || Math.round(oldMaxHp * 0.30);
 
   pokemon.exp += amount;
   let didLevelUp = false;
@@ -1839,11 +2131,14 @@ function addPokemonExp(pokemon, amount) {
     pokemon.level++;
     
     pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
-    pokemon.maxHp += 2;
+
+    // Stat-Zuwachs
+    const hpGain = pokemon.isSingleStage ? 4 : 3;
+    pokemon.maxHp += hpGain;
     pokemon.hp = pokemon.maxHp;
     
     pokemon.attack = Math.round(pokemon.maxHp * 0.20);
-    pokemon.specialAttack = Math.round((pokemon.maxHp * 0.30) + (pokemon.level * 0.5));
+    pokemon.specialAttack = (pokemon.specialAttack || Math.round(pokemon.maxHp * 0.30)) + 1;
     didLevelUp = true;
   }
 
@@ -1903,6 +2198,10 @@ function closeLevelUpOverlay() {
   }
 }
 
+/* EVOLUTION DURCHFÜHREN & BONI VERGEBEN
+   - 3-Stufen-Ketten: +10 Spezialangriff
+   - 2-Stufen-Ketten: +20 Spezialangriff & +10 KP
+*/
 function triggerBackgroundEvolution(pokemon) {
   const evoData = EVOLUTION_CHAINS[pokemon.name];
   if (!evoData) return;
@@ -1930,13 +2229,23 @@ function triggerBackgroundEvolution(pokemon) {
     evoImg.src = evoData.cardUrl;
     pokemon.name = evoData.next;
     pokemon.cardUrl = evoData.cardUrl;
-    pokemon.maxHp += evoData.hpBonus;
-    pokemon.hp = pokemon.maxHp;
+    
+    // Stufen-Upgrade in Datenstruktur hinterlegen
+    if (evoData.isTwoStage) {
+      pokemon.stage = 2;
+      pokemon.specialAttack = (pokemon.specialAttack || 0) + 20;
+      pokemon.maxHp += 10;
+      pokemon.hp = pokemon.maxHp;
+    } else {
+      pokemon.stage = (pokemon.stage || 0) + 1;
+      pokemon.specialAttack = (pokemon.specialAttack || 0) + 10;
+    }
+
     saveCurrentData();
 
     document.getElementById('evo-title').innerText = `✨ GLÜCKWUNSCH! ✨`;
     document.getElementById('evo-subtitle').innerText = `Dein Pokémon wurde zu ${pokemon.name}!`;
-    document.getElementById('evo-chance-info').innerText = `Neue maximale KP: ${pokemon.maxHp}`;
+    document.getElementById('evo-chance-info').innerText = `Neue KP: ${pokemon.maxHp} | Spezial-Angriff: +${evoData.isTwoStage ? 20 : 10}`;
 
     if (modalCard && !document.getElementById('active-evo-stars')) {
       const starsContainer = document.createElement('div');
@@ -1978,11 +2287,7 @@ function addTrainerExp(amount) {
   }
 }
 
-
-/* =========================================================
-   10. BACKUP-SYSTEM & INIT
-   ========================================================= */
-
+/* BACKUP-SYSTEM & INITIALISIERUNG */
 function exportSaveGame() {
   const backup = {
     slot1: localStorage.getItem('pokemon_rl_slot_1'),
@@ -2017,7 +2322,7 @@ function importSaveGame(e) {
   reader.readAsText(file);
 }
 
-// App-Start (Wartet bis DOM geladen ist)
+// App-Start nach Laden des DOM
 const safeStartIntro = () => {
   requestAnimationFrame(() => {
     IntroManager.init();
@@ -2029,3 +2334,4 @@ if (document.readyState === 'loading') {
 } else {
   safeStartIntro();
 }
+
