@@ -361,7 +361,6 @@ button:active { transform: scale(0.97); }
   color: var(--accent-yellow);
 }
 
-/* BÜHNE */
 .arena-stage {
   position: relative !important;
   z-index: 5;
@@ -369,10 +368,13 @@ button:active { transform: scale(0.97); }
   width: 100%;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
+  justify-content: space-evenly !important; /* Verteilt Gegner oben, Box in der Mitte und Spieler unten gleichmäßig */
   align-items: center !important;
   perspective: 700px;
   padding: 10px 0 !important;
+  box-sizing: border-box !important;
+}
+;
   box-sizing: border-box !important;
 }
 
