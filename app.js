@@ -1672,9 +1672,19 @@ function runFromBattle() {
 }
 
 /* FANG-ENGINE LOGIK */
+/* IN TEIL 3 VON APP.JS ERSETZEN */
+
 const CatchEngine = {
   active: false,
   animId: null,
+  eventsBound: false,
+
+  // Referenzen für Event-Cleanup
+  handlers: {
+    onStart: null,
+    onMove: null,
+    onEnd: null
+  },
 
   ball: {
     x: 0, y: 0, z: 1.0,
@@ -1689,7 +1699,6 @@ const CatchEngine = {
   touchHistory: [],
   ringScale: 1.0,
   ringShrinking: true,
-  eventsBound: false,
 
   startCatchSession() {
     this.active = true;
@@ -1715,6 +1724,10 @@ const CatchEngine = {
   stopCatchSession() {
     this.active = false;
     cancelAnimationFrame(this.animId);
+    
+    // Cleanup der Listener beim Beenden der Fang-Session
+    this.unbindEvents();
+
     const ring = document.getElementById('target-ring-outer');
     if (ring) ring.classList.add('hidden');
     
@@ -1725,35 +1738,11 @@ const CatchEngine = {
     }
   },
 
-  resetBall() {
-    const b = this.ball;
-    b.x = window.innerWidth / 2;
-    b.y = window.innerHeight - 140;
-    b.z = 1.0;
-    b.vx = 0; b.vy = 0; b.vz = 0;
-    b.isDragging = false;
-    b.isThrown = false;
-    b.isSpinning = false;
-    b.spinSpeed = 0;
-    b.spinAngle = 0;
-
-    const ballEl = document.getElementById('catch-throw-ball');
-    if (ballEl) {
-      ballEl.classList.remove('wobble');
-      ballEl.style.opacity = '1';
-      ballEl.style.display = 'block';
-      ballEl.style.visibility = 'visible';
-    }
-
-    this.touchHistory = [];
-    this.updateBallElement();
-  },
-
   bindEvents(el) {
     if (this.eventsBound) return;
     this.eventsBound = true;
 
-    const onStart = (e) => {
+    this.handlers.onStart = (e) => {
       if (!this.active || this.ball.isThrown) return;
       if (e.cancelable) e.preventDefault();
 
@@ -1765,7 +1754,7 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-    const onMove = (e) => {
+    this.handlers.onMove = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       if (e.cancelable) e.preventDefault();
 
@@ -1795,7 +1784,7 @@ const CatchEngine = {
       this.updateBallElement();
     };
 
-    const onEnd = (e) => {
+    this.handlers.onEnd = (e) => {
       if (!this.active || !this.ball.isDragging) return;
       this.ball.isDragging = false;
 
@@ -1823,12 +1812,58 @@ const CatchEngine = {
       }
     };
 
-    el.addEventListener('touchstart', onStart, { passive: false });
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('touchend', onEnd, { passive: false });
-    el.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
+    el.addEventListener('touchstart', this.handlers.onStart, { passive: false });
+    window.addEventListener('touchmove', this.handlers.onMove, { passive: false });
+    window.addEventListener('touchend', this.handlers.onEnd, { passive: false });
+    el.addEventListener('mousedown', this.handlers.onStart);
+    window.addEventListener('mousemove', this.handlers.onMove);
+    window.addEventListener('mouseup', this.handlers.onEnd);
+  },
+
+  unbindEvents() {
+    if (!this.eventsBound) return;
+
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl && this.handlers.onStart) {
+      ballEl.removeEventListener('touchstart', this.handlers.onStart);
+      ballEl.removeEventListener('mousedown', this.handlers.onStart);
+    }
+
+    if (this.handlers.onMove) {
+      window.removeEventListener('touchmove', this.handlers.onMove);
+      window.removeEventListener('mousemove', this.handlers.onMove);
+    }
+
+    if (this.handlers.onEnd) {
+      window.removeEventListener('touchend', this.handlers.onEnd);
+      window.removeEventListener('mouseup', this.handlers.onEnd);
+    }
+
+    this.eventsBound = false;
+  },
+
+  resetBall() {
+    const b = this.ball;
+    b.x = window.innerWidth / 2;
+    b.y = window.innerHeight - 140;
+    b.z = 1.0;
+    b.vx = 0; b.vy = 0; b.vz = 0;
+    b.isDragging = false;
+    b.isThrown = false;
+    b.isSpinning = false;
+    b.spinSpeed = 0;
+    b.spinAngle = 0;
+
+    const ballEl = document.getElementById('catch-throw-ball');
+    if (ballEl) {
+      ballEl.classList.remove('wobble');
+      ballEl.style.opacity = '1';
+      ballEl.style.display = 'block';
+      ballEl.style.visibility = 'visible';
+    }
+
+    this.touchHistory = [];
+    this.updateBallElement();
   },
 
   startLoop() {
@@ -2056,6 +2091,7 @@ const CatchEngine = {
     }, 450);
   }
 };
+
 
 function attemptCatch() {
   if (isTrainingMode) return;
