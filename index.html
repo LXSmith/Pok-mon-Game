@@ -73,26 +73,49 @@
     </section>
 
 
-    <!-- SCREEN 2: SPEICHERSLOTS -->
-    <section id="screen-slots" class="card-ui screen-panel hidden">
-      <h2 id="slot-screen-title" style="color:#fff; margin-top:0; font-size: 18px;">Wähle Speicherplatz</h2>
-      <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)"><h3>Slot 1</h3><div id="slot-1-info" class="slot-info">Leer</div></div>
-      <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)"><h3>Slot 2</h3><div id="slot-2-info" class="slot-info">Leer</div></div>
-      <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)"><h3>Slot 3</h3><div id="slot-3-info" class="slot-info">Leer</div></div>
-      <button type="button" onclick="showScreen('screen-main-menu')" class="btn-secondary">Zurück</button>
+        <!-- SCREEN 2: SPEICHERSLOTS (FULLSCREEN) -->
+    <section id="screen-slots" class="fullscreen-menu hidden">
+      <div class="menu-center-content">
+        <!-- Kleines Logo über den Slots -->
+        <div class="hud-logo-wrapper" style="margin-bottom: 30px; transform: scale(0.85);">
+          <div class="brand-logo-container">
+            <img class="brand-pokemon-svg" src="https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg" alt="Pokémon">
+            <div class="brand-move-badge">MOVE</div>
+          </div>
+        </div>
+        
+        <h2 id="slot-screen-title" style="color:#fff; margin-top:0; font-size: 22px;">Wähle Speicherplatz</h2>
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+          <div id="slot-1" class="slot-card" onclick="onSlotSelected(1)"><h3>Slot 1</h3><div id="slot-1-info" class="slot-info">Leer</div></div>
+          <div id="slot-2" class="slot-card" onclick="onSlotSelected(2)"><h3>Slot 2</h3><div id="slot-2-info" class="slot-info">Leer</div></div>
+          <div id="slot-3" class="slot-card" onclick="onSlotSelected(3)"><h3>Slot 3</h3><div id="slot-3-info" class="slot-info">Leer</div></div>
+        </div>
+      </div>
+      
+      <div class="menu-actions" style="max-width: 350px;">
+        <button type="button" onclick="showScreen('screen-main-menu')" class="btn-secondary btn-lg">Zurück</button>
+      </div>
     </section>
 
-    <!-- SCREEN 3: STARTER -->
-    <section id="screen-starter" class="card-ui screen-panel hidden">
-      <h2 style="color:#fff; margin-top:0; font-size: 18px;">Dein Erstes Pokémon</h2>
-      <p class="subtitle" style="color:#f0f9ff; font-size:12px;">Wähle deinen Partner!</p>
-      <div class="starter-container">
-        <div class="starter-card" onclick="chooseStarter('bisasam', this)"><img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam"><div class="starter-name">Bisasam</div></div>
-        <div class="starter-card" onclick="chooseStarter('glumanda', this)"><img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda"><div class="starter-name">Glumanda</div></div>
-        <div class="starter-card" onclick="chooseStarter('schiggy', this)"><img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy"><div class="starter-name">Schiggy</div></div>
+
+        <!-- SCREEN 3: STARTER (FULLSCREEN) -->
+    <section id="screen-starter" class="fullscreen-menu hidden">
+      <div class="menu-center-content" style="max-width: 380px;">
+        <h2 style="color:#fff; margin-top:0; font-size: 24px;">Dein Erstes Pokémon</h2>
+        <p class="subtitle" style="color:var(--text-sub); font-size:15px; margin-bottom: 35px;">Wähle deinen Partner!</p>
+        
+        <div class="starter-container" style="gap: 12px; margin-bottom: 20px;">
+          <div class="starter-card" onclick="chooseStarter('bisasam', this)"><img src="https://images.pokemontcg.io/base1/44_hires.png" alt="Bisasam"><div class="starter-name">Bisasam</div></div>
+          <div class="starter-card" onclick="chooseStarter('glumanda', this)"><img src="https://images.pokemontcg.io/base1/46_hires.png" alt="Glumanda"><div class="starter-name">Glumanda</div></div>
+          <div class="starter-card" onclick="chooseStarter('schiggy', this)"><img src="https://images.pokemontcg.io/base1/63_hires.png" alt="Schiggy"><div class="starter-name">Schiggy</div></div>
+        </div>
       </div>
-      <button type="button" id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary" style="margin-top:10px;">Pokémon Wählen</button>
+      
+      <div class="menu-actions" style="max-width: 350px;">
+        <button type="button" id="confirm-starter-btn" onclick="confirmStarter()" disabled class="btn-primary btn-xl">Wählen & Starten</button>
+      </div>
     </section>
+
 
     <!-- SCREEN 4: HAUPTSPIEL RADAR-HUD -->
     <section id="screen-radar-hud" class="hud-layout hidden">
@@ -250,39 +273,43 @@
       </div>
     </div>
 
-    <!-- MODAL 2: HAUPTMENÜ OVERLAY -->
+        <!-- MODAL 2: HAUPTMENÜ OVERLAY (Schwebendes Fenster für In-Game) -->
     <div id="modal-menu" class="modal-overlay hidden">
       <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column;">
-        <h3>Hauptmenü</h3>
-        <div class="menu-tab-buttons">
-          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon">🐾 Team & Box</button>
-          <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items">🎒 Beutel</button>
-          <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp">🧢 Trainer</button>
+        <h3 style="margin-top:0; color:var(--accent-yellow); font-size: 22px; text-transform: uppercase;">Trainer Menü</h3>
+        
+        <div class="menu-tab-buttons" style="background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; margin-bottom: 15px;">
+          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon" style="padding: 10px;">🐾 Team</button>
+          <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items" style="padding: 10px;">🎒 Beutel</button>
+          <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp" style="padding: 10px;">🧢 Trainer</button>
         </div>
         
-        <div id="mtab-content-pokemon" class="mtab-content" style="overflow-y: auto; max-height: 45vh; padding-right: 4px; margin-top: 5px;">
+        <div id="mtab-content-pokemon" class="mtab-content" style="overflow-y: auto; flex: 1; padding-right: 4px; margin-top: 5px;">
           <div id="pokemon-team-list"></div>
         </div>
 
-        <div id="mtab-content-items" class="mtab-content hidden">
-          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:10px; border-radius:12px;">
-            <span>🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:16px; color:var(--accent-yellow);">10</strong>
+        <div id="mtab-content-items" class="mtab-content hidden" style="flex: 1;">
+          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:15px; border-radius:12px;">
+            <span style="font-size: 16px;">🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:20px; color:var(--accent-yellow);">10</strong>
           </div>
         </div>
 
-        <div id="mtab-content-exp" class="mtab-content hidden">
-          <div class="trainer-card-inner" style="text-align:left;">
-            <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 5px 0;">Level 1</h4>
-            <div class="bar-bg" style="width:100%;"><div id="menu-trainer-exp-bar" class="bar-fill exp-fill"></div></div>
-            <div id="menu-trainer-exp-text" class="bar-text" style="text-align:right;">0 / 100 EXP</div>
-            <div class="stat-line" style="margin-top:10px; font-size:12px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
+        <div id="mtab-content-exp" class="mtab-content hidden" style="flex: 1;">
+          <div class="trainer-card-inner" style="background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; text-align:left;">
+            <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 10px 0; font-size: 20px;">Level 1</h4>
+            <div class="bar-bg" style="width:100%; height: 10px;"><div id="menu-trainer-exp-bar" class="bar-fill exp-fill"></div></div>
+            <div id="menu-trainer-exp-text" class="bar-text" style="text-align:right; margin-top:6px; font-size:12px;">0 / 100 EXP</div>
+            <div class="stat-line" style="margin-top:20px; font-size:13px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
 
-        <button type="button" onclick="exitToMainMenu()" class="btn-primary" style="margin-top:15px; background:#e74c3c;">💾 Speichern & Menü</button>
-        <button type="button" onclick="closeMenuModal()" class="btn-secondary" style="margin-top:8px;">Schließen</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+          <button type="button" onclick="exitToMainMenu()" class="btn-primary" style="background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); color: white; padding: 12px;">💾 Speichern & Beenden</button>
+          <button type="button" onclick="closeMenuModal()" class="btn-secondary" style="padding: 12px;">Zurück zum Spiel</button>
+        </div>
       </div>
     </div>
+
 
     <!-- EVOLUTION & VICTORY MODALS -->
     <div id="evo-screen" class="modal-overlay hidden">
