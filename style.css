@@ -376,10 +376,10 @@ button:active { transform: scale(0.97); }
   box-sizing: border-box !important;
 }
 
-/* GEGNER POSITION (OBEN) */
+/* GEGNER POSITION (MITTE) */
 .enemy-target-wrapper {
   position: relative !important;
-  top: 10px !important;
+  top: 60px !important;
   transform: scale(1.1) !important;
   filter: drop-shadow(0 15px 12px rgba(0,0,0,0.6));
   display: flex !important;
@@ -395,6 +395,7 @@ button:active { transform: scale(0.97); }
   height: 190px;
   object-fit: contain;
 }
+
 
 /* ZIELRING */
 .target-ring-outer {
@@ -535,7 +536,7 @@ button:active { transform: scale(0.97); }
 
 .battle-box-hud {
   position: absolute;
-  top: 90px;
+  top: 140px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(15, 23, 42, 0.9);
@@ -549,6 +550,7 @@ button:active { transform: scale(0.97); }
   text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
+
 
 .throw-feedback {
   position: absolute;
