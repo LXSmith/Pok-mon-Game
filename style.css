@@ -396,10 +396,10 @@ button:active { transform: scale(0.97); }
   object-fit: contain;
 }
 
-/* HINWEISBOX IM KAMPF ANPASSEN */
+/* HINWEISBOX IM KAMPF UNTER DIE GEGNER-KARTE SETZEN */
 .battle-box-hud {
   position: absolute;
-  top: 175px;
+  top: 310px; /* Platziert die Box direkt unter die Taubsi-Karte */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(15, 23, 42, 0.9);
@@ -413,6 +413,7 @@ button:active { transform: scale(0.97); }
   text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
+
 
 
 
