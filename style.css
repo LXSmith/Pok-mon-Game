@@ -978,3 +978,73 @@ button:active { transform: scale(0.97); }
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
+/* =========================================================
+   FULLSCREEN HAUPTMENÜ
+   ========================================================= */
+
+.fullscreen-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0f172a; /* Der dunkle App-Hintergrund */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Drückt Inhalt in die Mitte und Footer nach unten */
+  align-items: center;
+  padding: 12vh 20px 30px 20px;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+.menu-center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 350px;
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-xl {
+  padding: 18px 20px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.btn-lg {
+  padding: 14px 20px;
+  font-size: 14px;
+}
+
+/* Dezenter Footer ganz unten */
+.menu-footer-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5; /* Macht den Text unauffällig */
+  font-size: 11px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.footer-link {
+  cursor: pointer;
+  padding: 10px;
+}
+
+.footer-divider {
+  color: #475569;
+}
+
