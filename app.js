@@ -889,21 +889,28 @@ function exitToMainMenu() {
   showScreen('screen-main-menu');
 }
 
-// --- TAGES-POOL FÜR TRAINER LEVEL 1 BIS 5 ---
+// --- TAGES-POOL FÜR TRAINER LEVEL 1 BIS 5 (CASE-INSENSITIVE) ---
 function getDailyLevel1To5Pool() {
-  // 1. Die 4 festen Basis-Pokémon
-  const fixedIds = ['rattfratz', 'taubsi', 'hornliu', 'raupi'];
+  // 1. Die 4 festen Basis-Pokémon (in Kleinschreibung für den Abgleich)
+  const fixedTargetIds = ['rattfratz', 'taubsi', 'hornliu', 'raupi'];
   
-  // 2. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 1, ohne Rares/SingleStage)
+  // Hilfsfunktion: Wandelt ID oder Name sicher in Kleinschreibung um
+  const getCleanId = (p) => (p.id || p.name || '').toLowerCase();
+
+  // 2. Die 4 festen Pokémon aus deiner Datenbank herausfiltern
+  const fixedPokemon = POKEMON_DATABASE.filter(p => 
+    fixedTargetIds.includes(getCleanId(p))
+  );
+
+  // 3. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 1, ohne Rares/SingleStage)
   const commonStage1Pool = POKEMON_DATABASE.filter(p => 
     (p.stage || 1) === 1 && 
     !p.isRare && 
     !p.isSingleStage && 
-    !fixedIds.includes(p.id)
+    !fixedTargetIds.includes(getCleanId(p))
   );
 
-  // 3. Kalenderdatum als mathematischen Seed nutzen (z. B. "2026-11-9")
-  // Wechselt jeden Tag automatisch um 00:00 Uhr!
+  // 4. Kalenderdatum als Seed nutzen (wechselt automatisch um 00:00 Uhr)
   const d = new Date();
   const dateSeed = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   
@@ -913,23 +920,20 @@ function getDailyLevel1To5Pool() {
     hash |= 0;
   }
 
-  // 4. Exakt 6 zufällige, aber für diesen Tag feste Pokémon auswählen
+  // 5. Exakt 6 zufällige, aber für diesen Tag feste Pokémon auswählen
   const dailyChosen = [];
   const tempPool = [...commonStage1Pool];
   
   for (let i = 0; i < 6 && tempPool.length > 0; i++) {
-    // Fester Index basierend auf dem Tages-Hash
     const index = Math.abs(hash + (i * 37)) % tempPool.length;
     dailyChosen.push(tempPool[index]);
-    tempPool.splice(index, 1); // Verhindert Dopplungen am selben Tag
+    tempPool.splice(index, 1);
   }
-
-  // 5. Die 4 festen Pokémon aus deiner Datenbank holen
-  const fixedPokemon = POKEMON_DATABASE.filter(p => fixedIds.includes(p.id));
 
   // Gesamter Tagespool (4 feste + 6 wechselnde = 10 Pokémon)
   return [...fixedPokemon, ...dailyChosen];
 }
+
 
 
 /* =========================================================
