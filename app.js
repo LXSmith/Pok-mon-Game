@@ -889,6 +889,49 @@ function exitToMainMenu() {
   showScreen('screen-main-menu');
 }
 
+// --- TAGES-POOL FÜR TRAINER LEVEL 1 BIS 5 ---
+function getDailyLevel1To5Pool() {
+  // 1. Die 4 festen Basis-Pokémon
+  const fixedIds = ['rattfratz', 'taubsi', 'hornliu', 'raupi'];
+  
+  // 2. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 1, ohne Rares/SingleStage)
+  const commonStage1Pool = POKEMON_DATABASE.filter(p => 
+    (p.stage || 1) === 1 && 
+    !p.isRare && 
+    !p.isSingleStage && 
+    !fixedIds.includes(p.id)
+  );
+
+  // 3. Kalenderdatum als mathematischen Seed nutzen (z. B. "2026-11-9")
+  // Wechselt jeden Tag automatisch um 00:00 Uhr!
+  const d = new Date();
+  const dateSeed = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  
+  let hash = 0;
+  for (let i = 0; i < dateSeed.length; i++) {
+    hash = (hash << 5) - hash + dateSeed.charCodeAt(i);
+    hash |= 0;
+  }
+
+  // 4. Exakt 6 zufällige, aber für diesen Tag feste Pokémon auswählen
+  const dailyChosen = [];
+  const tempPool = [...commonStage1Pool];
+  
+  for (let i = 0; i < 6 && tempPool.length > 0; i++) {
+    // Fester Index basierend auf dem Tages-Hash
+    const index = Math.abs(hash + (i * 37)) % tempPool.length;
+    dailyChosen.push(tempPool[index]);
+    tempPool.splice(index, 1); // Verhindert Dopplungen am selben Tag
+  }
+
+  // 5. Die 4 festen Pokémon aus deiner Datenbank holen
+  const fixedPokemon = POKEMON_DATABASE.filter(p => fixedIds.includes(p.id));
+
+  // Gesamter Tagespool (4 feste + 6 wechselnde = 10 Pokémon)
+  return [...fixedPokemon, ...dailyChosen];
+}
+
+
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 3 VON 4)
    3. SPAWN-LOGIK, RADAR, KAMPFSYSTEM & FANG-ENGINE
@@ -944,35 +987,44 @@ function determineSpawnStage(team) {
   }
 }
 
-/* WILDES POKÉMON GENERIEREN (FESTE KP LAUT TABELLE, POWER SCAN +60% RARE) */
+/* WILDES POKÉMON GENERIEREN (MIT TAGES-POOL BIS LEVEL 5) */
 function generateWildPokemon(scanType = 'quick') {
-  const team = currentSaveData.pokemonTeam || [];
-  const targetStage = determineSpawnStage(team);
+  const trainerLevel = currentSaveData.trainerLevel || 1;
+  let candidates = [];
 
-  // Power Scan erhöht Rare-Wahrscheinlichkeit um +60%
-  let baseRareChance = 15;
-  if (scanType === 'power') {
-    baseRareChance *= 1.6; // 24% Rare Chance
-  }
-  const isRareRoll = (Math.random() * 100) < baseRareChance;
+  if (trainerLevel <= 5) {
+    // 🔒 BIS LEVEL 5: Ausschließlich die 10 Tages-Pokémon (4 feste + 6 tägliche)
+    candidates = getDailyLevel1To5Pool();
+  } else {
+    // 🔓 AB LEVEL 6: Normales Spawnsystem nach Team-Entwicklungsstufe & Rare-Chance
+    const team = currentSaveData.pokemonTeam || [];
+    const targetStage = determineSpawnStage(team);
 
-  let candidates = POKEMON_DATABASE.filter(p => {
-    if (p.isLegendary) return false; // Legendäre nur per Spezial-Events
-    
-    if (p.isSingleStage) {
-      return isRareRoll ? p.isRare : !p.isRare;
+    let baseRareChance = 15;
+    if (scanType === 'power') {
+      baseRareChance *= 1.6; // 24% Rare Chance beim Power Scan
     }
-    return p.stage === targetStage && (p.isRare === isRareRoll);
-  });
+    const isRareRoll = (Math.random() * 100) < baseRareChance;
 
-  // Fallback, falls gefilteter Pool leer sein sollte
-  if (candidates.length === 0) {
-    candidates = POKEMON_DATABASE.filter(p => p.stage === 0 && !p.isLegendary);
+    candidates = POKEMON_DATABASE.filter(p => {
+      if (p.isLegendary) return false;
+      
+      if (p.isSingleStage) {
+        return isRareRoll ? p.isRare : !p.isRare;
+      }
+      return p.stage === targetStage && (p.isRare === isRareRoll);
+    });
   }
 
+  // Fallback, falls der Pool leer sein sollte
+  if (!candidates || candidates.length === 0) {
+    candidates = POKEMON_DATABASE.filter(p => (p.stage || 0) === 0 && !p.isLegendary);
+  }
+
+  // Zufälliges Pokémon aus dem ermittelten Pool auswählen
   const template = candidates[Math.floor(Math.random() * candidates.length)];
 
-  // Exakte Basis-KP laut 151er-Tabelle (keine Stauchung/Entstellung)
+  // Objekt für den Kampf vorbereiten
   return {
     name: template.name,
     type: template.type,
@@ -990,6 +1042,7 @@ function generateWildPokemon(scanType = 'quick') {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
+
 
 /* RADAR-STEUERUNG */
 function openScanModal() {
