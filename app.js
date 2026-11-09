@@ -39,6 +39,25 @@ function unlockAudio() {
   }
 }
 
+function playBeep(frequency, duration) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine'; // Klarer, klassischer Gameboy-Beep-Sound
+    osc.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  } catch(e){}
+}
+
+
 function triggerVibration(pattern = 50) {
   if ("vibrate" in navigator) {
     try {
