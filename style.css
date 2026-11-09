@@ -149,7 +149,7 @@ html, body {
 
 @keyframes performSlash { 0% { transform: rotate(-22deg) scaleX(0); opacity: 1; } 50% { transform: rotate(-22deg) scaleX(1); opacity: 1; } 100% { transform: rotate(-22deg) scaleX(1) translateY(60px); opacity: 0; } }
 @keyframes screenFlash { 0% { opacity: 0; } 40% { opacity: 0.95; } 100% { opacity: 0; } }
-@keyframes revealMoveTitle { 0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); opacity: 1; } 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; } }
+@keyframes revealMoveTitle { 0% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 100%); opacity: 1; } 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; } }
 @keyframes revealTextUpper { to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInGlow { to { opacity: 1; } }
 
@@ -193,11 +193,57 @@ button:active { transform: scale(0.97); }
 .slot-card h3 { margin: 0; font-size: 15px; color: #fff; }
 .slot-info { font-size: 12px; color: var(--text-sub); }
 
-.starter-container { display: flex; gap: 8px; margin-bottom: 10px; }
-.starter-card { flex: 1; background: #1e293b; padding: 8px; border-radius: 10px; border: 2px solid transparent; }
-.starter-card.selected { border-color: var(--accent-yellow); background: rgba(255, 203, 5, 0.2); }
-.starter-card img { width: 100%; border-radius: 6px; }
-.starter-name { font-size: 11px; margin-top: 4px; font-weight: 700; color: #fff; }
+/* =========================================================
+   STARTER KARTEN - NEUES SCROLL-LAYOUT (GROSSE KARTEN)
+   ========================================================= */
+.starter-container { 
+  display: flex; 
+  gap: 12px; /* Etwas mehr Platz zwischen den Karten */
+  margin-bottom: 15px; 
+  overflow-x: auto; /* Erlaubt horizontales Wischen */
+  padding: 5px 0 15px 0; /* Platz unten für den Hover-Effekt */
+  justify-content: flex-start; /* Karten starten links */
+  scrollbar-width: none; /* Versteckt Scrollbar in Firefox */
+  -ms-overflow-style: none; /* Versteckt Scrollbar in IE/Edge */
+}
+
+/* Versteckt Scrollbar in Chrome/Safari/iOS */
+.starter-container::-webkit-scrollbar { 
+  display: none; 
+}
+
+.starter-card { 
+  flex: 0 0 140px; /* Zwingt die Karte auf 140px Breite (verhindert quetschen) */
+  background: #1e293b; 
+  padding: 6px; /* Weniger Rahmen = Größeres Bild */
+  border-radius: 12px; 
+  border: 2px solid transparent; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s ease; /* Weiche Animation beim Auswählen */
+}
+
+.starter-card.selected { 
+  border-color: var(--accent-yellow); 
+  background: rgba(255, 203, 5, 0.25); 
+  transform: translateY(-4px); /* Karte springt leicht nach oben */
+  box-shadow: 0 6px 15px rgba(255, 203, 5, 0.3); /* Leuchteffekt */
+}
+
+.starter-card img { 
+  width: 100%; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5); /* Leichter Schatten fürs Bild */
+}
+
+.starter-name { 
+  font-size: 13px; /* Größere, besser lesbare Schrift */
+  margin-top: 6px; 
+  font-weight: 800; 
+  color: #fff; 
+}
+/* ========================================================= */
 
 .backup-bar { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); }
 
