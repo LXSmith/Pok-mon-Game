@@ -1016,32 +1016,62 @@ function determineSpawnStage(team) {
 }
 
 /* =========================================================
-   VEREINFACHTE SPAWN-LOGIK MIT LEVEL-SKALIERUNG
-   - Quick Scan: Level in % = Chance auf Rare Pokémon (z.B. Lv. 10 = 10%)
-   - Power Scan: Level in % = Chance auf Legendäre (ohne Mew & Mewtu)
+   VOLLSTÄNDIGE SPAWN-LOGIK (INKL. EINZIGARTIGER LEGENDÄRER)
    ========================================================= */
 
 function generateWildPokemon(scanType = 'quick') {
-  // Aktuelles Trainer-Level des Spielers (Standard: 1)
   const playerLevel = currentSaveData.level || 1;
-  
-  // Die Prozentchance entspricht exakt dem Spielerlevel (Level 1 = 1%, Level 10 = 10%, etc., max. 100%)
   const levelPercentage = Math.min(100, playerLevel);
+
+  // 1. Sammle alle Pokémon, die der Spieler bereits besitzt (Team + Box)
+  const ownedNames = new Set([
+    ...(currentSaveData.pokemonTeam || []).map(p => p.name),
+    ...(currentSaveData.pokemonBox || []).map(p => p.name)
+  ]);
+
+  // Stelle sicher, dass das Array für gefangene Legenden existiert
+  if (!currentSaveData.caughtLegendaries) {
+    currentSaveData.caughtLegendaries = [];
+  }
+
+  // --- ENDGAME-PRÜFUNG: MEW & MEWTU ---
+  // Alle fangbaren Standard-Pokémon (ID 1 bis 143)
+  const catchableBaseList = POKEMON_DATABASE.filter(p => p.id < 150); 
+  const hasCaughtThemAll = catchableBaseList.every(p => ownedNames.has(p.name));
+
+  if (hasCaughtThemAll) {
+    // Wenn alle da sind und Mew noch nicht gefangen wurde -> ERZWINGE MEW
+    if (!currentSaveData.caughtLegendaries.includes("Mew")) {
+      const mewTemplate = POKEMON_DATABASE.find(p => p.id === 151);
+      if (mewTemplate) return createPokemonInstance(mewTemplate);
+    } 
+    // Wenn Mew gefangen ist, aber Mewtu noch nicht -> ERZWINGE MEWTU
+    else if (!currentSaveData.caughtLegendaries.includes("Mewtu")) {
+      const mewtwoTemplate = POKEMON_DATABASE.find(p => p.id === 150);
+      if (mewtwoTemplate) return createPokemonInstance(mewtwoTemplate);
+    }
+  }
+  // ------------------------------------
 
   let candidates = [];
 
   if (scanType === 'power') {
-    // 1. Im Power Scan wird gewürfelt, ob ein Legendäres Pokémon erscheint (Chance = Spielerlevel in %)
+    // Power Scan: Chance auf ein Legendäres Pokémon (Level in %)
     const rollLegendary = (Math.random() * 100) < levelPercentage;
 
     if (rollLegendary) {
-      // Filtert alle Legendären, schließt aber Mewtu (id: 150) und Mew (id: 151) strikt aus
-      candidates = POKEMON_DATABASE.filter(p => p.isLegendary && p.id !== 150 && p.id !== 151);
+      // Hole alle legendären Pokémon, die der Spieler NOCH NICHT gefangen hat (schließt Mew/Mewtu im Endgame aus)
+      candidates = POKEMON_DATABASE.filter(p => 
+        p.isLegendary && 
+        p.id < 150 && // Normale Vögel im regulären Power Scan
+        !currentSaveData.caughtLegendaries.includes(p.name) &&
+        !ownedNames.has(p.name)
+      );
     }
 
-    // Wenn kein Legendäres gewürfelt wurde (oder der Pool leer ist), greift der Standard-Pool mit erhöhter Rare-Chance
+    // Wenn kein Legenden-Roll erfolgreich war oder alle bereits gefangen wurden -> normaler Rare-Pool
     if (!candidates || candidates.length === 0) {
-      const wantRare = (Math.random() * 100) < (levelPercentage * 2); // Power Scan boostet normale Rares etwas stärker
+      const wantRare = (Math.random() * 100) < (levelPercentage * 2);
       candidates = POKEMON_DATABASE.filter(p => {
         if (p.isLegendary) return false;
         return (p.stage === 0 || p.isSingleStage) && (p.isRare === wantRare);
@@ -1049,37 +1079,34 @@ function generateWildPokemon(scanType = 'quick') {
     }
 
   } else {
-    // Quick Scan / Dev-Spawn: Chance auf Rare Pokémon entspricht direkt dem Spielerlevel in %
+    // Quick Scan / Dev-Spawn: Chance auf Rare Pokémon entspricht dem Spielerlevel in %
     const wantRare = (Math.random() * 100) < levelPercentage;
 
     candidates = POKEMON_DATABASE.filter(p => {
-      // Keine Legendären im Quick Scan
-      if (p.isLegendary) return false;
-
-      // Erlaubt sind alle Basis-Pokémon (Stage 0) und Single-Stage Pokémon
+      if (p.isLegendary) return false; // Keine Legenden im Quick Scan
       const isAllowedType = (p.stage === 0 || p.isSingleStage);
-
-      // Filter nach Seltenheit basierend auf der Level-Prozentchance
       const matchesRareFilter = (p.isRare === wantRare);
-
       return isAllowedType && matchesRareFilter;
     });
   }
 
-  // Fallback, falls der gefilterte Pool leer sein sollte
+  // Fallback, falls der Pool leer ist
   if (!candidates || candidates.length === 0) {
     candidates = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage) && !p.isRare);
   }
 
-  // Zufälliges Pokémon aus den gültigen Kandidaten auswählen
   const template = candidates[Math.floor(Math.random() * candidates.length)];
+  return createPokemonInstance(template);
+}
 
+// Hilfsfunktion zur Erstellung des Pokémon-Objekts
+function createPokemonInstance(template) {
   return {
     name: template.name,
     type: template.type,
-    stage: template.stage,
-    isRare: template.isRare,
-    isSingleStage: template.isSingleSingleStage || template.isSingleStage || false,
+    stage: template.stage || 0,
+    isRare: template.isRare || false,
+    isSingleStage: template.isSingleStage || false,
     level: 1,
     hp: template.baseHp,
     maxHp: template.baseHp,
@@ -1091,6 +1118,7 @@ function generateWildPokemon(scanType = 'quick') {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
+
 
 
 
