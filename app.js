@@ -891,8 +891,9 @@ function exitToMainMenu() {
 
 // --- TAGES-POOL FÜR TRAINER LEVEL 1 BIS 5 (CASE-INSENSITIVE) ---
 function getDailyLevel1To5Pool() {
-  // 1. Die 4 festen Basis-Pokémon (in Kleinschreibung für den Abgleich)
-  const fixedTargetIds = ['rattfratz', 'taubsi', 'hornliu', 'raupi'];
+  // 1. Die 4 festen Basis-Pokémon (in Kleinschreibung für den Abgleich) 
+  // FIX: 'raupy' mit y statt i
+  const fixedTargetIds = ['rattfratz', 'taubsi', 'hornliu', 'raupy'];
   
   // Hilfsfunktion: Wandelt ID oder Name sicher in Kleinschreibung um
   const getCleanId = (p) => (p.id || p.name || '').toLowerCase();
@@ -902,9 +903,10 @@ function getDailyLevel1To5Pool() {
     fixedTargetIds.includes(getCleanId(p))
   );
 
-  // 3. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 1, ohne Rares/SingleStage)
-  const commonStage1Pool = POKEMON_DATABASE.filter(p => 
-    (p.stage || 1) === 1 && 
+  // 3. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 0, ohne Rares/SingleStage)
+  // FIX: p.stage === 0 anstatt (p.stage || 1) === 1
+  const commonBasicPool = POKEMON_DATABASE.filter(p => 
+    p.stage === 0 && 
     !p.isRare && 
     !p.isSingleStage && 
     !fixedTargetIds.includes(getCleanId(p))
@@ -922,7 +924,7 @@ function getDailyLevel1To5Pool() {
 
   // 5. Exakt 6 zufällige, aber für diesen Tag feste Pokémon auswählen
   const dailyChosen = [];
-  const tempPool = [...commonStage1Pool];
+  const tempPool = [...commonBasicPool];
   
   for (let i = 0; i < 6 && tempPool.length > 0; i++) {
     const index = Math.abs(hash + (i * 37)) % tempPool.length;
@@ -933,6 +935,7 @@ function getDailyLevel1To5Pool() {
   // Gesamter Tagespool (4 feste + 6 wechselnde = 10 Pokémon)
   return [...fixedPokemon, ...dailyChosen];
 }
+
 
 
 
