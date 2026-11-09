@@ -360,8 +360,10 @@ let currentSaveData = {
   pokeballs: 10,
   pokemonTeam: [],
   pokemonBox: [],
-  homePos: null
+  homePos: null,
+  caughtLegendaries: [] // NEU: Speichert z.B. ["Arktos", "Zapdos", etc.]
 };
+
 
 // Geo & Map State
 let currentPosition = null;
@@ -1013,41 +1015,63 @@ function determineSpawnStage(team) {
   }
 }
 
-/* WILDES POKÉMON GENERIEREN (MIT TAGES-POOL BIS LEVEL 5) */
+/* =========================================================
+   VEREINFACHTE SPAWN-LOGIK MIT LEVEL-SKALIERUNG
+   - Quick Scan: Level in % = Chance auf Rare Pokémon (z.B. Lv. 10 = 10%)
+   - Power Scan: Level in % = Chance auf Legendäre (ohne Mew & Mewtu)
+   ========================================================= */
+
 function generateWildPokemon(scanType = 'quick') {
-  // FIX: Richtiger Schlüssel 'level' anstatt 'trainerLevel'
-  const trainerLevel = currentSaveData.level || 1;
+  // Aktuelles Trainer-Level des Spielers (Standard: 1)
+  const playerLevel = currentSaveData.level || 1;
+  
+  // Die Prozentchance entspricht exakt dem Spielerlevel (Level 1 = 1%, Level 10 = 10%, etc., max. 100%)
+  const levelPercentage = Math.min(100, playerLevel);
+
   let candidates = [];
 
-  if (trainerLevel <= 5) {
-    // 🔒 BIS LEVEL 5: Ausschließlich die 10 Tages-Pokémon (4 feste + 6 tägliche)
-    candidates = getDailyLevel1To5Pool();
-  } else {
-    // 🔓 AB LEVEL 6: Normales Spawnsystem
-    const team = currentSaveData.pokemonTeam || [];
-    const targetStage = determineSpawnStage(team);
+  if (scanType === 'power') {
+    // 1. Im Power Scan wird gewürfelt, ob ein Legendäres Pokémon erscheint (Chance = Spielerlevel in %)
+    const rollLegendary = (Math.random() * 100) < levelPercentage;
 
-    let baseRareChance = 15;
-    if (scanType === 'power') {
-      baseRareChance *= 1.6; // 24% Rare Chance beim Power Scan
+    if (rollLegendary) {
+      // Filtert alle Legendären, schließt aber Mewtu (id: 150) und Mew (id: 151) strikt aus
+      candidates = POKEMON_DATABASE.filter(p => p.isLegendary && p.id !== 150 && p.id !== 151);
     }
-    const isRareRoll = (Math.random() * 100) < baseRareChance;
+
+    // Wenn kein Legendäres gewürfelt wurde (oder der Pool leer ist), greift der Standard-Pool mit erhöhter Rare-Chance
+    if (!candidates || candidates.length === 0) {
+      const wantRare = (Math.random() * 100) < (levelPercentage * 2); // Power Scan boostet normale Rares etwas stärker
+      candidates = POKEMON_DATABASE.filter(p => {
+        if (p.isLegendary) return false;
+        return (p.stage === 0 || p.isSingleStage) && (p.isRare === wantRare);
+      });
+    }
+
+  } else {
+    // Quick Scan / Dev-Spawn: Chance auf Rare Pokémon entspricht direkt dem Spielerlevel in %
+    const wantRare = (Math.random() * 100) < levelPercentage;
 
     candidates = POKEMON_DATABASE.filter(p => {
+      // Keine Legendären im Quick Scan
       if (p.isLegendary) return false;
-      
-      if (p.isSingleStage) {
-        return isRareRoll ? p.isRare : !p.isRare;
-      }
-      return p.stage === targetStage && (p.isRare === isRareRoll);
+
+      // Erlaubt sind alle Basis-Pokémon (Stage 0) und Single-Stage Pokémon
+      const isAllowedType = (p.stage === 0 || p.isSingleStage);
+
+      // Filter nach Seltenheit basierend auf der Level-Prozentchance
+      const matchesRareFilter = (p.isRare === wantRare);
+
+      return isAllowedType && matchesRareFilter;
     });
   }
 
-  // FIX: Fallback streng auf stage === 0 prüfen
+  // Fallback, falls der gefilterte Pool leer sein sollte
   if (!candidates || candidates.length === 0) {
-    candidates = POKEMON_DATABASE.filter(p => p.stage === 0 && !p.isLegendary);
+    candidates = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage) && !p.isRare);
   }
 
+  // Zufälliges Pokémon aus den gültigen Kandidaten auswählen
   const template = candidates[Math.floor(Math.random() * candidates.length)];
 
   return {
@@ -1055,7 +1079,7 @@ function generateWildPokemon(scanType = 'quick') {
     type: template.type,
     stage: template.stage,
     isRare: template.isRare,
-    isSingleStage: template.isSingleStage || false,
+    isSingleStage: template.isSingleSingleStage || template.isSingleStage || false,
     level: 1,
     hp: template.baseHp,
     maxHp: template.baseHp,
@@ -1067,6 +1091,7 @@ function generateWildPokemon(scanType = 'quick') {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
+
 
 
 
