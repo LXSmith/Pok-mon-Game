@@ -1308,15 +1308,18 @@ function startBattleFromScan(rawPokemonData) {
 
 
 /* KAMPFSYSTEM LOGIK */
+/* KAMPFSYSTEM LOGIK */
 function startBattleFromScan(rawPokemonData) {
-  const team = currentSaveData.pokemonTeam || playerTeam || [];
+  // FIX: Veraltetes 'playerTeam' entfernt, um ReferenceError zu vermeiden
+  const team = currentSaveData.pokemonTeam || [];
   
-  // FIX: stage explizit auslesen, damit 0 auch 0 bleibt (kein "p.stage || 1")
   const playerMaxStage = team.length > 0 
     ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
     : 0;
 
   const baseData = rawPokemonData || generateWildPokemon(currentScanType);
+  // ... Rest bleibt gleich
+
   currentEnemy = prepareSpawnPokemon(baseData, playerMaxStage);
 
   playerBattlePokemon = team[0];
