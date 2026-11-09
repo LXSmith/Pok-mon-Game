@@ -996,14 +996,15 @@ function determineSpawnStage(team) {
 
 /* WILDES POKÉMON GENERIEREN (MIT TAGES-POOL BIS LEVEL 5) */
 function generateWildPokemon(scanType = 'quick') {
-  const trainerLevel = currentSaveData.trainerLevel || 1;
+  // FIX: Richtiger Schlüssel 'level' anstatt 'trainerLevel'
+  const trainerLevel = currentSaveData.level || 1;
   let candidates = [];
 
   if (trainerLevel <= 5) {
     // 🔒 BIS LEVEL 5: Ausschließlich die 10 Tages-Pokémon (4 feste + 6 tägliche)
     candidates = getDailyLevel1To5Pool();
   } else {
-    // 🔓 AB LEVEL 6: Normales Spawnsystem nach Team-Entwicklungsstufe & Rare-Chance
+    // 🔓 AB LEVEL 6: Normales Spawnsystem
     const team = currentSaveData.pokemonTeam || [];
     const targetStage = determineSpawnStage(team);
 
@@ -1023,15 +1024,13 @@ function generateWildPokemon(scanType = 'quick') {
     });
   }
 
-  // Fallback, falls der Pool leer sein sollte
+  // FIX: Fallback streng auf stage === 0 prüfen
   if (!candidates || candidates.length === 0) {
-    candidates = POKEMON_DATABASE.filter(p => (p.stage || 0) === 0 && !p.isLegendary);
+    candidates = POKEMON_DATABASE.filter(p => p.stage === 0 && !p.isLegendary);
   }
 
-  // Zufälliges Pokémon aus dem ermittelten Pool auswählen
   const template = candidates[Math.floor(Math.random() * candidates.length)];
 
-  // Objekt für den Kampf vorbereiten
   return {
     name: template.name,
     type: template.type,
@@ -1049,6 +1048,7 @@ function generateWildPokemon(scanType = 'quick') {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
+
 
 
 /* RADAR-STEUERUNG */
