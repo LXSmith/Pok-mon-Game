@@ -2223,6 +2223,19 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
+// --- LEGENDÄRES POKÉMON ALS GEFANGEN MARKIEREN ---
+if (currentEnemy.isLegendary) {
+  if (!currentSaveData.caughtLegendaries) {
+    currentSaveData.caughtLegendaries = [];
+  }
+  if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
+    currentSaveData.caughtLegendaries.push(currentEnemy.name);
+  }
+  alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
+}
+// ------------------------------------------------
+
+
               const newMon = {
                 name: currentEnemy.name,
                 type: currentEnemy.type,
