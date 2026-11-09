@@ -1278,23 +1278,29 @@ function prepareSpawnPokemon(pokemonData, playerMaxStage) {
   let spawn = { ...pokemonData };
 
   // Wenn es ein Pokémon ohne Entwicklung ist, skaliere die KP passend zur Stufe!
+// --- SPAWN SKALIERUNG (Single-Stage & Rare Pokémon) ---
+function prepareSpawnPokemon(pokemonData, playerMaxStage) {
+  let spawn = { ...pokemonData };
+
   if (spawn.isSingleStage) {
     let scaleFactor = 1.0;
     
-    if (playerMaxStage === 1) scaleFactor = 0.35;      // ~42 KP auf Stufe 1
-    else if (playerMaxStage === 2) scaleFactor = 0.70; // ~84 KP auf Stufe 2
-    else if (playerMaxStage === 3) scaleFactor = 1.00; // 120 KP auf Stufe 3
+    // FIX: Richtige Stufen (0, 1, 2) abfragen
+    if (playerMaxStage === 0) scaleFactor = 0.35;      // ca. 42 KP auf Basic-Stufe
+    else if (playerMaxStage === 1) scaleFactor = 0.70; // ca. 84 KP auf Stufe 1
+    else if (playerMaxStage === 2) scaleFactor = 1.00; // Volle KP auf Stufe 2
 
-    spawn.maxHp = Math.round((spawn.baseHp || 100) * scaleFactor);
+    // Mindestens 10 KP als Sicherheitsnetz, falls Werte extrem tief fallen
+    spawn.maxHp = Math.max(10, Math.round((spawn.baseHp || 100) * scaleFactor));
     spawn.hp = spawn.maxHp;
   } else {
-    // Normales Pokémon (Fallback KP-Zuweisung falls noch nicht berechnet)
     spawn.maxHp = spawn.baseHp || 50;
     spawn.hp = spawn.maxHp;
   }
 
   return spawn;
 }
+
 
 
 /* KAMPFSYSTEM LOGIK */
