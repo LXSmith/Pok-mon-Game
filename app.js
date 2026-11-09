@@ -1299,26 +1299,25 @@ function prepareSpawnPokemon(pokemonData, playerMaxStage) {
 
 /* KAMPFSYSTEM LOGIK */
 function startBattleFromScan(rawPokemonData) {
-  // 1. Höchste Entwicklungsstufe im Spielerteam herausfinden
   const team = currentSaveData.pokemonTeam || playerTeam || [];
-  const playerMaxStage = Math.max(...team.map(p => p.stage || 1), 1);
+  
+  // FIX: stage explizit auslesen, damit 0 auch 0 bleibt (kein "p.stage || 1")
+  const playerMaxStage = team.length > 0 
+    ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
+    : 0;
 
-  // 2. Gegner-Daten holen & skaliertes Pokémon als Gegner setzen
   const baseData = rawPokemonData || generateWildPokemon(currentScanType);
   currentEnemy = prepareSpawnPokemon(baseData, playerMaxStage);
 
-  // 3. Eigenes Kampf-Pokémon & Kampf-Variablen initialisieren
   playerBattlePokemon = team[0];
   isTrainingMode = false;
   playerEnergy = 0;
   isPlayerTurn = true;
   isEnemyAttacking = false;
 
-  // 4. Timer & Ausweich-Window zurücksetzen
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
 
-  // 5. UI-Elemente vorbereiten
   const dodgeBtn = document.getElementById('btn-dodge-action');
   if (dodgeBtn) dodgeBtn.classList.add('hidden');
 
@@ -1331,17 +1330,16 @@ function startBattleFromScan(rawPokemonData) {
     bottomHud.style.display = 'block';
   }
 
-  // 6. Screens wechseln & UI aktualisieren
   resetRadarUI();
   showScreen('screen-battle');
   updateBattleUI();
 
-  // 7. Hinweisbox aktualisieren
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) {
     warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) greift an!`;
   }
 }
+
 
 
 function updateBattleUI() {
