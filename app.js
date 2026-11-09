@@ -1292,33 +1292,18 @@ function startTrainingMatch(partnerMon) {
   document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
 }
 
-// --- SPAWN SKALIERUNG (Single-Stage & Rare Pokémon) ---
-function prepareSpawnPokemon(pokemonData, playerMaxStage) {
-  let spawn = { ...pokemonData };
+/* KAMPFSYSTEM LOGIK */
+function startBattleFromScan(rawPokemonData) {
+  // FIX: Veraltetes 'playerTeam' entfernt, um ReferenceError zu vermeiden
+  const team = currentSaveData.pokemonTeam || [];
+  
+  const playerMaxStage = team.length > 0 
+    ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
+    : 0;
 
-  // Wenn es ein Pokémon ohne Entwicklung ist, skaliere die KP passend zur Stufe!
-// --- SPAWN SKALIERUNG (Single-Stage & Rare Pokémon) ---
-function prepareSpawnPokemon(pokemonData, playerMaxStage) {
-  let spawn = { ...pokemonData };
+  const baseData = rawPokemonData || generateWildPokemon(currentScanType);
+  // ... Rest bleibt gleich
 
-  if (spawn.isSingleStage) {
-    let scaleFactor = 1.0;
-    
-    // FIX: Richtige Stufen (0, 1, 2) abfragen
-    if (playerMaxStage === 0) scaleFactor = 0.35;      // ca. 42 KP auf Basic-Stufe
-    else if (playerMaxStage === 1) scaleFactor = 0.70; // ca. 84 KP auf Stufe 1
-    else if (playerMaxStage === 2) scaleFactor = 1.00; // Volle KP auf Stufe 2
-
-    // Mindestens 10 KP als Sicherheitsnetz, falls Werte extrem tief fallen
-    spawn.maxHp = Math.max(10, Math.round((spawn.baseHp || 100) * scaleFactor));
-    spawn.hp = spawn.maxHp;
-  } else {
-    spawn.maxHp = spawn.baseHp || 50;
-    spawn.hp = spawn.maxHp;
-  }
-
-  return spawn;
-}
 
 
 
