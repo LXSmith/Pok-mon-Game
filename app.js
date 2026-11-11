@@ -1958,15 +1958,14 @@ const CatchEngine = {
   // ... (CatchEngine Physik & Visuals)
 
 
-/* FANG-ENGINE LOGIK */
-/* IN TEIL 3 VON APP.JS ERSETZEN */
-
+/* =========================================================
+   FANG-ENGINE LOGIK (EINZIGE DEKLARATION)
+   ========================================================= */
 const CatchEngine = {
   active: false,
   animId: null,
   eventsBound: false,
 
-  // Referenzen für Event-Cleanup
   handlers: {
     onStart: null,
     onMove: null,
@@ -2012,7 +2011,6 @@ const CatchEngine = {
     this.active = false;
     cancelAnimationFrame(this.animId);
     
-    // Cleanup der Listener beim Beenden der Fang-Session
     this.unbindEvents();
 
     const ring = document.getElementById('target-ring-outer');
@@ -2325,18 +2323,15 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
-// --- LEGENDÄRES POKÉMON ALS GEFANGEN MARKIEREN ---
-if (currentEnemy.isLegendary) {
-  if (!currentSaveData.caughtLegendaries) {
-    currentSaveData.caughtLegendaries = [];
-  }
-  if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
-    currentSaveData.caughtLegendaries.push(currentEnemy.name);
-  }
-  alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
-}
-// ------------------------------------------------
-
+              if (currentEnemy.isLegendary) {
+                if (!currentSaveData.caughtLegendaries) {
+                  currentSaveData.caughtLegendaries = [];
+                }
+                if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
+                  currentSaveData.caughtLegendaries.push(currentEnemy.name);
+                }
+                alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
+              }
 
               const newMon = {
                 name: currentEnemy.name,
@@ -2391,6 +2386,7 @@ if (currentEnemy.isLegendary) {
     }, 450);
   }
 };
+
 
 
 function attemptCatch() {
