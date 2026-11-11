@@ -515,12 +515,8 @@ function closeHomeMapModal() {
   document.getElementById('modal-home-map').classList.add('hidden');
 }
 
-Genau das ist der Schlüssel: Wenn requestCompassPermission() beim ersten Bildschirm-Touch im Event-Listener synchron ausgeführt wird, fordert iOS/Safari Geräte-Rechte an oder erzeugt eine unbehandelte Promise-Rejection. Das blockiert die Ausführung des JavaScript-Threads exakt im Moment der Touch-Interaktion, wodurch die setTimeout-Timer für den Schriftzug und den Übergang stoppen.
-Ersetze in deiner app.js sowohl die Funktion requestCompassPermission() als auch den IntroManager durch diesen entkoppelten und fehlerresistenten Code.
-1. Entkoppelte requestCompassPermission()
-Durch das Ausführen in einem setTimeout(..., 0) wird die Rechteabfrage vollständig aus dem Touch-Event-Stream gelöst und kann niemals die Intro-Animationen oder Timer blockieren.
+/* ENTKOPPELTE KOMPASS-RECHTE (OHNE REJECTION-BLOCKER) */
 function requestCompassPermission() {
-  // Asynchron entkoppeln, damit der Touch-Handler niemals blockiert wird
   setTimeout(() => {
     try {
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -543,6 +539,7 @@ function requestCompassPermission() {
     }
   }, 0);
 }
+
 
 2. Fehlerresistenter IntroManager
 Dieser Block bindet die Event-Listener direkt an das globale window (damit jeder Klick zuverlässig zählt) und besitzt einen automatischen Sicherheits-Fallback nach 9.5 Sekunden, falls überhaupt keine Interaktion stattfindet.
