@@ -515,16 +515,45 @@ function closeHomeMapModal() {
   document.getElementById('modal-home-map').classList.add('hidden');
 }
 
-/* CINEMATIC INTRO */
+Genau das ist der Schlüssel: Wenn requestCompassPermission() beim ersten Bildschirm-Touch im Event-Listener synchron ausgeführt wird, fordert iOS/Safari Geräte-Rechte an oder erzeugt eine unbehandelte Promise-Rejection. Das blockiert die Ausführung des JavaScript-Threads exakt im Moment der Touch-Interaktion, wodurch die setTimeout-Timer für den Schriftzug und den Übergang stoppen.
+Ersetze in deiner app.js sowohl die Funktion requestCompassPermission() als auch den IntroManager durch diesen entkoppelten und fehlerresistenten Code.
+1. Entkoppelte requestCompassPermission()
+Durch das Ausführen in einem setTimeout(..., 0) wird die Rechteabfrage vollständig aus dem Touch-Event-Stream gelöst und kann niemals die Intro-Animationen oder Timer blockieren.
+function requestCompassPermission() {
+  // Asynchron entkoppeln, damit der Touch-Handler niemals blockiert wird
+  setTimeout(() => {
+    try {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+          })
+          .catch(err => console.log("Kompass Rechte ignoriert:", err));
+      } else {
+        if ('ondeviceorientationabsolute' in window) {
+          window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        } else if ('ondeviceorientation' in window) {
+          window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+      }
+    } catch (e) {
+      console.log("Kompass API nicht verfügbar:", e);
+    }
+  }, 0);
+}
+
+2. Fehlerresistenter IntroManager
+Dieser Block bindet die Event-Listener direkt an das globale window (damit jeder Klick zuverlässig zählt) und besitzt einen automatischen Sicherheits-Fallback nach 9.5 Sekunden, falls überhaupt keine Interaktion stattfindet.
+/* CINEMATIC INTRO MANAGER (VOLLSTÄNDIG ENTKOPPELT) */
 const IntroManager = {
   active: true,
   canInteractiveFinish: false,
 
   init() {
     const introScreen = document.getElementById('intro-screen');
-    const container = document.getElementById('introContainer') || document.querySelector('.intro-container');
-
-    if (!introScreen || !container) {
+    if (!introScreen) {
       this.finishIntro();
       return;
     }
@@ -536,18 +565,24 @@ const IntroManager = {
 
     const triggerAudio = (e) => {
       safeUnlock();
-      if (this.canInteractiveFinish) {
+      if (this.canInteractiveFinish || !this.active) {
         this.finishIntro();
       }
     };
 
-    container.addEventListener('touchstart', triggerAudio, { passive: true });
-    container.addEventListener('pointerdown', triggerAudio, { passive: true });
-    container.addEventListener('click', triggerAudio, { passive: true });
+    // Global auf window hören, damit jeder Touch zuverlässig erkannt wird
+    window.addEventListener('touchstart', triggerAudio, { passive: true });
+    window.addEventListener('pointerdown', triggerAudio, { passive: true });
+    window.addEventListener('click', triggerAudio, { passive: true });
 
     this.startCardRush();
-    setTimeout(() => this.playSlashSound(), 5300);
 
+    // Sound für Slash-Effekt abspielen
+    setTimeout(() => {
+      if (this.active) this.playSlashSound();
+    }, 5300);
+
+    // Klick-Aufforderung freischalten & Text einblenden
     setTimeout(() => {
       if (!this.active) return;
       this.canInteractiveFinish = true;
@@ -557,6 +592,13 @@ const IntroManager = {
         promptEl.classList.add('show-prompt');
       }
     }, 7300);
+
+    // GARANTIERTER FALLBACK: Schaltet nach spätestens 9.5 Sekunden automatisch zum Hauptmenü
+    setTimeout(() => {
+      if (this.active) {
+        this.finishIntro();
+      }
+    }, 9500);
   },
 
   playWhooshSound() {
@@ -673,6 +715,8 @@ const IntroManager = {
     }
   }
 };
+
+
 
 /* MENÜS & SPIELSTART LOGIK */
 function initApp() {
