@@ -541,9 +541,7 @@ function requestCompassPermission() {
 }
 
 
-2. Fehlerresistenter IntroManager
-Dieser Block bindet die Event-Listener direkt an das globale window (damit jeder Klick zuverlässig zählt) und besitzt einen automatischen Sicherheits-Fallback nach 9.5 Sekunden, falls überhaupt keine Interaktion stattfindet.
-/* CINEMATIC INTRO MANAGER (VOLLSTÄNDIG ENTKOPPELT) */
+/* CINEMATIC INTRO MANAGER (ROBUST & ENTKOPPELT) */
 const IntroManager = {
   active: true,
   canInteractiveFinish: false,
@@ -560,21 +558,19 @@ const IntroManager = {
       try { if (typeof requestCompassPermission === 'function') requestCompassPermission(); } catch(e){}
     };
 
-    const triggerAudio = (e) => {
+    const triggerAudio = () => {
       safeUnlock();
       if (this.canInteractiveFinish || !this.active) {
         this.finishIntro();
       }
     };
 
-    // Global auf window hören, damit jeder Touch zuverlässig erkannt wird
     window.addEventListener('touchstart', triggerAudio, { passive: true });
     window.addEventListener('pointerdown', triggerAudio, { passive: true });
     window.addEventListener('click', triggerAudio, { passive: true });
 
     this.startCardRush();
 
-    // Sound für Slash-Effekt abspielen
     setTimeout(() => {
       if (this.active) this.playSlashSound();
     }, 5300);
@@ -583,14 +579,18 @@ const IntroManager = {
     setTimeout(() => {
       if (!this.active) return;
       this.canInteractiveFinish = true;
-      const promptEl = document.querySelector('.start-prompt');
-      if (promptEl) {
-        promptEl.innerText = "TIPPE AUF DEN BILDSCHIRM";
-        promptEl.classList.add('show-prompt');
+      
+      let promptEl = document.querySelector('.start-prompt') || document.getElementById('start-prompt');
+      if (!promptEl) {
+        promptEl = document.createElement('div');
+        promptEl.className = 'start-prompt';
+        introScreen.appendChild(promptEl);
       }
+      promptEl.innerText = "TIPPE AUF DEN BILDSCHIRM";
+      promptEl.classList.add('show-prompt');
     }, 7300);
 
-    // GARANTIERTER FALLBACK: Schaltet nach spätestens 9.5 Sekunden automatisch zum Hauptmenü
+    // Garantierter Fallback nach 9.5s
     setTimeout(() => {
       if (this.active) {
         this.finishIntro();
@@ -650,8 +650,21 @@ const IntroManager = {
   },
 
   startCardRush() {
-    const cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
-    if (!cardStream) return;
+    let cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
+    
+    // Fallback: Falls cardStream im HTML fehlt, im Intro-Screen anlegen
+    if (!cardStream) {
+      const introScreen = document.getElementById('intro-screen');
+      if (introScreen) {
+        cardStream = document.createElement('div');
+        cardStream.id = 'cardStream';
+        cardStream.className = 'card-stream';
+        introScreen.appendChild(cardStream);
+      } else {
+        return;
+      }
+    }
+
     const tcgCards = [
       { tcg: 'https://images.pokemontcg.io/base1/4_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png' },
       { tcg: 'https://images.pokemontcg.io/base1/58_hires.png', fallback: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png' },
@@ -712,6 +725,7 @@ const IntroManager = {
     }
   }
 };
+
 
 
 
