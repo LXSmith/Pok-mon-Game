@@ -1948,7 +1948,6 @@ const CatchEngine = {
   animId: null,
   eventsBound: false,
 
-  // Referenzen für Event-Cleanup
   handlers: {
     onStart: null,
     onMove: null,
@@ -1993,8 +1992,6 @@ const CatchEngine = {
   stopCatchSession() {
     this.active = false;
     cancelAnimationFrame(this.animId);
-    
-    // Cleanup der Listener beim Beenden der Fang-Session
     this.unbindEvents();
 
     const ring = document.getElementById('target-ring-outer');
@@ -2218,11 +2215,10 @@ const CatchEngine = {
     ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
   },
 
-    evaluateHit(ballX, ballY, enemyRect) {
+  evaluateHit(ballX, ballY, enemyRect) {
     let throwBonus = 0; // Wurf-Bonus in Prozent
     let feedbackText = "TREFFER!";
 
-    // Wurfqualität auswerten (basierend auf der Skalierung des Zielrings)
     if (this.ringScale < 0.4) {
       throwBonus = 20; // Roter Kreis (Perfekt)
       feedbackText = "FABELHAFT!";
@@ -2281,30 +2277,30 @@ const CatchEngine = {
     setTimeout(() => {
       if (ballEl) ballEl.classList.add('wobble');
 
-      // --- ADDITIVE BERECHNUNG DER FANGCHANCE ---
-      let chance = 50; // Basis 50%
+      // Additive Berechnung nach neuer Fangmechanik
+      let chance = 50;
 
-      // 1. Wurfqualität (+20%, +10% oder +0%)
+      // 1. Wurfqualität (+20%, +10%, +0%)
       chance += throwBonus;
 
       // 2. Rest-KP des Pokémon
       const hpRatio = currentEnemy.hp / currentEnemy.maxHp;
       if (hpRatio > 0.50) {
-        chance -= 30; // Über 50% KP -> -30%
+        chance -= 30;
       } else if (hpRatio <= 0.10) {
-        chance += 20; // Unter 10% KP -> +20%
+        chance += 20;
       } else if (hpRatio <= 0.20) {
-        chance += 10; // Unter 20% KP -> +10%
+        chance += 10;
       }
 
       // 3. Maximal-KP des Pokémon
       const maxHp = currentEnemy.maxHp;
       if (maxHp > 120) {
-        chance -= 30; // Über 120 Max-KP -> -30%
+        chance -= 30;
       } else if (maxHp > 100) {
-        chance -= 20; // Bis 120 Max-KP -> -20%
+        chance -= 20;
       } else if (maxHp > 80) {
-        chance -= 10; // Bis 100 Max-KP -> -10%
+        chance -= 10;
       }
 
       // 4. Legendärer Malus (-20%)
@@ -2312,9 +2308,7 @@ const CatchEngine = {
         chance -= 20;
       }
 
-      // Umrechnung in Prozent (Sicherheitsgrenze 5% bis 95%)
       const finalChance = Math.max(0.05, Math.min(0.95, chance / 100));
-
       let wobbles = 0;
 
       const wobbleInterval = setInterval(() => {
@@ -2404,6 +2398,8 @@ const CatchEngine = {
       }, 700);
     }, 450);
   }
+};
+
 
 
 
