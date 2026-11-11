@@ -2218,20 +2218,23 @@ const CatchEngine = {
     ballEl.style.transform = `translate(-50%, -50%) scale(${scale}) ${rotation}`;
   },
 
-  evaluateHit(ballX, ballY, enemyRect) {
-    let throwBonus = 1.0;
+    evaluateHit(ballX, ballY, enemyRect) {
+    let throwBonus = 0; // Wurf-Bonus in Prozent
     let feedbackText = "TREFFER!";
 
+    // Wurfqualität auswerten (basierend auf der Skalierung des Zielrings)
     if (this.ringScale < 0.4) {
-      throwBonus = 1.8;
+      throwBonus = 20; // Roter Kreis (Perfekt)
       feedbackText = "FABELHAFT!";
     } else if (this.ringScale < 0.7) {
-      throwBonus = 1.4;
+      throwBonus = 10; // Gelber Kreis (Gut)
       feedbackText = "GROSSARTIG!";
+    } else {
+      throwBonus = 0;  // Grüner Kreis (Normal)
+      feedbackText = "TREFFER!";
     }
 
     if (this.ball.isSpinning) {
-      throwBonus *= 1.5;
       feedbackText += " (CURVE)";
     }
 
@@ -2278,8 +2281,40 @@ const CatchEngine = {
     setTimeout(() => {
       if (ballEl) ballEl.classList.add('wobble');
 
-      const baseChance = 0.80;
-      const finalChance = Math.min(0.98, baseChance * throwBonus);
+      // --- ADDITIVE BERECHNUNG DER FANGCHANCE ---
+      let chance = 50; // Basis 50%
+
+      // 1. Wurfqualität (+20%, +10% oder +0%)
+      chance += throwBonus;
+
+      // 2. Rest-KP des Pokémon
+      const hpRatio = currentEnemy.hp / currentEnemy.maxHp;
+      if (hpRatio > 0.50) {
+        chance -= 30; // Über 50% KP -> -30%
+      } else if (hpRatio <= 0.10) {
+        chance += 20; // Unter 10% KP -> +20%
+      } else if (hpRatio <= 0.20) {
+        chance += 10; // Unter 20% KP -> +10%
+      }
+
+      // 3. Maximal-KP des Pokémon
+      const maxHp = currentEnemy.maxHp;
+      if (maxHp > 120) {
+        chance -= 30; // Über 120 Max-KP -> -30%
+      } else if (maxHp > 100) {
+        chance -= 20; // Bis 120 Max-KP -> -20%
+      } else if (maxHp > 80) {
+        chance -= 10; // Bis 100 Max-KP -> -10%
+      }
+
+      // 4. Legendärer Malus (-20%)
+      if (currentEnemy.isLegendary) {
+        chance -= 20;
+      }
+
+      // Umrechnung in Prozent (Sicherheitsgrenze 5% bis 95%)
+      const finalChance = Math.max(0.05, Math.min(0.95, chance / 100));
+
       let wobbles = 0;
 
       const wobbleInterval = setInterval(() => {
@@ -2307,18 +2342,15 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
-// --- LEGENDÄRES POKÉMON ALS GEFANGEN MARKIEREN ---
-if (currentEnemy.isLegendary) {
-  if (!currentSaveData.caughtLegendaries) {
-    currentSaveData.caughtLegendaries = [];
-  }
-  if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
-    currentSaveData.caughtLegendaries.push(currentEnemy.name);
-  }
-  alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
-}
-// ------------------------------------------------
-
+              if (currentEnemy.isLegendary) {
+                if (!currentSaveData.caughtLegendaries) {
+                  currentSaveData.caughtLegendaries = [];
+                }
+                if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
+                  currentSaveData.caughtLegendaries.push(currentEnemy.name);
+                }
+                alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
+              }
 
               const newMon = {
                 name: currentEnemy.name,
@@ -2372,7 +2404,7 @@ if (currentEnemy.isLegendary) {
       }, 700);
     }, 450);
   }
-};
+
 
 
 function attemptCatch() {
