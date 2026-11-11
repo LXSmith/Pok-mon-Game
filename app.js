@@ -1,5 +1,3 @@
-Hier ist doch mein js Code sage mir an welcher Stelle ich das einfügen soll
-
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 1 VON 4)
    1. SETUP, SYSTEM & DATENBANK (151 KANTO POKÉMON)
