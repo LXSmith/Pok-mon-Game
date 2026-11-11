@@ -1,3 +1,4 @@
+Wo baue ich den neuen Code ein?
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 1 VON 4)
    1. SETUP, SYSTEM & DATENBANK (151 KANTO POKÉMON)
@@ -1885,87 +1886,15 @@ function runFromBattle() {
   showScreen('screen-radar-hud');
 }
 
-
-/* =========================================================
-   FANG-BERECHNUNG & WURF-LOGIK
-   ========================================================= */
-function calculateCatchChance(pokemon, throwQuality = "green", currentHp = null) {
-  // Fallback: Falls keine aktuellen KP übergeben wurden, wird baseHp verwendet
-  if (currentHp === null || currentHp === undefined) {
-    currentHp = pokemon.baseHp;
-  }
-
-  // 1. Basis-Wahrscheinlichkeit (50%)
-  let chance = 50;
-
-  // 2. Wurfqualität (+20% Rot, +10% Gelb)
-  const quality = String(throwQuality).toLowerCase();
-  if (quality === "red" || quality === "rot" || quality === "excellent") {
-    chance += 20;
-  } else if (quality === "yellow" || quality === "gelb" || quality === "great") {
-    chance += 10;
-  }
-
-  // 3. Rest-KP in Prozent (mit inklusiven <= Grenzen)
-  const hpPercent = (currentHp / pokemon.baseHp) * 100;
-  if (hpPercent > 50) {
-    chance -= 30;
-  } else if (hpPercent <= 10) {
-    chance += 20;
-  } else if (hpPercent <= 20) {
-    chance += 10;
-  }
-
-  // 4. Maximal-KP Malus
-  if (pokemon.baseHp > 120) {
-    chance -= 30;
-  } else if (pokemon.baseHp > 100) {
-    chance -= 20;
-  } else if (pokemon.baseHp > 80) {
-    chance -= 10;
-  }
-
-  // 5. Zusatz-Malus (-20%) EXKLUSIV für Mewtu und Mew
-  if (pokemon.name === "Mewtu" || pokemon.name === "Mew") {
-    chance -= 20;
-  }
-
-  // 6. Sicherheitsnetz (Minimum 5%, Maximum 90%)
-  chance = Math.max(5, Math.min(90, chance));
-
-  return chance;
-}
-
-// Ausführung des Fangs
-function throwPokeball(pokemon, throwQuality, currentHp) {
-  const chance = calculateCatchChance(pokemon, throwQuality, currentHp);
-  const roll = Math.floor(Math.random() * 100) + 1;
-
-  const isCaught = roll <= chance;
-
-  console.log(`Fangversuch auf ${pokemon.name}: Chance ${chance}% | Gewürfelt: ${roll} -> ${isCaught ? "GEFANGEN" : "ENTFLOHEN"}`);
-
-  return {
-    success: isCaught,
-    chance: chance,
-    roll: roll
-  };
-}
-
-
 /* FANG-ENGINE LOGIK */
-const CatchEngine = {
-  // ... (CatchEngine Physik & Visuals)
+/* IN TEIL 3 VON APP.JS ERSETZEN */
 
-
-/* =========================================================
-   FANG-ENGINE LOGIK (EINZIGE DEKLARATION)
-   ========================================================= */
 const CatchEngine = {
   active: false,
   animId: null,
   eventsBound: false,
 
+  // Referenzen für Event-Cleanup
   handlers: {
     onStart: null,
     onMove: null,
@@ -2011,6 +1940,7 @@ const CatchEngine = {
     this.active = false;
     cancelAnimationFrame(this.animId);
     
+    // Cleanup der Listener beim Beenden der Fang-Session
     this.unbindEvents();
 
     const ring = document.getElementById('target-ring-outer');
@@ -2323,15 +2253,18 @@ const CatchEngine = {
                 enemyImg.style.opacity = '1';
               }
 
-              if (currentEnemy.isLegendary) {
-                if (!currentSaveData.caughtLegendaries) {
-                  currentSaveData.caughtLegendaries = [];
-                }
-                if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
-                  currentSaveData.caughtLegendaries.push(currentEnemy.name);
-                }
-                alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
-              }
+// --- LEGENDÄRES POKÉMON ALS GEFANGEN MARKIEREN ---
+if (currentEnemy.isLegendary) {
+  if (!currentSaveData.caughtLegendaries) {
+    currentSaveData.caughtLegendaries = [];
+  }
+  if (!currentSaveData.caughtLegendaries.includes(currentEnemy.name)) {
+    currentSaveData.caughtLegendaries.push(currentEnemy.name);
+  }
+  alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
+}
+// ------------------------------------------------
+
 
               const newMon = {
                 name: currentEnemy.name,
@@ -2386,7 +2319,6 @@ const CatchEngine = {
     }, 450);
   }
 };
-
 
 
 function attemptCatch() {
@@ -2681,4 +2613,3 @@ if (document.readyState === 'loading') {
 } else {
   safeStartIntro();
 }
-
