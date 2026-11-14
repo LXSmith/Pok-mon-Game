@@ -1087,3 +1087,80 @@ button:active { transform: scale(0.97); }
 .footer-divider {
   color: #475569;
 }
+
+/* =========================================================
+   SAMMELMAPPE (TCG KARTENALBUM #001 - #151)
+   ========================================================= */
+.pokedex-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.pokedex-slot {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  aspect-ratio: 2.4 / 3.5;
+  position: relative;
+  overflow: hidden;
+}
+
+.pokedex-slot.caught {
+  border-color: rgba(255, 203, 5, 0.55);
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.pokedex-slot.missing {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+}
+
+.pokedex-num {
+  font-size: 10px;
+  font-weight: 800;
+  color: #94a3b8;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+.pokedex-slot.caught .pokedex-num {
+  color: var(--accent-yellow);
+}
+
+.pokedex-slot img {
+  width: 100%;
+  height: 76%;
+  object-fit: contain;
+  border-radius: 5px;
+  margin: 2px 0;
+}
+
+.pokedex-question {
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.18);
+  margin: auto 0;
+}
+
+.pokedex-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pokedex-slot.missing .pokedex-name {
+  color: #64748b;
+}
