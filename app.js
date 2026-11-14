@@ -2645,6 +2645,27 @@ function winBattle() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
   CatchEngine.stopCatchSession();
+
+  // Falls Trainerkampf: +50% EXP (75% der Gegner-Max-KP) sammeln & nächstes Trainer-Pokémon rufen
+  if (isTrainerBattle && currentTrainer) {
+    const monExp = Math.round(currentEnemy.maxHp * 0.75);
+    currentTrainer.totalExp += monExp;
+
+    if (currentTrainer.currentIndex + 1 < currentTrainer.team.length) {
+      currentTrainer.currentIndex++;
+      const nextMon = currentTrainer.team[currentTrainer.currentIndex];
+      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name} in den Kampf!`;
+      try { playBeep(523.25, 0.15); } catch (e) {}
+
+      setTimeout(() => {
+        currentEnemy = nextMon;
+        isEnemyAttacking = false;
+        isPlayerTurn = true;
+        updateBattleUI();
+      }, 1100);
+      return;
+    }
+  }
   
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
   try {
@@ -2656,16 +2677,56 @@ function winBattle() {
   setTimeout(() => {
     if (isTrainingMode) {
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
-      addPokemonExp(playerBattlePokemon, earnedExp);
+      const leveledUp = addPokemonExp(playerBattlePokemon, earnedExp);
       if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
       playerBattlePokemon.hp = playerBattlePokemon.maxHp;
       saveCurrentData();
 
       document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
       document.getElementById('victory-item-text').innerText = `Beide Pokémon sind gewachsen!`;
-      window._pendingLevelUpInfo = pendingLevelUpData;
+      window._pendingLevelUpInfo = leveledUp ? pendingLevelUpData : null;
       window._launchEvolutionAfterVictory = false;
       document.getElementById('victory-screen').classList.remove('hidden');
+
+    } else if (isTrainerBattle && currentTrainer) {
+      const earnedExp = currentTrainer.totalExp;
+      addTrainerExp(earnedExp);
+
+      // Zufalls-Belohnung: 50% 10 Pokébälle, 35% 1 Heiltrank, 15% 1 Sonderbonbon
+      const roll = Math.random();
+      let rewardText = "";
+      if (roll < 0.50) {
+        currentSaveData.pokeballs += 10;
+        rewardText = "🎁 +10 Pokébälle erhalten!";
+      } else if (roll < 0.85) {
+        currentSaveData.potions = (currentSaveData.potions || 0) + 1;
+        rewardText = "🧪 +1 Heiltrank erhalten!";
+      } else {
+        currentSaveData.rareCandies = (currentSaveData.rareCandies || 0) + 1;
+        rewardText = "🍬 +1 Sonderbonbon erhalten!";
+      }
+
+      const activeMon = playerBattlePokemon;
+      const leveledUp = addPokemonExp(activeMon, earnedExp);
+      activeMon.hp = activeMon.maxHp;
+
+      isTrainerBattle = false;
+      currentTrainer = null;
+      saveCurrentData();
+
+      let triggeredEvo = false;
+      if (EVOLUTION_CHAINS[activeMon.name] && activeMon.maxHp >= EVOLUTION_CHAINS[activeMon.name].requiredMaxHp) {
+        triggeredEvo = true;
+        pendingEvoPokemon = activeMon;
+      }
+
+      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (+50% Trainer-Bonus!)`;
+      document.getElementById('victory-item-text').innerText = rewardText;
+
+      window._pendingLevelUpInfo = leveledUp ? pendingLevelUpData : null;
+      window._launchEvolutionAfterVictory = triggeredEvo;
+      document.getElementById('victory-screen').classList.remove('hidden');
+
     } else {
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       addTrainerExp(earnedExp);
@@ -2676,7 +2737,6 @@ function winBattle() {
       activeMon.hp = activeMon.maxHp;
       saveCurrentData();
 
-      // Evolutionsprüfung über den organischen requiredMaxHp Schwellenwert
       let triggeredEvo = false;
       if (EVOLUTION_CHAINS[activeMon.name]) {
         const evoData = EVOLUTION_CHAINS[activeMon.name];
@@ -2695,6 +2755,7 @@ function winBattle() {
     }
   }, 1000);
 }
+
 
 /* POKÉMON EXP & LEVEL-UP STAT-ZUWACHS
    - Single-Stage (ohne Evo): +4 Max-KP pro Level
