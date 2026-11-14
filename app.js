@@ -335,9 +335,11 @@ let isScanning = false;
 let scanTimer = null;
 let currentScanType = 'quick';
 
-// Training State
+// Training & Trainer-Kampf State
 let isTrainingMode = false;
 let trainingPartnerMon = null;
+let isTrainerBattle = false;
+let currentTrainer = null;
 
 // Battle State
 let currentEnemy = null;
@@ -358,12 +360,15 @@ let currentSaveData = {
   exp: 0,
   maxExp: 100,
   pokeballs: 10,
+  potions: 2,
+  rareCandies: 0,
   pokemonTeam: [],
   pokemonBox: [],
   homePos: null,
   caughtLegendaries: [],
   pokedex: [] // Speichert gefangene/entwickelte IDs (1 bis 151)
 };
+
 
 function registerPokemonInPokedex(nameOrId) {
   if (!currentSaveData.pokedex) currentSaveData.pokedex = [];
