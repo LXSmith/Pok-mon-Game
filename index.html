@@ -178,6 +178,7 @@
         <!-- GEGNER POKÉMON + KP-LEISTE DIREKT DRÜBER -->
         <div id="enemy-target-wrapper" class="enemy-target-wrapper">
           <div class="hp-overlay enemy-hp-overlay" style="margin-bottom: 8px;">
+            <div id="trainer-balls-hud" class="trainer-balls-hud hidden"></div>
             <div id="enemy-title" class="battle-title-hud">WILDES POKÉMON</div>
             <div class="bar-bg" style="margin-top:4px;">
               <div id="enemy-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div>
@@ -192,6 +193,12 @@
             <img id="enemy-card-img" class="enemy-sprite-img" src="" alt="Wildes Pokémon">
           </div>
         </div>
+
+        <!-- HEILTRANK-BUTTON IM KAMPF -->
+        <button type="button" id="battle-potion-btn" class="battle-potion-btn" onclick="useBattlePotion()" title="Heiltrank einsetzen (100% KP)">
+          <span style="font-size: 26px;">🧪</span>
+          <span id="battle-potions-badge" class="ball-badge" style="background:#10b981;">2</span>
+        </button>
 
         <!-- GRIFFBEREITER POKÉBALL RECHTS NEBEN DEM GEGNER/SPIELER -->
         <button type="button" id="battle-ready-ball" class="battle-ready-ball hidden" onclick="attemptCatch()" title="Pokéball greifen & werfen">
