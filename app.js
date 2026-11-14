@@ -1430,7 +1430,7 @@ function updateBlipPosition() {
     const scareBtn = document.getElementById('btn-scare-overlay');
     if (scareBtn) scareBtn.classList.add('hidden');
     targetPokemonCoords = null;
-    startBattleFromScan();
+    triggerRadarEncounter();
     return;
   }
 
@@ -1449,9 +1449,18 @@ function updateBlipPosition() {
     triggerVibration([200, 100, 200]);
     blip.classList.add('hidden');
     targetPokemonCoords = null;
-    startBattleFromScan();
+    triggerRadarEncounter();
   };
 }
+
+function triggerRadarEncounter() {
+  if (Math.random() < 0.25) {
+    startTrainerBattle();
+  } else {
+    startBattleFromScan();
+  }
+}
+
 
 function cancelScan() {
   clearTimeout(scanTimer);
