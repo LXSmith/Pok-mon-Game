@@ -286,11 +286,37 @@
           <div id="pokemon-team-list"></div>
         </div>
 
-        <div id="mtab-content-items" class="mtab-content hidden" style="width: 100%; flex: 1;">
-          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:15px; border-radius:12px;">
-            <span style="font-size: 16px;">🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:20px; color:var(--accent-yellow);">10</strong>
+              <div id="mtab-content-items" class="mtab-content hidden" style="width: 100%; overflow-y: auto; flex: 1;">
+          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:12px 15px; border-radius:12px; margin-bottom:8px;">
+            <div style="text-align:left;">
+              <div style="font-size: 15px; font-weight:700;">🔴 Pokébälle</div>
+              <div style="font-size: 11px; color:#94a3b8;">Zum Fangen wilder Pokémon</div>
+            </div>
+            <strong id="menu-item-pokeballs" style="font-size:20px; color:var(--accent-yellow);">10</strong>
           </div>
+
+          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:12px 15px; border-radius:12px; margin-bottom:8px;">
+            <div style="text-align:left;">
+              <div style="font-size: 15px; font-weight:700;">🧪 Heiltrank</div>
+              <div style="font-size: 11px; color:#94a3b8;">Heilt im Kampf sofort 100% KP</div>
+            </div>
+            <strong id="menu-item-potions" style="font-size:20px; color:#10b981;">2</strong>
+          </div>
+
+          <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:12px 15px; border-radius:12px; margin-bottom:8px;">
+            <div style="text-align:left;">
+              <div style="font-size: 15px; font-weight:700;">🍬 Sonderbonbon</div>
+              <div style="font-size: 11px; color:#94a3b8;">Sofortiges Level-Up (+1 Level)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong id="menu-item-candies" style="font-size:20px; color:#a855f7;">0</strong>
+              <button type="button" onclick="openCandySelection()" class="btn-primary" style="width:auto; padding:6px 10px; font-size:11px;">Nutzen</button>
+            </div>
+          </div>
+
+          <div id="candy-target-list" class="hidden" style="background:rgba(15,23,42,0.9); padding:10px; border-radius:12px; border:1px solid rgba(255,203,5,0.4); margin-top:8px;"></div>
         </div>
+
 
         <div id="mtab-content-album" class="mtab-content hidden" style="width: 100%; overflow-y: auto; flex: 1; padding-right: 4px;">
           <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); padding:8px 12px; border-radius:10px; margin-bottom:10px; font-size:13px;">
