@@ -263,52 +263,52 @@
       </div>
     </div>
 
-    <!-- MODAL 1b: TRAININGSPARTNER WAHL -->
-    <div id="modal-training-select" class="modal-overlay hidden">
-      <div class="modal-card">
-        <h3>Trainingspartner wählen</h3>
-        <p class="subtitle">Dein aktives Pokémon kämpft gegen dein gewähltes Team-Mitglied (beide erhalten 50% EXP).</p>
-        <div id="training-partner-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
-        <button type="button" onclick="closeTrainingSelection()" class="btn-secondary">Abbrechen</button>
-      </div>
-    </div>
-
-        <!-- MODAL 2: HAUPTMENÜ OVERLAY (Schwebendes Fenster für In-Game) -->
+    <!-- MODAL 2: HAUPTMENÜ OVERLAY (Schwebendes Fenster für In-Game) -->
     <div id="modal-menu" class="modal-overlay hidden">
       <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column;">
         <h3 style="margin-top:0; color:var(--accent-yellow); font-size: 22px; text-transform: uppercase;">Trainer Menü</h3>
         
-        <div class="menu-tab-buttons" style="background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; margin-bottom: 15px;">
-          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon" style="padding: 10px;">🐾 Team</button>
-          <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items" style="padding: 10px;">🎒 Beutel</button>
-          <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp" style="padding: 10px;">🧢 Trainer</button>
+        <div class="menu-tab-buttons" style="width: 100%; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; margin-bottom: 15px;">
+          <button type="button" onclick="switchMenuTab('pokemon')" class="tab-btn active" id="mtab-btn-pokemon" style="padding: 8px 4px;">🐾 Team</button>
+          <button type="button" onclick="switchMenuTab('items')" class="tab-btn" id="mtab-btn-items" style="padding: 8px 4px;">🎒 Beutel</button>
+          <button type="button" onclick="switchMenuTab('album')" class="tab-btn" id="mtab-btn-album" style="padding: 8px 4px;">📖 Mappe</button>
+          <button type="button" onclick="switchMenuTab('exp')" class="tab-btn" id="mtab-btn-exp" style="padding: 8px 4px;">🧢 Trainer</button>
         </div>
         
-        <div id="mtab-content-pokemon" class="mtab-content" style="overflow-y: auto; flex: 1; padding-right: 4px; margin-top: 5px;">
+        <div id="mtab-content-pokemon" class="mtab-content" style="width: 100%; overflow-y: auto; flex: 1; padding-right: 4px; margin-top: 5px;">
           <div id="pokemon-team-list"></div>
         </div>
 
-        <div id="mtab-content-items" class="mtab-content hidden" style="flex: 1;">
+        <div id="mtab-content-items" class="mtab-content hidden" style="width: 100%; flex: 1;">
           <div class="item-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:15px; border-radius:12px;">
             <span style="font-size: 16px;">🔴 Pokébälle</span><strong id="menu-item-pokeballs" style="font-size:20px; color:var(--accent-yellow);">10</strong>
           </div>
         </div>
 
-        <div id="mtab-content-exp" class="mtab-content hidden" style="flex: 1;">
+        <div id="mtab-content-album" class="mtab-content hidden" style="width: 100%; overflow-y: auto; flex: 1; padding-right: 4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); padding:8px 12px; border-radius:10px; margin-bottom:10px; font-size:13px;">
+            <span style="color:#94a3b8; font-weight:700;">Kanto-Sammlung</span>
+            <strong id="pokedex-progress-text" style="color:var(--accent-yellow);">0 / 151</strong>
+          </div>
+          <div id="pokedex-grid" class="pokedex-grid"></div>
+        </div>
+
+        <div id="mtab-content-exp" class="mtab-content hidden" style="width: 100%; flex: 1;">
           <div class="trainer-card-inner" style="background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; text-align:left;">
             <h4 id="menu-trainer-level" style="color:var(--accent-yellow); margin:0 0 10px 0; font-size: 20px;">Level 1</h4>
             <div class="bar-bg" style="width:100%; height: 10px;"><div id="menu-trainer-exp-bar" class="bar-fill exp-fill"></div></div>
-            <div id="menu-trainer-exp-text" class="bar-text" style="text-align:right; margin-top:6px; font-size:12px;">0 / 100 EXP</div>
+            <div id="menu-trainer-exp-text" style="text-align:right; margin-top:6px; font-size:12px;" class="bar-text">0 / 100 EXP</div>
             <div class="stat-line" style="margin-top:20px; font-size:13px; color:#aaa;">Gefangene Pokémon: <strong id="menu-caught-count" style="color:#fff;">1</strong></div>
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
           <button type="button" onclick="exitToMainMenu()" class="btn-primary" style="background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); color: white; padding: 12px;">💾 Speichern & Beenden</button>
           <button type="button" onclick="closeMenuModal()" class="btn-secondary" style="padding: 12px;">Zurück zum Spiel</button>
         </div>
       </div>
     </div>
+
 
 
     <!-- EVOLUTION & VICTORY MODALS -->
