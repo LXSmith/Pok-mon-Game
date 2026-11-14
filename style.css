@@ -1344,3 +1344,17 @@ button:active { transform: scale(0.97); }
   100% { width: 140%; }
 }
 
+/* Fix für das Einblenden von Banner, Mini-Karte und Pokéball-HUD im Trainerkampf */
+#trainer-challenge-banner:not(.hidden),
+#battle-trainer-badge:not(.hidden),
+#trainer-balls-hud:not(.hidden) {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#trainer-challenge-banner:not(.hidden) {
+  display: block !important;
+}
+
