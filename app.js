@@ -361,8 +361,28 @@ let currentSaveData = {
   pokemonTeam: [],
   pokemonBox: [],
   homePos: null,
-  caughtLegendaries: [] // NEU: Speichert z.B. ["Arktos", "Zapdos", etc.]
+  caughtLegendaries: [],
+  pokedex: [] // Speichert gefangene/entwickelte IDs (1 bis 151)
 };
+
+function registerPokemonInPokedex(nameOrId) {
+  if (!currentSaveData.pokedex) currentSaveData.pokedex = [];
+  const entry = POKEMON_DATABASE.find(p => p.id === nameOrId || p.name === nameOrId);
+  if (entry && !currentSaveData.pokedex.includes(entry.id)) {
+    currentSaveData.pokedex.push(entry.id);
+    currentSaveData.pokedex.sort((a, b) => a - b);
+  }
+}
+
+function syncPokedexWithOwned() {
+  if (!currentSaveData.pokedex) currentSaveData.pokedex = [];
+  const owned = [
+    ...(currentSaveData.pokemonTeam || []),
+    ...(currentSaveData.pokemonBox || [])
+  ];
+  owned.forEach(mon => registerPokemonInPokedex(mon.name));
+}
+
 
 
 // Geo & Map State
@@ -828,6 +848,8 @@ function confirmStarter() {
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
   currentSaveData.pokemonBox = [];
   currentSaveData.pokeballs = 10;
+  currentSaveData.pokedex = [];
+  registerPokemonInPokedex(starters[selectedStarter].name);
 
   if (currentPosition) {
     currentSaveData.homePos = { ...currentPosition };
@@ -845,6 +867,7 @@ function saveCurrentData() {
 }
 
 function loadDashboard() {
+  syncPokedexWithOwned();
   document.getElementById('scan-active-mon').innerText = currentSaveData.pokemonTeam[0]?.name || '--';
   document.getElementById('menu-item-pokeballs').innerText = currentSaveData.pokeballs;
   document.getElementById('menu-trainer-level').innerText = "Level " + currentSaveData.level;
@@ -852,10 +875,44 @@ function loadDashboard() {
   const expPct = Math.min(100, (currentSaveData.exp / currentSaveData.maxExp) * 100);
   document.getElementById('menu-trainer-exp-bar').style.width = expPct + "%";
   document.getElementById('menu-trainer-exp-text').innerText = `${currentSaveData.exp} / ${currentSaveData.maxExp} EXP`;
-  document.getElementById('menu-caught-count').innerText = currentSaveData.pokemonTeam.length + currentSaveData.pokemonBox.length;
+  document.getElementById('menu-caught-count').innerText = `${currentSaveData.pokedex.length} / 151`;
 
   renderPokemonTeam();
+  renderPokedexAlbum();
 }
+
+function renderPokedexAlbum() {
+  const grid = document.getElementById('pokedex-grid');
+  const progressText = document.getElementById('pokedex-progress-text');
+  if (!grid) return;
+
+  const caughtSet = new Set(currentSaveData.pokedex || []);
+  if (progressText) {
+    progressText.innerText = `${caughtSet.size} / ${POKEMON_DATABASE.length}`;
+  }
+
+  grid.innerHTML = POKEMON_DATABASE.map(p => {
+    const numStr = `#${String(p.id).padStart(3, '0')}`;
+    if (caughtSet.has(p.id)) {
+      return `
+        <div class="pokedex-slot caught">
+          <div class="pokedex-num">${numStr}</div>
+          <img src="${p.cardUrl}" alt="${p.name}" loading="lazy">
+          <div class="pokedex-name">${p.name}</div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="pokedex-slot missing">
+          <div class="pokedex-num">${numStr}</div>
+          <div class="pokedex-question">?</div>
+          <div class="pokedex-name">???</div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
 
 function renderPokemonTeam() {
   const container = document.getElementById('pokemon-team-list');
