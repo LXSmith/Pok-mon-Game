@@ -412,6 +412,29 @@
       </div>
     </div>
 
+    <!-- MODAL: TRAINER SIEG & DURCHSTREICHUNG -->
+    <div id="trainer-defeat-screen" class="modal-overlay hidden" style="background: rgba(3, 7, 18, 0.92);">
+      <div class="modal-card" style="text-align: center; border-color: var(--accent-red); position: relative;">
+        <h2 style="color: var(--accent-yellow); margin-top: 0;">SIEG GEGEN TRAINER!</h2>
+        <p id="trainer-defeat-subtitle" style="color: #aaa; font-size: 13px; margin-bottom: 10px;">Der Gegner wurde geschlagen!</p>
+        
+        <div class="trainer-big-card-container">
+          <div class="trainer-card-frame">
+            <div class="trainer-card-avatar">🧢</div>
+            <div id="big-trainer-name" class="trainer-card-title">Wanderer Hannes</div>
+          </div>
+          <!-- Das rote X -->
+          <div id="red-cross-overlay" class="red-cross-overlay hidden">
+            <div class="cross-line-1"></div>
+            <div class="cross-line-2"></div>
+          </div>
+        </div>
+
+        <button type="button" id="trainer-defeat-next-btn" onclick="closeTrainerDefeatOverlay()" class="btn-primary hidden" style="margin-top: 20px;">BEUTE ABHOLEN</button>
+      </div>
+    </div>
+
+
   </main>
 
   <!-- Leaflet JS & App Script -->
