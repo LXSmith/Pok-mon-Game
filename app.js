@@ -2106,6 +2106,17 @@ function handlePokemonKnockout() {
   const lostExp = Math.floor(oldExp / 2);
   mon.exp = oldExp - lostExp;
   mon.hp = mon.maxHp;
+
+  let lossMsg = `-${lostExp} EXP verloren!`;
+
+  if (isTrainerBattle) {
+    const lostBalls = Math.floor((currentSaveData.pokeballs || 0) / 2);
+    currentSaveData.pokeballs = Math.max(0, (currentSaveData.pokeballs || 0) - lostBalls);
+    lossMsg = `-${lostExp} EXP & -${lostBalls} Pokébälle verloren!`;
+    isTrainerBattle = false;
+    currentTrainer = null;
+  }
+
   saveCurrentData();
 
   pendingKoInfo = {
@@ -2115,7 +2126,7 @@ function handlePokemonKnockout() {
     maxExp: mon.maxExp
   };
 
-  document.getElementById('ko-loss-text').innerText = `-${lostExp} EXP verloren!`;
+  document.getElementById('ko-loss-text').innerText = lossMsg;
   document.getElementById('ko-remaining-text').innerText = `Verbleibende EXP: ${mon.exp} / ${mon.maxExp}`;
   document.getElementById('ko-screen').classList.remove('hidden');
   try { playBeep(150, 0.4); } catch(e){}
@@ -2128,8 +2139,20 @@ function closeKoOverlay() {
 }
 
 function attemptEscape() {
+  if (isTrainerBattle) {
+    const confirmGiveUp = confirm("Willst du das Trainer-Duell wirklich aufgeben? Du verlierst dabei die Hälfte deiner Pokébälle!");
+    if (!confirmGiveUp) return;
+
+    const lostBalls = Math.floor((currentSaveData.pokeballs || 0) / 2);
+    currentSaveData.pokeballs = Math.max(0, (currentSaveData.pokeballs || 0) - lostBalls);
+    if (playerBattlePokemon) playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+    isTrainerBattle = false;
+    currentTrainer = null;
+    saveCurrentData();
+  }
   runFromBattle();
 }
+
 
 function runFromBattle() {
   clearTimeout(dodgeTimer);
