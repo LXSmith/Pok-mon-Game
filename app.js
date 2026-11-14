@@ -1539,49 +1539,6 @@ function startTrainingMatch(partnerMon) {
   document.getElementById('battle-warning-box').innerText = `🏋️ Trainingskampf: ${playerBattlePokemon.name} vs ${currentEnemy.name}!`;
 }
 
-/* KAMPFSYSTEM LOGIK */
-function startBattleFromScan(rawPokemonData) {
-  const team = currentSaveData.pokemonTeam || [];
-  
-  const playerMaxStage = team.length > 0 
-    ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
-    : 0;
-
-  const baseData = rawPokemonData || generateWildPokemon(currentScanType);
-  
-  currentEnemy = prepareSpawnPokemon(baseData, playerMaxStage);
-
-  playerBattlePokemon = team[0];
-  isTrainingMode = false;
-  playerEnergy = 0;
-  isPlayerTurn = true;
-  isEnemyAttacking = false;
-
-  clearTimeout(dodgeTimer);
-  isDodgeWindowActive = false;
-
-  const dodgeBtn = document.getElementById('btn-dodge-action');
-  if (dodgeBtn) dodgeBtn.classList.add('hidden');
-
-  const catchBtn = document.getElementById('battle-ready-ball');
-  if (catchBtn) catchBtn.classList.remove('hidden');
-
-  const bottomHud = document.querySelector('.arena-bottom-hud');
-  if (bottomHud) {
-    bottomHud.classList.remove('hidden');
-    bottomHud.style.display = 'block';
-  }
-
-  resetRadarUI();
-  showScreen('screen-battle');
-  updateBattleUI();
-
-  const warnBox = document.getElementById('battle-warning-box');
-  if (warnBox) {
-    warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) greift an!`;
-  }
-}
-
 // --- SPAWN SKALIERUNG (Single-Stage & Rare Pokémon) ---
 function prepareSpawnPokemon(pokemonData, playerMaxStage) {
   let spawn = { ...pokemonData };
@@ -1606,8 +1563,7 @@ function prepareSpawnPokemon(pokemonData, playerMaxStage) {
   return spawn;
 }
 
-
-/* KAMPFSYSTEM LOGIK */
+/* KAMPFSYSTEM LOGIK (BEREINIGT & MIT TRAINER-MODUS) */
 function startBattleFromScan(rawPokemonData) {
   const team = currentSaveData.pokemonTeam || [];
   
@@ -1621,6 +1577,8 @@ function startBattleFromScan(rawPokemonData) {
 
   playerBattlePokemon = team[0];
   isTrainingMode = false;
+  isTrainerBattle = false;
+  currentTrainer = null;
   playerEnergy = 0;
   isPlayerTurn = true;
   isEnemyAttacking = false;
@@ -1650,14 +1608,84 @@ function startBattleFromScan(rawPokemonData) {
   }
 }
 
+function startTrainerBattle() {
+  const team = currentSaveData.pokemonTeam || [];
+  const playerMaxStage = team.length > 0 
+    ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
+    : 0;
 
+  const trainerNames = [
+    "Käfersammler Benny",
+    "Ass-Trainer Viktor",
+    "Göre Maja",
+    "Wanderer Hannes",
+    "Schwarzgurt Ken",
+    "Forscher Gideon"
+  ];
+  const trainerName = trainerNames[Math.floor(Math.random() * trainerNames.length)];
+  const teamCount = Math.floor(Math.random() * 3) + 1;
 
+  const nonLegendaryPool = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage));
+  const trainerTeam = [];
+
+  for (let i = 0; i < teamCount; i++) {
+    const tpl = nonLegendaryPool[Math.floor(Math.random() * nonLegendaryPool.length)];
+    const inst = createPokemonInstance(tpl);
+    trainerTeam.push(prepareSpawnPokemon(inst, playerMaxStage));
+  }
+
+  isTrainerBattle = true;
+  isTrainingMode = false;
+  currentTrainer = {
+    name: trainerName,
+    team: trainerTeam,
+    currentIndex: 0,
+    totalExp: 0
+  };
+
+  currentEnemy = currentTrainer.team[0];
+  playerBattlePokemon = team[0];
+  playerEnergy = 0;
+  isPlayerTurn = true;
+  isEnemyAttacking = false;
+
+  clearTimeout(dodgeTimer);
+  isDodgeWindowActive = false;
+
+  const dodgeBtn = document.getElementById('btn-dodge-action');
+  if (dodgeBtn) dodgeBtn.classList.add('hidden');
+
+  const catchBtn = document.getElementById('battle-ready-ball');
+  if (catchBtn) catchBtn.classList.add('hidden');
+
+  resetRadarUI();
+  showScreen('screen-battle');
+  updateBattleUI();
+
+  const warnBox = document.getElementById('battle-warning-box');
+  if (warnBox) {
+    warnBox.innerText = `⚔️ ${trainerName} fordert dich mit ${teamCount} Pokémon heraus!`;
+  }
+}
 
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
-  const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
-  document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
+  const trainerHud = document.getElementById('trainer-balls-hud');
+  if (isTrainerBattle && currentTrainer) {
+    document.getElementById('enemy-title').innerText = `${currentTrainer.name.toUpperCase()}: ${currentEnemy.name.toUpperCase()}`;
+    if (trainerHud) {
+      trainerHud.classList.remove('hidden');
+      trainerHud.innerText = currentTrainer.team
+        .map((_, idx) => (idx < currentTrainer.currentIndex ? "⚫" : "🔴"))
+        .join(" ");
+    }
+  } else {
+    const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
+    document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
+    if (trainerHud) trainerHud.classList.add('hidden');
+  }
+
   document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
   document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
   document.getElementById('enemy-hp-bar').style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
@@ -1668,6 +1696,13 @@ function updateBattleUI() {
 
   const ballsBadge = document.getElementById('battle-balls-badge') || document.getElementById('battle-balls-count');
   if (ballsBadge) ballsBadge.innerText = currentSaveData.pokeballs;
+
+  const potionBtn = document.getElementById('battle-potion-btn');
+  const potionsBadge = document.getElementById('battle-potions-badge');
+  if (potionsBadge) potionsBadge.innerText = currentSaveData.potions || 0;
+  if (potionBtn) {
+    potionBtn.style.opacity = (currentSaveData.potions || 0) > 0 ? "1" : "0.4";
+  }
 
   const playerCardImg = document.getElementById('player-card-img');
   if (playerCardImg) {
@@ -1689,6 +1724,31 @@ function updateBattleUI() {
     if (dodgeBtn) dodgeBtn.classList.add('hidden');
   }
 }
+
+function useBattlePotion() {
+  if (!isPlayerTurn || isEnemyAttacking) return;
+  if ((currentSaveData.potions || 0) <= 0) {
+    alert("Du hast keine Heiltränke mehr im Beutel!");
+    return;
+  }
+  if (playerBattlePokemon.hp >= playerBattlePokemon.maxHp) {
+    alert(`${playerBattlePokemon.name} hat bereits volle KP!`);
+    return;
+  }
+
+  currentSaveData.potions--;
+  playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+  saveCurrentData();
+  updateBattleUI();
+
+  try {
+    playBeep(587.33, 0.12);
+    setTimeout(() => playBeep(880, 0.2), 120);
+  } catch (e) {}
+
+  document.getElementById('battle-warning-box').innerText = `🧪 Heiltrank genutzt! ${playerBattlePokemon.name} ist wieder bei 100% KP!`;
+}
+
 
 function playPunchSound() {
   const ctx = getAudioContext();
