@@ -853,6 +853,8 @@ function confirmStarter() {
   currentSaveData.pokemonTeam = [starters[selectedStarter]];
   currentSaveData.pokemonBox = [];
   currentSaveData.pokeballs = 10;
+  currentSaveData.potions = 2;
+  currentSaveData.rareCandies = 0;
   currentSaveData.pokedex = [];
   registerPokemonInPokedex(starters[selectedStarter].name);
 
@@ -872,9 +874,18 @@ function saveCurrentData() {
 }
 
 function loadDashboard() {
+  if (currentSaveData.potions === undefined) currentSaveData.potions = 2;
+  if (currentSaveData.rareCandies === undefined) currentSaveData.rareCandies = 0;
+
   syncPokedexWithOwned();
   document.getElementById('scan-active-mon').innerText = currentSaveData.pokemonTeam[0]?.name || '--';
   document.getElementById('menu-item-pokeballs').innerText = currentSaveData.pokeballs;
+  
+  const potionsEl = document.getElementById('menu-item-potions');
+  if (potionsEl) potionsEl.innerText = currentSaveData.potions;
+  const candiesEl = document.getElementById('menu-item-candies');
+  if (candiesEl) candiesEl.innerText = currentSaveData.rareCandies;
+
   document.getElementById('menu-trainer-level').innerText = "Level " + currentSaveData.level;
 
   const expPct = Math.min(100, (currentSaveData.exp / currentSaveData.maxExp) * 100);
@@ -882,9 +893,64 @@ function loadDashboard() {
   document.getElementById('menu-trainer-exp-text').innerText = `${currentSaveData.exp} / ${currentSaveData.maxExp} EXP`;
   document.getElementById('menu-caught-count').innerText = `${currentSaveData.pokedex.length} / 151`;
 
+  const candyList = document.getElementById('candy-target-list');
+  if (candyList) candyList.classList.add('hidden');
+
   renderPokemonTeam();
   renderPokedexAlbum();
 }
+
+function openCandySelection() {
+  if ((currentSaveData.rareCandies || 0) <= 0) {
+    alert("Du hast aktuell kein Sonderbonbon im Beutel! Besiege Trainer, um welche zu gewinnen.");
+    return;
+  }
+  const container = document.getElementById('candy-target-list');
+  if (!container) return;
+
+  container.classList.remove('hidden');
+  container.innerHTML = `<div style="font-size:12px; color:#ffcb05; font-weight:bold; margin-bottom:6px;">Wähle ein Pokémon für +1 Level:</div>`;
+
+  currentSaveData.pokemonTeam.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = "pokemon-row";
+    row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:6px 8px; margin-bottom:4px; background:rgba(255,255,255,0.06); border-radius:8px;";
+    row.innerHTML = `
+      <span style="font-size:13px;"><strong>${p.name}</strong> (Lv. ${p.level} | ${p.maxHp} KP)</span>
+      <button type="button" class="btn-primary" style="width:auto; padding:4px 10px; font-size:10px;" onclick="useRareCandyOn(${idx})">🍬 Geben</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function useRareCandyOn(teamIndex) {
+  if ((currentSaveData.rareCandies || 0) <= 0) return;
+  const mon = currentSaveData.pokemonTeam[teamIndex];
+  if (!mon) return;
+
+  currentSaveData.rareCandies--;
+  if (!mon.maxExp) mon.maxExp = 50 + (mon.level * mon.level * 25);
+  const expNeeded = Math.max(1, mon.maxExp - (mon.exp || 0));
+
+  const leveledUp = addPokemonExp(mon, expNeeded);
+
+  let triggeredEvo = false;
+  if (EVOLUTION_CHAINS[mon.name] && mon.maxHp >= EVOLUTION_CHAINS[mon.name].requiredMaxHp) {
+    triggeredEvo = true;
+    pendingEvoPokemon = mon;
+  }
+
+  saveCurrentData();
+  loadDashboard();
+  closeMenuModal();
+
+  if (leveledUp && pendingLevelUpData) {
+    window._pendingLevelUpInfo = pendingLevelUpData;
+    window._launchEvolutionAfterVictory = triggeredEvo;
+    closeVictoryOverlay();
+  }
+}
+
 
 function renderPokedexAlbum() {
   const grid = document.getElementById('pokedex-grid');
