@@ -2422,6 +2422,8 @@ const CatchEngine = {
                 specialAttack: Math.round(currentEnemy.maxHp * 0.30)
               };
 
+                      registerPokemonInPokedex(currentEnemy.name);
+
               if (currentSaveData.pokemonTeam.length < 6) {
                 currentSaveData.pokemonTeam.push(newMon);
                 alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
@@ -2430,6 +2432,7 @@ const CatchEngine = {
                 currentSaveData.pokemonBox.push(newMon);
                 alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
               }
+
 
               if (currentSaveData.pokemonTeam.length > 0) {
                 currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
@@ -2645,10 +2648,12 @@ function triggerBackgroundEvolution(pokemon) {
     try { playBeep(880, 0.4); } catch(e){}
   }, 200);
 
-  setTimeout(() => {
+    setTimeout(() => {
     evoImg.src = evoData.cardUrl;
     pokemon.name = evoData.next;
     pokemon.cardUrl = evoData.cardUrl;
+    registerPokemonInPokedex(pokemon.name);
+
     
     // Stufen-Upgrade in Datenstruktur hinterlegen
     if (evoData.isTwoStage) {
