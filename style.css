@@ -1164,3 +1164,38 @@ button:active { transform: scale(0.97); }
 .pokedex-slot.missing .pokedex-name {
   color: #64748b;
 }
+/* =========================================================
+   TRAINER-KAMPF HUD & HEILTRANK-BUTTON
+   ========================================================= */
+.trainer-balls-hud {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  margin-bottom: 3px;
+  letter-spacing: 2px;
+}
+
+.battle-potion-btn {
+  position: absolute !important;
+  bottom: 195px;
+  right: 22px;
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 50% !important;
+  border: 3px solid rgba(255, 255, 255, 0.5) !important;
+  background: radial-gradient(circle, #059669 0%, #064e3b 100%) !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6) !important;
+  z-index: 100 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.battle-potion-btn:active {
+  transform: scale(0.9);
+}
+
