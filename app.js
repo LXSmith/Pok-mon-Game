@@ -1003,13 +1003,15 @@ function closeMenuModal() {
 }
 
 function switchMenuTab(tabName) {
-  ['pokemon', 'items', 'exp'].forEach(t => {
+  ['pokemon', 'items', 'album', 'exp'].forEach(t => {
     document.getElementById(`mtab-content-${t}`).classList.add('hidden');
     document.getElementById(`mtab-btn-${t}`).classList.remove('active');
   });
   document.getElementById(`mtab-content-${tabName}`).classList.remove('hidden');
   document.getElementById(`mtab-btn-${tabName}`).classList.add('active');
 }
+
+
 
 function exitToMainMenu() {
   clearTimeout(dodgeTimer);
