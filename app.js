@@ -1662,11 +1662,29 @@ function startTrainerBattle() {
   showScreen('screen-battle');
   updateBattleUI();
 
+  // Trainer Banner einblenden
+  const banner = document.getElementById('trainer-challenge-banner');
+  const bannerName = document.getElementById('trainer-name-banner');
+  if (banner && bannerName) {
+    bannerName.innerText = trainerName;
+    banner.classList.remove('hidden');
+    setTimeout(() => banner.classList.add('hidden'), 2500);
+  }
+
+  // Kleine Trainer-Karte links einblenden
+  const badge = document.getElementById('battle-trainer-badge');
+  const badgeName = document.getElementById('trainer-badge-name');
+  if (badge && badgeName) {
+    badgeName.innerText = trainerName.split(" ")[0]; // z.B. nur "Hannes"
+    badge.classList.remove('hidden');
+  }
+
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) {
-    warnBox.innerText = `⚔️ ${trainerName} fordert dich mit ${teamCount} Pokémon heraus!`;
+    warnBox.innerText = `⚔️ ${trainerName} fordert dich heraus!`;
   }
 }
+
 
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
@@ -2641,6 +2659,8 @@ function attemptCatch() {
    4. PROGRESSION (EXP/LEVEL-UP), EVOLUTION (+10/+20 BONI) & BACKUP
    ========================================================= */
 
+let pendingTrainerRewardData = null;
+
 function winBattle() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
@@ -2654,7 +2674,7 @@ function winBattle() {
     if (currentTrainer.currentIndex + 1 < currentTrainer.team.length) {
       currentTrainer.currentIndex++;
       const nextMon = currentTrainer.team[currentTrainer.currentIndex];
-      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name} in den Kampf!`;
+      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name}!`;
       try { playBeep(523.25, 0.15); } catch (e) {}
 
       setTimeout(() => {
@@ -2675,6 +2695,10 @@ function winBattle() {
   } catch(e){}
 
   setTimeout(() => {
+    // Mini-Karte im Battle wieder ausblenden
+    const badge = document.getElementById('battle-trainer-badge');
+    if (badge) badge.classList.add('hidden');
+
     if (isTrainingMode) {
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       const leveledUp = addPokemonExp(playerBattlePokemon, earnedExp);
@@ -2689,10 +2713,11 @@ function winBattle() {
       document.getElementById('victory-screen').classList.remove('hidden');
 
     } else if (isTrainerBattle && currentTrainer) {
+      // Epischer Trainer-Sieg mit durchgestrichener Karte
+      const trainerName = currentTrainer.name;
       const earnedExp = currentTrainer.totalExp;
-      addTrainerExp(earnedExp);
 
-      // Zufalls-Belohnung: 50% 10 Pokébälle, 35% 1 Heiltrank, 15% 1 Sonderbonbon
+      // Zufalls-Belohnung vorbereiten
       const roll = Math.random();
       let rewardText = "";
       if (roll < 0.50) {
@@ -2720,12 +2745,34 @@ function winBattle() {
         pendingEvoPokemon = activeMon;
       }
 
-      document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (+50% Trainer-Bonus!)`;
-      document.getElementById('victory-item-text').innerText = rewardText;
+      pendingTrainerRewardData = {
+        earnedExp: earnedExp,
+        rewardText: rewardText,
+        leveledUp: leveledUp,
+        triggeredEvo: triggeredEvo
+      };
 
-      window._pendingLevelUpInfo = leveledUp ? pendingLevelUpData : null;
-      window._launchEvolutionAfterVictory = triggeredEvo;
-      document.getElementById('victory-screen').classList.remove('hidden');
+      // Modal für durchgestrichene Trainer-Karte öffnen
+      document.getElementById('big-trainer-name').innerText = trainerName;
+      document.getElementById('trainer-defeat-screen').classList.remove('hidden');
+      document.getElementById('red-cross-overlay').classList.add('hidden');
+      document.getElementById('trainer-defeat-next-btn').classList.add('hidden');
+
+      try {
+        playBeep(440, 0.2);
+        setTimeout(() => playBeep(880, 0.4), 200);
+      } catch (e) {}
+
+      // Rotes X nach kurzer Verzögerung einzeichnen
+      setTimeout(() => {
+        document.getElementById('red-cross-overlay').classList.remove('hidden');
+        try { playBeep(220, 0.3); } catch (e) {}
+      }, 500);
+
+      // Weiter-Button nach der Animation freigeben
+      setTimeout(() => {
+        document.getElementById('trainer-defeat-next-btn').classList.remove('hidden');
+      }, 1300);
 
     } else {
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
@@ -2756,6 +2803,20 @@ function winBattle() {
   }, 1000);
 }
 
+function closeTrainerDefeatOverlay() {
+  document.getElementById('trainer-defeat-screen').classList.add('hidden');
+  if (!pendingTrainerRewardData) return;
+
+  const data = pendingTrainerRewardData;
+  pendingTrainerRewardData = null;
+
+  document.getElementById('victory-exp-text').innerText = `+${data.earnedExp} EXP (+50% Trainer-Bonus!)`;
+  document.getElementById('victory-item-text').innerText = data.rewardText;
+
+  window._pendingLevelUpInfo = data.leveledUp ? pendingLevelUpData : null;
+  window._launchEvolutionAfterVictory = data.triggeredEvo;
+  document.getElementById('victory-screen').classList.remove('hidden');
+}
 
 /* POKÉMON EXP & LEVEL-UP STAT-ZUWACHS
    - Single-Stage (ohne Evo): +4 Max-KP pro Level
