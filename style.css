@@ -1358,3 +1358,14 @@ button:active { transform: scale(0.97); }
   display: block !important;
 }
 
+/* Behebt die Überlappung zwischen Kampf-Textbox und eigenem Pokémon-Namen */
+.battle-box-hud {
+  margin: 4px auto 18px auto !important;
+  z-index: 30 !important;
+}
+
+.player-sprite-wrapper {
+  bottom: 42px !important;
+  transform: scale(1.55) !important;
+}
+
