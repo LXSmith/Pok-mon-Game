@@ -1589,6 +1589,14 @@ function startBattleFromScan(rawPokemonData) {
   const dodgeBtn = document.getElementById('btn-dodge-action');
   if (dodgeBtn) dodgeBtn.classList.add('hidden');
 
+  // Trainer-Elemente bei wildem Kampf garantiert verstecken
+  const badge = document.getElementById('battle-trainer-badge');
+  if (badge) badge.classList.add('hidden');
+  const banner = document.getElementById('trainer-challenge-banner');
+  if (banner) banner.classList.add('hidden');
+  const trainerHud = document.getElementById('trainer-balls-hud');
+  if (trainerHud) trainerHud.classList.add('hidden');
+
   const catchBtn = document.getElementById('battle-ready-ball');
   if (catchBtn) catchBtn.classList.remove('hidden');
 
@@ -1614,17 +1622,30 @@ function startTrainerBattle() {
     ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
     : 0;
 
-  const trainerNames = [
-    "Käfersammler Benny",
-    "Ass-Trainer Viktor",
-    "Göre Maja",
-    "Wanderer Hannes",
-    "Schwarzgurt Ken",
-    "Forscher Gideon"
+  const trainerPool = [
+    { name: "Viktor", gender: "m", title: "Pokémon Trainer" },
+    { name: "Benny",  gender: "m", title: "Pokémon Trainer" },
+    { name: "Hannes", gender: "m", title: "Pokémon Trainer" },
+    { name: "Ken",    gender: "m", title: "Pokémon Trainer" },
+    { name: "Gideon", gender: "m", title: "Pokémon Trainer" },
+    { name: "Maja",   gender: "f", title: "Pokémon Trainerin" },
+    { name: "Fiona",  gender: "f", title: "Pokémon Trainerin" },
+    { name: "Sarah",  gender: "f", title: "Pokémon Trainerin" },
+    { name: "Laura",  gender: "f", title: "Pokémon Trainerin" }
   ];
-  const trainerName = trainerNames[Math.floor(Math.random() * trainerNames.length)];
-  const teamCount = Math.floor(Math.random() * 3) + 1;
 
+  const trainer = trainerPool[Math.floor(Math.random() * trainerPool.length)];
+  const fullTrainerName = `${trainer.title} ${trainer.name}`;
+
+  // Geprüfte, gültige DiceBear 9.x Adventurer-Parameter (Comic/Anime-Look)
+  const randomSeed = `${trainer.name}_${Math.floor(Math.random() * 1000)}`;
+  const hairList = trainer.gender === "m"
+    ? "short01,short02,short03,short04,short05,short06,short07,short08,short12,short15"
+    : "long01,long02,long04,long05,long06,long07,long09,long13,long16,long19";
+
+  const avatarUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(randomSeed)}&hair=${hairList}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+
+  const teamCount = Math.floor(Math.random() * 3) + 1;
   const nonLegendaryPool = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage));
   const trainerTeam = [];
 
@@ -1637,7 +1658,9 @@ function startTrainerBattle() {
   isTrainerBattle = true;
   isTrainingMode = false;
   currentTrainer = {
-    name: trainerName,
+    name: fullTrainerName,
+    shortName: trainer.name,
+    avatarUrl: avatarUrl,
     team: trainerTeam,
     currentIndex: 0,
     totalExp: 0
@@ -1662,28 +1685,33 @@ function startTrainerBattle() {
   showScreen('screen-battle');
   updateBattleUI();
 
-  // Trainer Banner einblenden
+  // Leuchtendes Herausforderungs-Banner für 2,5 Sekunden einblenden
   const banner = document.getElementById('trainer-challenge-banner');
   const bannerName = document.getElementById('trainer-name-banner');
   if (banner && bannerName) {
-    bannerName.innerText = trainerName;
+    bannerName.innerText = fullTrainerName;
     banner.classList.remove('hidden');
     setTimeout(() => banner.classList.add('hidden'), 2500);
   }
 
-  // Kleine Trainer-Karte links einblenden
+  // Kleine Trainer-Karte links oben mit Avatar-Bild einblenden
   const badge = document.getElementById('battle-trainer-badge');
   const badgeName = document.getElementById('trainer-badge-name');
+  const badgeAvatar = document.querySelector('.trainer-badge-avatar');
   if (badge && badgeName) {
-    badgeName.innerText = trainerName.split(" ")[0]; // z.B. nur "Hannes"
+    badgeName.innerText = trainer.name;
+    if (badgeAvatar) {
+      badgeAvatar.innerHTML = `<img src="${avatarUrl}" alt="${trainer.name}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+    }
     badge.classList.remove('hidden');
   }
 
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) {
-    warnBox.innerText = `⚔️ ${trainerName} fordert dich heraus!`;
+    warnBox.innerText = `⚔️ Herausforderung von ${fullTrainerName}!`;
   }
 }
+
 
 
 function updateBattleUI() {
