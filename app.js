@@ -2146,6 +2146,9 @@ function switchBattlePokemon(newTeamIndex) {
 
 function handlePokemonKnockout() {
   if(typeof CatchEngine !== 'undefined') CatchEngine.stopCatchSession();
+  const badge = document.getElementById('battle-trainer-badge');
+  if (badge) badge.classList.add('hidden');
+
   const mon = playerBattlePokemon;
   const oldExp = mon.exp || 0;
   
@@ -2196,8 +2199,11 @@ function attemptEscape() {
     currentTrainer = null;
     saveCurrentData();
   }
+  const badge = document.getElementById('battle-trainer-badge');
+  if (badge) badge.classList.add('hidden');
   runFromBattle();
 }
+
 
 
 function runFromBattle() {
