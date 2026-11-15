@@ -2729,7 +2729,6 @@ function winBattle() {
   } catch(e){}
 
   setTimeout(() => {
-    // Mini-Karte im Battle wieder ausblenden
     const badge = document.getElementById('battle-trainer-badge');
     if (badge) badge.classList.add('hidden');
 
@@ -2747,11 +2746,13 @@ function winBattle() {
       document.getElementById('victory-screen').classList.remove('hidden');
 
     } else if (isTrainerBattle && currentTrainer) {
-      // Epischer Trainer-Sieg mit durchgestrichener Karte
+      // WICHTIG: Daten sichern BEVOR currentTrainer auf null gesetzt wird!
       const trainerName = currentTrainer.name;
+      const trainerAvatar = currentTrainer.avatarUrl;
       const earnedExp = currentTrainer.totalExp;
 
-      // Zufalls-Belohnung vorbereiten
+      addTrainerExp(earnedExp);
+
       const roll = Math.random();
       let rewardText = "";
       if (roll < 0.50) {
@@ -2786,8 +2787,13 @@ function winBattle() {
         triggeredEvo: triggeredEvo
       };
 
-      // Modal für durchgestrichene Trainer-Karte öffnen
+      // Große Trainer-Karte mit Avatar füllen und einblenden
       document.getElementById('big-trainer-name').innerText = trainerName;
+      const bigCardAvatar = document.querySelector('.trainer-card-avatar');
+      if (bigCardAvatar && trainerAvatar) {
+        bigCardAvatar.innerHTML = `<img src="${trainerAvatar}" alt="${trainerName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      }
+
       document.getElementById('trainer-defeat-screen').classList.remove('hidden');
       document.getElementById('red-cross-overlay').classList.add('hidden');
       document.getElementById('trainer-defeat-next-btn').classList.add('hidden');
@@ -2797,13 +2803,11 @@ function winBattle() {
         setTimeout(() => playBeep(880, 0.4), 200);
       } catch (e) {}
 
-      // Rotes X nach kurzer Verzögerung einzeichnen
       setTimeout(() => {
         document.getElementById('red-cross-overlay').classList.remove('hidden');
         try { playBeep(220, 0.3); } catch (e) {}
       }, 500);
 
-      // Weiter-Button nach der Animation freigeben
       setTimeout(() => {
         document.getElementById('trainer-defeat-next-btn').classList.remove('hidden');
       }, 1300);
@@ -2851,6 +2855,7 @@ function closeTrainerDefeatOverlay() {
   window._launchEvolutionAfterVictory = data.triggeredEvo;
   document.getElementById('victory-screen').classList.remove('hidden');
 }
+
 
 /* POKÉMON EXP & LEVEL-UP STAT-ZUWACHS
    - Single-Stage (ohne Evo): +4 Max-KP pro Level
