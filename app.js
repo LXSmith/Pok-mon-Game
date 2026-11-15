@@ -3,14 +3,22 @@
    1. SETUP, SYSTEM & DATENBANK (151 KANTO POKÉMON)
    ========================================================= */
 
-// Service Worker Registrierung
+// Service Worker & Cache-Auto-Update (verhindert veraltete Dateien auf dem Handy)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registriert', reg))
-      .catch(err => console.log('Service Worker Fehler', err));
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let reg of registrations) {
+        reg.update();
+      }
+    });
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      });
+    }
   });
 }
+
 
 // Globale Audio-Kontext Verwaltung
 let audioCtx = null;
