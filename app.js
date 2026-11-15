@@ -885,6 +885,14 @@ function loadDashboard() {
   if (currentSaveData.potions === undefined) currentSaveData.potions = 2;
   if (currentSaveData.rareCandies === undefined) currentSaveData.rareCandies = 0;
 
+  // Falls aus altem Spielstand mehr als 3 Pokémon im Team sind -> Überschuss in die Box
+  if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
+  while (currentSaveData.pokemonTeam && currentSaveData.pokemonTeam.length > 3) {
+    const movedMon = currentSaveData.pokemonTeam.pop();
+    currentSaveData.pokemonBox.push(movedMon);
+  }
+
+
   syncPokedexWithOwned();
   document.getElementById('scan-active-mon').innerText = currentSaveData.pokemonTeam[0]?.name || '--';
   document.getElementById('menu-item-pokeballs').innerText = currentSaveData.pokeballs;
