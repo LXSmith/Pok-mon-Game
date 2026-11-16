@@ -1216,8 +1216,14 @@ function generateWildPokemon(scanType = 'quick') {
       });
     }
 
-  } else {
-    const wantRare = (Math.random() * 100) < levelPercentage;
+    } else {
+    // Quick Scan / Schneller Scan: KEINE Rare Pokémon! Nur normale (isRare === false) Basis-Pokémon
+    candidates = POKEMON_DATABASE.filter(p => {
+      if (p.isLegendary) return false;
+      if (p.isRare) return false; // Schließt alle Rare-Pokémon im Schnellen Scan aus
+      return (p.stage === 0 || p.isSingleStage);
+    });
+  }
 
     candidates = POKEMON_DATABASE.filter(p => {
       if (p.isLegendary) return false;
