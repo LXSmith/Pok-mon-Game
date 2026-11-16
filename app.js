@@ -1383,15 +1383,18 @@ function updateBlipPosition() {
   blip.style.left = x + "px";
   blip.style.top = y + "px";
 
-  blip.onclick = () => {
+    blip.onclick = (e) => {
+    e.stopPropagation();
     triggerVibration([200, 100, 200]);
     blip.classList.add('hidden');
     targetPokemonCoords = null;
     triggerRadarEncounter();
   };
+
 }
 
 function triggerRadarEncounter() {
+  // Sofortige Entfernungsprüfung oder direkter Start des Kampfes
   if (Math.random() < 0.25) {
     startTrainerBattle();
   } else {
