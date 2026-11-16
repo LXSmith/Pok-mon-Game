@@ -1116,60 +1116,56 @@ function getDailyLevel1To5Pool() {
    ========================================================= */
 
 /* DYNAMISCHE SPAWN-WAHRSCHEINLICHKEIT NACH TEAM-ZUSAMMENSETZUNG
-   - Single-Stage (ohne Evo) zählen als Phase 2
-   - Phase 1: +10% pro Slot
-   - Phase 2: +10% pro Slot
-   - Mindestens 40% Chance auf Basic bleibt erhalten
+   - Jedes Pokémon der Stufe 1 im Team erhöht die Stufe-1-Chance um 20%
+   - Jedes Pokémon der Stufe 2 / Single-Stage im Team erhöht die Stufe-2-Chance um 20%
+   - Der Rest verbleibt bei Stufe 0 (Basic)
 */
 function determineSpawnStage(team) {
-  let phase1Count = 0;
-  let phase2Count = 0;
+  let stage1Count = 0;
+  let stage2Count = 0;
 
   team.forEach(mon => {
     if (mon.isSingleStage) {
-      phase2Count++;
+      stage2Count++;
     } else if (mon.stage === 1) {
-      phase1Count++;
+      stage1Count++;
     } else if (mon.stage === 2) {
-      phase2Count++;
+      stage2Count++;
     }
   });
 
-  if (phase1Count === 0 && phase2Count === 0) {
-    return 0; // 100% Basic (Phase 0)
-  }
+  let chanceStage1 = stage1Count * 20; // 20% pro Stufe-1-Pokémon
+  let chanceStage2 = stage2Count * 20; // 20% pro Stufe-2-Pokémon
 
-  let chancePhase2 = phase2Count * 10;
-  let chancePhase1 = phase1Count * 10;
-
-  if (phase2Count > 0 && chancePhase1 > 50) {
-    chancePhase1 = 50;
-  }
-
-  if ((chancePhase1 + chancePhase2) > 60) {
-    const totalEvo = chancePhase1 + chancePhase2;
-    chancePhase1 = Math.round((chancePhase1 / totalEvo) * 60);
-    chancePhase2 = 60 - chancePhase1;
+  // Sicherheitshalber nach oben auf 100% deckeln
+  if (chanceStage1 + chanceStage2 > 100) {
+    const total = chanceStage1 + chanceStage2;
+    chanceStage1 = Math.round((chanceStage1 / total) * 100);
+    chanceStage2 = 100 - chanceStage1;
   }
 
   const roll = Math.random() * 100;
 
-  if (roll < chancePhase2) {
-    return 2; // Phase 2 (Endstufe)
-  } else if (roll < (chancePhase2 + chancePhase1)) {
-    return 1; // Phase 1 (Erste Entwicklung)
+  if (roll < chanceStage2) {
+    return 2; // Stufe 2 (Endstufe / Single-Stage)
+  } else if (roll < chanceStage2 + chanceStage1) {
+    return 1; // Stufe 1
   } else {
-    return 0; // Phase 0 (Basic)
+    return 0; // Stufe 0 (Basic)
   }
 }
 
 /* =========================================================
-   VOLLSTÄNDIGE SPAWN-LOGIK (INKL. EINZIGARTIGER LEGENDÄRER)
+   VOLLSTÄNDIGE SPAWN-LOGIK (INKL. STUFEN- & SELEKTIONSFILTER)
    ========================================================= */
 
 function generateWildPokemon(scanType = 'quick') {
   const playerLevel = currentSaveData.level || 1;
   const levelPercentage = Math.min(100, playerLevel);
+  const team = currentSaveData.pokemonTeam || [];
+  
+  // Bestimme die Ziel-Entwicklungsstufe basierend auf dem Team (20% pro passendem Pokémon)
+  const targetStage = determineSpawnStage(team);
 
   const ownedNames = new Set([
     ...(currentSaveData.pokemonTeam || []).map(p => p.name),
@@ -1212,54 +1208,42 @@ function generateWildPokemon(scanType = 'quick') {
       const wantRare = (Math.random() * 100) < (levelPercentage * 2);
       candidates = POKEMON_DATABASE.filter(p => {
         if (p.isLegendary) return false;
-        return (p.stage === 0 || p.isSingleStage) && (p.isRare === wantRare);
+        if (p.isRare !== wantRare) return false;
+        
+        // Stufenfilter anwenden
+        if (targetStage === 2) {
+          return (p.stage === 2 || p.isSingleStage);
+        } else {
+          return p.stage === targetStage && !p.isSingleStage;
+        }
       });
     }
 
-    } else {
-    // Quick Scan / Schneller Scan: KEINE Rare Pokémon! Nur normale (isRare === false) Basis-Pokémon
+  } else {
+    // Quick Scan / Schneller Scan: KEINE rare Pokémon, aber Entwicklungsstufen nach Team-Wahrscheinlichkeit!
     candidates = POKEMON_DATABASE.filter(p => {
       if (p.isLegendary) return false;
-      if (p.isRare) return false; // Schließt alle Rare-Pokémon im Schnellen Scan aus
-      return (p.stage === 0 || p.isSingleStage);
+      if (p.isRare) return false; // Ausschluss von Rare-Pokémon im Schnellen Scan
+
+      // Stufenfilter anwenden
+      if (targetStage === 2) {
+        return (p.stage === 2 || p.isSingleStage);
+      } else {
+        return p.stage === targetStage && !p.isSingleStage;
+      }
     });
   }
 
-    candidates = POKEMON_DATABASE.filter(p => {
-      if (p.isLegendary) return false;
-      const isAllowedType = (p.stage === 0 || p.isSingleStage);
-      const matchesRareFilter = (p.isRare === wantRare);
-      return isAllowedType && matchesRareFilter;
-    });
-  }
-
+  // Fallback, falls der gefilterte Pool für die Stufe leer ist
   if (!candidates || candidates.length === 0) {
-    candidates = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage) && !p.isRare);
+    candidates = POKEMON_DATABASE.filter(p => !p.isLegendary && !p.isRare && p.stage === 0);
+  }
+  if (!candidates || candidates.length === 0) {
+    candidates = POKEMON_DATABASE.filter(p => !p.isLegendary);
   }
 
   const template = candidates[Math.floor(Math.random() * candidates.length)];
   return createPokemonInstance(template);
-}
-
-function createPokemonInstance(template) {
-  return {
-    name: template.name,
-    type: template.type,
-    stage: template.stage || 0,
-    isRare: template.isRare || false,
-    isSingleStage: template.isSingleStage || false,
-     isLegendary: template.isLegendary || false,
-    baseHp: template.baseHp,
-    level: 1,
-    hp: template.baseHp,
-    maxHp: template.baseHp,
-    cardUrl: template.cardUrl,
-    weakness: template.weakness,
-    exp: 0,
-    maxExp: 75,
-    attack: Math.round(template.baseHp * 0.20),
-    specialAttack: Math.round(template.baseHp * 0.30)
-  };
 }
 
 /* RADAR-STEUERUNG */
