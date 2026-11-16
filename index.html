@@ -431,6 +431,17 @@
       </div>
     </div>
 
+    <!-- MODAL: TRAINING & KAMPF AUSWAHL (ZUHAUSE) -->
+    <div id="modal-training-select" class="modal-overlay hidden">
+      <div class="modal-card">
+        <h3 style="margin-top:0; color:var(--accent-yellow);">🏋️ Training & Kampf</h3>
+        <p class="subtitle" style="margin-bottom:12px;">Wähle einen Sparringspartner oder starte den Kampf:</p>
+        <div id="training-partner-list" style="max-height: 180px; overflow-y: auto; width:100%; margin-bottom: 12px;"></div>
+        <button type="button" onclick="closeTrainingSelection(); forceDevSpawn();" class="btn-primary" style="margin-bottom: 8px; width:100%;">⚡ Pokémon Kampf</button>
+        <button type="button" onclick="closeTrainingSelection()" class="btn-secondary" style="width:100%;">Abbrechen</button>
+      </div>
+    </div>
+
 
   </main>
 
