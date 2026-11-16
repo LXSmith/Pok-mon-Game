@@ -2503,7 +2503,7 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-  updatePhysics() {
+    updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
@@ -2536,13 +2536,14 @@ const CatchEngine = {
         return;
       }
 
+      // Wenn der Ball daneben geht: KEINE Rückerstattung mehr, der Ball ist weg!
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
-        this.showFeedback("VORBEI! (-1 BALL)");
+        this.showFeedback("VORBEI!");
         setTimeout(() => {
           if ((currentSaveData.pokeballs || 0) <= 0) {
             this.stopCatchSession();
-            alert("Dein letzter Pokéball ging daneben! Keine Bälle mehr übrig.");
+            alert("Der Pokéball ging daneben und du hast keine Bälle mehr übrig!");
           } else {
             this.resetBall();
           }
@@ -2553,6 +2554,7 @@ const CatchEngine = {
       this.updateBallElement();
     }
   },
+
 
   updateRing() {
     if (this.ball.isThrown) return;
