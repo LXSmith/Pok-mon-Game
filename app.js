@@ -510,18 +510,27 @@ function searchAddressOnMap() {
     }).catch(() => alert("Fehler bei der Adresssuche."));
 }
 
+let isSettingHomeForNewGame = false;
+
 function saveHomeLocationFromMap() {
   if (tempHomeCoords) {
     currentSaveData.homePos = { ...tempHomeCoords };
     saveCurrentData();
     alert("🏠 Zuhause-Standort erfolgreich gespeichert!");
-    closeHomeMapModal();
+    document.getElementById('modal-home-map').classList.add('hidden');
+
+    if (isSettingHomeForNewGame) {
+      isSettingHomeForNewGame = false;
+      showScreen('screen-starter');
+    }
   }
 }
 
 function closeHomeMapModal() {
+  isSettingHomeForNewGame = false;
   document.getElementById('modal-home-map').classList.add('hidden');
 }
+
 
 /* ENTKOPPELTE KOMPASS-RECHTE (OHNE REJECTION-BLOCKER) */
 function requestCompassPermission() {
