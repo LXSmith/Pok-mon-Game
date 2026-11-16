@@ -1383,13 +1383,18 @@ function updateBlipPosition() {
   blip.style.left = x + "px";
   blip.style.top = y + "px";
 
-    blip.onclick = (e) => {
-    e.stopPropagation();
+  blip.onclick = (e) => {
+    if (e) e.stopPropagation();
     triggerVibration([200, 100, 200]);
     blip.classList.add('hidden');
     targetPokemonCoords = null;
-    triggerRadarEncounter();
+    
+    // Kleiner Timeout, damit das Ausblenden sauber greift bevor der Screen wechselt
+    setTimeout(() => {
+      triggerRadarEncounter();
+    }, 50);
   };
+
 
 }
 
