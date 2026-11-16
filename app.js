@@ -1246,6 +1246,28 @@ function generateWildPokemon(scanType = 'quick') {
   return createPokemonInstance(template);
 }
 
+function createPokemonInstance(template) {
+  return {
+    name: template.name,
+    type: template.type,
+    stage: template.stage || 0,
+    isRare: template.isRare || false,
+    isSingleStage: template.isSingleStage || false,
+    isLegendary: template.isLegendary || false,
+    baseHp: template.baseHp,
+    level: 1,
+    hp: template.baseHp,
+    maxHp: template.baseHp,
+    cardUrl: template.cardUrl,
+    weakness: template.weakness,
+    exp: 0,
+    maxExp: 75,
+    attack: Math.round(template.baseHp * 0.20),
+    specialAttack: Math.round(template.baseHp * 0.30)
+  };
+}
+
+
 /* RADAR-STEUERUNG */
 function openScanModal() {
   requestCompassPermission();
