@@ -796,7 +796,8 @@ function onSlotSelected(slotNum) {
     }
   } else {
     currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, potions: 2, rareCandies: 0, pokemonTeam: [], pokemonBox: [], homePos: null, caughtLegendaries: [], pokedex: [] };
-    showScreen('screen-starter');
+    isSettingHomeForNewGame = true;
+    openHomeMapModal();
   }
 }
 
@@ -841,7 +842,8 @@ function confirmStarter() {
   currentSaveData.pokedex = [];
   registerPokemonInPokedex(starters[selectedStarter].name);
 
-  if (currentPosition) {
+  // Nur falls zuvor kein Zuhause-Standort auf der Karte gewählt wurde, aktuelles GPS als Fallback nutzen
+  if (!currentSaveData.homePos && currentPosition) {
     currentSaveData.homePos = { ...currentPosition };
   }
 
@@ -849,6 +851,7 @@ function confirmStarter() {
   loadDashboard();
   showScreen('screen-radar-hud');
 }
+
 
 function saveCurrentData() {
   if (activeSlot) {
@@ -1603,6 +1606,16 @@ function ensureTrainerUIElements() {
   }
 }
 
+// Prüft, ob sich der Spieler im Umkreis von 25 Metern um seinen Zuhause-Standort befindet
+function isWithinHomeZone() {
+  if (!currentSaveData || !currentSaveData.homePos || !currentPosition) return false;
+  const dist = calculateDistance(
+    currentPosition.lat, currentPosition.lon,
+    currentSaveData.homePos.lat, currentSaveData.homePos.lon
+  );
+  return dist <= 25;
+}
+
 /* KAMPFSYSTEM LOGIK (3v3 TRAINER-MODUS & WILD-MODUS) */
 function startBattleFromScan(rawPokemonData) {
   ensureTrainerUIElements();
@@ -1639,8 +1652,16 @@ function startBattleFromScan(rawPokemonData) {
   const playerBallsHud = document.getElementById('player-balls-hud');
   if (playerBallsHud) { playerBallsHud.classList.add('hidden'); playerBallsHud.style.display = 'none'; }
 
+  const inHomeZone = isWithinHomeZone();
   const catchBtn = document.getElementById('battle-ready-ball');
-  if (catchBtn) catchBtn.classList.remove('hidden');
+  if (catchBtn) {
+    // Im 25m-Zuhause-Bereich bleibt der Pokéball ausgeblendet (wie beim Trainerkampf)
+    if (inHomeZone) {
+      catchBtn.classList.add('hidden');
+    } else {
+      catchBtn.classList.remove('hidden');
+    }
+  }
 
   const bottomHud = document.querySelector('.arena-bottom-hud');
   if (bottomHud) {
@@ -1654,9 +1675,14 @@ function startBattleFromScan(rawPokemonData) {
 
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) {
-    warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) greift an!`;
+    if (inHomeZone) {
+      warnBox.innerText = `🏠 Zuhause-Zone (≤25m): Wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) – nur Kampf möglich!`;
+    } else {
+      warnBox.innerText = `Ein wildes ${currentEnemy.name} (KP: ${currentEnemy.maxHp}) greift an!`;
+    }
   }
 }
+
 
 function startTrainerBattle() {
   ensureTrainerUIElements();
@@ -2802,11 +2828,11 @@ const CatchEngine = {
 };
 
 function attemptCatch() {
-  if (isTrainingMode || isTrainerBattle) return;
+  if (isTrainingMode || isTrainerBattle || isWithinHomeZone()) return;
   if ((currentSaveData.pokeballs || 0) <= 0) return alert("Keine Pokébälle mehr im Beutel!");
-  // Hinweis: Der Ball wird jetzt direkt in CatchEngine.bindEvents -> onEnd abgezogen, sobald man wirklich wirft!
   CatchEngine.startCatchSession();
 }
+
 
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 4 VON 4)
