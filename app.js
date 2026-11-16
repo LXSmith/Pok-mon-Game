@@ -1242,7 +1242,7 @@ function generateWildPokemon(scanType = 'quick') {
     candidates = POKEMON_DATABASE.filter(p => !p.isLegendary);
   }
 
-  const template = candidates[Math.floor(Math.random() * candidates.length)];
+    const template = candidates[Math.floor(Math.random() * candidates.length)];
   return createPokemonInstance(template);
 }
 
@@ -1266,7 +1266,6 @@ function createPokemonInstance(template) {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
-
 
 /* RADAR-STEUERUNG */
 function openScanModal() {
@@ -1311,7 +1310,8 @@ function forceDevSpawn() {
     currentPosition = { lat: 51.1657, lon: 10.4515 };
   }
 
-  const randomDistance = Math.random() * 6 + 2; 
+  // Spawnt in ca. 10 Metern Entfernung (9.5m bis 10.5m) in zufälliger Richtung
+  const randomDistance = 9.5 + Math.random(); 
   const randomBearing = Math.random() * 360;
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
 
@@ -1324,12 +1324,13 @@ function triggerSignalDetected() {
 
   if (!targetPokemonCoords) {
     if (currentPosition) {
-      const randomDistance = Math.random() * 6 + 2; 
+      const randomDistance = 9.5 + Math.random(); 
       const randomBearing = Math.random() * 360;
       targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
     } else {
-      targetPokemonCoords = { lat: 51.1657, lon: 10.4515 };
       currentPosition = { lat: 51.1657, lon: 10.4515 };
+      const randomBearing = Math.random() * 360;
+      targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, 10, randomBearing);
     }
   }
 
@@ -1354,7 +1355,7 @@ function triggerSignalDetected() {
 
 function scarePokemon() {
   if (!currentPosition) return;
-  const randomDistance = Math.random() * 6 + 2; 
+  const randomDistance = 9.5 + Math.random(); 
   const randomBearing = Math.random() * 360;
   targetPokemonCoords = calculateDestination(currentPosition.lat, currentPosition.lon, randomDistance, randomBearing);
   try { playBeep(1000, 0.15); } catch(e){}
@@ -1372,6 +1373,9 @@ function updateBlipPosition() {
   if (!targetPokemonCoords || !currentPosition || !blip) return;
 
   blip.classList.remove('hidden');
+  blip.onclick = null;
+  blip.ontouchstart = null;
+  blip.style.pointerEvents = 'none';
 
   const distMeters = calculateDistance(
     currentPosition.lat, currentPosition.lon,
@@ -1385,7 +1389,8 @@ function updateBlipPosition() {
 
   document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
 
-  if (distMeters > 0 && distMeters <= 3) {
+  // Bei <= 3m (innerster Ring) startet der Kampf automatisch
+  if (distMeters <= 3) {
     blip.classList.add('hidden');
     const scareBtn = document.getElementById('btn-scare-overlay');
     if (scareBtn) scareBtn.classList.add('hidden');
@@ -1394,9 +1399,10 @@ function updateBlipPosition() {
     return;
   }
 
-  const radarRadius = 140; 
-  const maxSearchRange = 50; 
-  const pixelDist = Math.min(radarRadius, (distMeters / maxSearchRange) * radarRadius);
+  // 10m = äußerer Ring (130px Radius), 3m = innerster Ring (39px Radius)
+  const outerRingRadius = 130; 
+  const maxSearchRange = 10; 
+  const pixelDist = Math.min(150, (distMeters / maxSearchRange) * outerRingRadius);
 
   const rad = absoluteBearing * Math.PI / 180;
   const x = 165 + pixelDist * Math.sin(rad);
@@ -1404,25 +1410,10 @@ function updateBlipPosition() {
 
   blip.style.left = x + "px";
   blip.style.top = y + "px";
-
-  blip.onclick = (e) => {
-    if (e) e.stopPropagation();
-    triggerVibration([200, 100, 200]);
-    blip.classList.add('hidden');
-    targetPokemonCoords = null;
-    
-    // Kleiner Timeout, damit das Ausblenden sauber greift bevor der Screen wechselt
-    setTimeout(() => {
-      triggerRadarEncounter();
-    }, 50);
-  };
-
-
 }
 
 function triggerRadarEncounter() {
   try {
-    // 25% Chance auf Trainerkampf, 75% auf wildes Pokémon
     if (Math.random() < 0.25) {
       startTrainerBattle();
     } else {
@@ -1433,7 +1424,6 @@ function triggerRadarEncounter() {
     startBattleFromScan();
   }
 }
-
 
 function cancelScan() {
   clearTimeout(scanTimer);
@@ -1450,6 +1440,7 @@ function resetRadarUI() {
   const scareBtn = document.getElementById('btn-scare-overlay');
   if (scareBtn) scareBtn.classList.add('hidden');
 }
+
 
 function openTrainingSelection() {
   closeScanModal();
