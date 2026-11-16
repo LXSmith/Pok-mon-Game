@@ -19,7 +19,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
 // Globale Audio-Kontext Verwaltung
 let audioCtx = null;
 
@@ -64,7 +63,6 @@ function playBeep(frequency, duration) {
     osc.stop(now + duration);
   } catch(e){}
 }
-
 
 function triggerVibration(pattern = 50) {
   if ("vibrate" in navigator) {
@@ -326,8 +324,6 @@ const POKEMON_DATABASE = [
   { id: 151, name: "Mew", type: "psycho", stage: 0, isRare: true, isLegendary: true, isSingleStage: true, baseHp: 200, weakness: "unlicht", cardUrl: "https://images.pokemontcg.io/basep/9_hires.png" }
 ];
 
-
-
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 2 VON 4)
    2. STATE, GPS, MENÜS & STARTER-INITIALISIERUNG
@@ -377,7 +373,6 @@ let currentSaveData = {
   pokedex: [] // Speichert gefangene/entwickelte IDs (1 bis 151)
 };
 
-
 function registerPokemonInPokedex(nameOrId) {
   if (!currentSaveData.pokedex) currentSaveData.pokedex = [];
   const entry = POKEMON_DATABASE.find(p => p.id === nameOrId || p.name === nameOrId);
@@ -395,8 +390,6 @@ function syncPokedexWithOwned() {
   ];
   owned.forEach(mon => registerPokemonInPokedex(mon.name));
 }
-
-
 
 // Geo & Map State
 let currentPosition = null;
@@ -451,22 +444,6 @@ function initGPSLiveTracking() {
       (err) => console.log("GPS Fehler:", err),
       { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
     );
-  }
-}
-
-function requestCompassPermission() {
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(response => {
-      if (response === 'granted') {
-        window.addEventListener('deviceorientation', handleOrientation, true);
-      }
-    }).catch(console.error);
-  } else {
-    if ('ondeviceorientationabsolute' in window) {
-      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-    } else if ('ondeviceorientation' in window) {
-      window.addEventListener('deviceorientation', handleOrientation, true);
-    }
   }
 }
 
@@ -571,7 +548,6 @@ function requestCompassPermission() {
   }, 0);
 }
 
-
 /* CINEMATIC INTRO MANAGER (ROBUST & ENTKOPPELT) */
 const IntroManager = {
   active: true,
@@ -606,7 +582,6 @@ const IntroManager = {
       if (this.active) this.playSlashSound();
     }, 5300);
 
-    // Klick-Aufforderung freischalten & Text einblenden
     setTimeout(() => {
       if (!this.active) return;
       this.canInteractiveFinish = true;
@@ -621,7 +596,6 @@ const IntroManager = {
       promptEl.classList.add('show-prompt');
     }, 7300);
 
-    // Garantierter Fallback nach 9.5s
     setTimeout(() => {
       if (this.active) {
         this.finishIntro();
@@ -683,7 +657,6 @@ const IntroManager = {
   startCardRush() {
     let cardStream = document.getElementById('cardStream') || document.querySelector('.card-stream');
     
-    // Fallback: Falls cardStream im HTML fehlt, im Intro-Screen anlegen
     if (!cardStream) {
       const introScreen = document.getElementById('intro-screen');
       if (introScreen) {
@@ -757,9 +730,6 @@ const IntroManager = {
   }
 };
 
-
-
-
 /* MENÜS & SPIELSTART LOGIK */
 function initApp() {
   updateSlotUI();
@@ -767,10 +737,6 @@ function initApp() {
   requestCompassPermission();
   showScreen('screen-main-menu');
 }
-
-/* =========================================================
-   ABGESICHERTE MENÜ- & SLOT-LOGIK (TEIL 2 ERSETZEN)
-   ========================================================= */
 
 function updateSlotUI() {
   for (let i = 1; i <= 3; i++) {
@@ -820,7 +786,7 @@ function onSlotSelected(slotNum) {
       alert("Dieser Speicherplatz ist leer! Bitte starte ein Neues Spiel.");
     }
   } else {
-    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, pokemonTeam: [], pokemonBox: [], homePos: null };
+    currentSaveData = { level: 1, exp: 0, maxExp: 100, pokeballs: 10, potions: 2, rareCandies: 0, pokemonTeam: [], pokemonBox: [], homePos: null, caughtLegendaries: [], pokedex: [] };
     showScreen('screen-starter');
   }
 }
@@ -885,13 +851,13 @@ function loadDashboard() {
   if (currentSaveData.potions === undefined) currentSaveData.potions = 2;
   if (currentSaveData.rareCandies === undefined) currentSaveData.rareCandies = 0;
 
-  // Falls aus altem Spielstand mehr als 3 Pokémon im Team sind -> Überschuss in die Box
+  // Falls aus altem Spielstand mehr als 3 Pokémon im Team sind -> Überschuss automatisch in die Box
   if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
   while (currentSaveData.pokemonTeam && currentSaveData.pokemonTeam.length > 3) {
     const movedMon = currentSaveData.pokemonTeam.pop();
     currentSaveData.pokemonBox.push(movedMon);
   }
-
+  saveCurrentData();
 
   syncPokedexWithOwned();
   document.getElementById('scan-active-mon').innerText = currentSaveData.pokemonTeam[0]?.name || '--';
@@ -967,7 +933,6 @@ function useRareCandyOn(teamIndex) {
   }
 }
 
-
 function renderPokedexAlbum() {
   const grid = document.getElementById('pokedex-grid');
   const progressText = document.getElementById('pokedex-progress-text');
@@ -1000,12 +965,11 @@ function renderPokedexAlbum() {
   }).join('');
 }
 
-
 function renderPokemonTeam() {
   const container = document.getElementById('pokemon-team-list');
   if (!container) return;
   container.innerHTML = `
-    <h3 style="color:#ffcb05; margin-bottom:10px; font-size:16px;">Dein Team (Max. 6)</h3>
+    <h3 style="color:#ffcb05; margin-bottom:10px; font-size:16px;">Dein Team (Max. 3)</h3>
     <div id="team-cards-container" style="display:flex; flex-direction:column; gap:8px;"></div>
     <h3 style="color:#ffcb05; margin:20px 0 10px 0; font-size:16px;">Lagerbox (${currentSaveData.pokemonBox.length})</h3>
     <div id="box-cards-container" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -1070,8 +1034,8 @@ function moveToBox(index) {
 }
 
 function moveToTeam(index) {
-  if (currentSaveData.pokemonTeam.length >= 6) {
-    alert("Dein Team ist voll! (Maximal 6 Pokémon im Team).");
+  if (currentSaveData.pokemonTeam.length >= 3) {
+    alert("Dein Team ist voll! (Maximal 3 Pokémon im Team).");
     return;
   }
   const mon = currentSaveData.pokemonBox.splice(index, 1)[0];
@@ -1098,8 +1062,6 @@ function switchMenuTab(tabName) {
   document.getElementById(`mtab-btn-${tabName}`).classList.add('active');
 }
 
-
-
 function exitToMainMenu() {
   clearTimeout(dodgeTimer);
   isDodgeWindowActive = false;
@@ -1113,20 +1075,13 @@ function exitToMainMenu() {
 
 // --- TAGES-POOL FÜR TRAINER LEVEL 1 BIS 5 (CASE-INSENSITIVE) ---
 function getDailyLevel1To5Pool() {
-  // 1. Die 4 festen Basis-Pokémon (in Kleinschreibung für den Abgleich) 
-  // FIX: 'raupy' mit y statt i
   const fixedTargetIds = ['rattfratz', 'taubsi', 'hornliu', 'raupy'];
-  
-  // Hilfsfunktion: Wandelt ID oder Name sicher in Kleinschreibung um
   const getCleanId = (p) => (p.id || p.name || '').toLowerCase();
 
-  // 2. Die 4 festen Pokémon aus deiner Datenbank herausfiltern
   const fixedPokemon = POKEMON_DATABASE.filter(p => 
     fixedTargetIds.includes(getCleanId(p))
   );
 
-  // 3. Pool aller anderen gewöhnlichen Basis-Pokémon (Stage 0, ohne Rares/SingleStage)
-  // FIX: p.stage === 0 anstatt (p.stage || 1) === 1
   const commonBasicPool = POKEMON_DATABASE.filter(p => 
     p.stage === 0 && 
     !p.isRare && 
@@ -1134,7 +1089,6 @@ function getDailyLevel1To5Pool() {
     !fixedTargetIds.includes(getCleanId(p))
   );
 
-  // 4. Kalenderdatum als Seed nutzen (wechselt automatisch um 00:00 Uhr)
   const d = new Date();
   const dateSeed = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   
@@ -1144,7 +1098,6 @@ function getDailyLevel1To5Pool() {
     hash |= 0;
   }
 
-  // 5. Exakt 6 zufällige, aber für diesen Tag feste Pokémon auswählen
   const dailyChosen = [];
   const tempPool = [...commonBasicPool];
   
@@ -1154,12 +1107,8 @@ function getDailyLevel1To5Pool() {
     tempPool.splice(index, 1);
   }
 
-  // Gesamter Tagespool (4 feste + 6 wechselnde = 10 Pokémon)
   return [...fixedPokemon, ...dailyChosen];
 }
-
-
-
 
 /* =========================================================
    POKÉMON REAL-LIFE RPG - APP.JS (TEIL 3 VON 4)
@@ -1177,7 +1126,6 @@ function determineSpawnStage(team) {
   let phase2Count = 0;
 
   team.forEach(mon => {
-    // Falls ein Pokémon keine Entwicklungsstufe hat (Single-Stage), wird es wie Phase 2 gewertet
     if (mon.isSingleStage) {
       phase2Count++;
     } else if (mon.stage === 1) {
@@ -1198,7 +1146,6 @@ function determineSpawnStage(team) {
     chancePhase1 = 50;
   }
 
-  // Basic Chance auf mindestens 40% deckeln (Pokédex Komplettierung)
   if ((chancePhase1 + chancePhase2) > 60) {
     const totalEvo = chancePhase1 + chancePhase2;
     chancePhase1 = Math.round((chancePhase1 / totalEvo) * 60);
@@ -1224,53 +1171,43 @@ function generateWildPokemon(scanType = 'quick') {
   const playerLevel = currentSaveData.level || 1;
   const levelPercentage = Math.min(100, playerLevel);
 
-  // 1. Sammle alle Pokémon, die der Spieler bereits besitzt (Team + Box)
   const ownedNames = new Set([
     ...(currentSaveData.pokemonTeam || []).map(p => p.name),
     ...(currentSaveData.pokemonBox || []).map(p => p.name)
   ]);
 
-  // Stelle sicher, dass das Array für gefangene Legenden existiert
   if (!currentSaveData.caughtLegendaries) {
     currentSaveData.caughtLegendaries = [];
   }
 
   // --- ENDGAME-PRÜFUNG: MEW & MEWTU ---
-  // Alle fangbaren Standard-Pokémon (ID 1 bis 143)
   const catchableBaseList = POKEMON_DATABASE.filter(p => p.id < 150); 
   const hasCaughtThemAll = catchableBaseList.every(p => ownedNames.has(p.name));
 
   if (hasCaughtThemAll) {
-    // Wenn alle da sind und Mew noch nicht gefangen wurde -> ERZWINGE MEW
     if (!currentSaveData.caughtLegendaries.includes("Mew")) {
       const mewTemplate = POKEMON_DATABASE.find(p => p.id === 151);
       if (mewTemplate) return createPokemonInstance(mewTemplate);
-    } 
-    // Wenn Mew gefangen ist, aber Mewtu noch nicht -> ERZWINGE MEWTU
-    else if (!currentSaveData.caughtLegendaries.includes("Mewtu")) {
+    } else if (!currentSaveData.caughtLegendaries.includes("Mewtu")) {
       const mewtwoTemplate = POKEMON_DATABASE.find(p => p.id === 150);
       if (mewtwoTemplate) return createPokemonInstance(mewtwoTemplate);
     }
   }
-  // ------------------------------------
 
   let candidates = [];
 
   if (scanType === 'power') {
-    // Power Scan: Chance auf ein Legendäres Pokémon (Level in %)
     const rollLegendary = (Math.random() * 100) < levelPercentage;
 
     if (rollLegendary) {
-      // Hole alle legendären Pokémon, die der Spieler NOCH NICHT gefangen hat (schließt Mew/Mewtu im Endgame aus)
       candidates = POKEMON_DATABASE.filter(p => 
         p.isLegendary && 
-        p.id < 150 && // Normale Vögel im regulären Power Scan
+        p.id < 150 && 
         !currentSaveData.caughtLegendaries.includes(p.name) &&
         !ownedNames.has(p.name)
       );
     }
 
-    // Wenn kein Legenden-Roll erfolgreich war oder alle bereits gefangen wurden -> normaler Rare-Pool
     if (!candidates || candidates.length === 0) {
       const wantRare = (Math.random() * 100) < (levelPercentage * 2);
       candidates = POKEMON_DATABASE.filter(p => {
@@ -1280,18 +1217,16 @@ function generateWildPokemon(scanType = 'quick') {
     }
 
   } else {
-    // Quick Scan / Dev-Spawn: Chance auf Rare Pokémon entspricht dem Spielerlevel in %
     const wantRare = (Math.random() * 100) < levelPercentage;
 
     candidates = POKEMON_DATABASE.filter(p => {
-      if (p.isLegendary) return false; // Keine Legenden im Quick Scan
+      if (p.isLegendary) return false;
       const isAllowedType = (p.stage === 0 || p.isSingleStage);
       const matchesRareFilter = (p.isRare === wantRare);
       return isAllowedType && matchesRareFilter;
     });
   }
 
-  // Fallback, falls der Pool leer ist
   if (!candidates || candidates.length === 0) {
     candidates = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage) && !p.isRare);
   }
@@ -1300,7 +1235,6 @@ function generateWildPokemon(scanType = 'quick') {
   return createPokemonInstance(template);
 }
 
-// Hilfsfunktion zur Erstellung des Pokémon-Objekts
 function createPokemonInstance(template) {
   return {
     name: template.name,
@@ -1308,6 +1242,8 @@ function createPokemonInstance(template) {
     stage: template.stage || 0,
     isRare: template.isRare || false,
     isSingleStage: template.isSingleStage || false,
+     isLegendary: template.isLegendary || false,
+    baseHp: template.baseHp,
     level: 1,
     hp: template.baseHp,
     maxHp: template.baseHp,
@@ -1319,10 +1255,6 @@ function createPokemonInstance(template) {
     specialAttack: Math.round(template.baseHp * 0.30)
   };
 }
-
-
-
-
 
 /* RADAR-STEUERUNG */
 function openScanModal() {
@@ -1395,7 +1327,7 @@ function triggerSignalDetected() {
   const scareBtn = document.getElementById('btn-scare-overlay');
 
   ringContainer.className = "radar-rings state-detected";
-  statusText.innerText = "⚠️ POKÉMON IN DER NÄHE!";
+  statusText.innerText = "⚠️ SIGNAL IN DER NÄHE!";
   triggerBtn.innerHTML = `<span aria-hidden="true">🛑</span><span>ENTFERNEN</span>`;
   
   if (scareBtn) scareBtn.classList.remove('hidden');
@@ -1403,7 +1335,7 @@ function triggerSignalDetected() {
   triggerVibration([800, 200, 800, 200, 800]);
 
   try { playBeep(880, 0.4); } catch(e){}
-  sendNotification("Pokémon MOVE", "⚠️ Ein wildes Pokémon ist in deiner Nähe aufgetaucht!");
+  sendNotification("Pokémon MOVE", "⚠️ Ein Signal ist in deiner Nähe aufgetaucht!");
 
   updateBlipPosition();
 }
@@ -1477,7 +1409,6 @@ function triggerRadarEncounter() {
   }
 }
 
-
 function cancelScan() {
   clearTimeout(scanTimer);
   targetPokemonCoords = null;
@@ -1534,6 +1465,8 @@ function closeTrainingSelection() {
 function startTrainingMatch(partnerMon) {
   closeTrainingSelection();
   isTrainingMode = true;
+  isTrainerBattle = false;
+  currentTrainer = null;
   trainingPartnerMon = partnerMon;
 
   clearTimeout(dodgeTimer);
@@ -1579,8 +1512,74 @@ function prepareSpawnPokemon(pokemonData, playerMaxStage) {
   return spawn;
 }
 
-/* KAMPFSYSTEM LOGIK (BEREINIGT & MIT TRAINER-MODUS) */
+function ensureTrainerUIElements() {
+  const battleScreen = document.getElementById('screen-battle');
+  if (!battleScreen) return;
+
+  if (!document.getElementById('trainer-challenge-banner')) {
+    const banner = document.createElement('div');
+    banner.id = 'trainer-challenge-banner';
+    banner.className = 'trainer-challenge-banner hidden';
+    battleScreen.appendChild(banner);
+  }
+
+  if (!document.getElementById('battle-trainer-badge')) {
+    const badge = document.createElement('div');
+    badge.id = 'battle-trainer-badge';
+    badge.className = 'battle-trainer-badge hidden';
+    badge.innerHTML = `
+      <div class="trainer-badge-avatar"></div>
+      <div id="trainer-badge-name" class="trainer-badge-name">Trainer</div>
+    `;
+    battleScreen.appendChild(badge);
+  }
+
+  const enemyOverlay = document.querySelector('.enemy-hp-overlay');
+  if (enemyOverlay && !document.getElementById('trainer-balls-hud')) {
+    const ballsHud = document.createElement('div');
+    ballsHud.id = 'trainer-balls-hud';
+    ballsHud.className = 'trainer-balls-hud hidden';
+    enemyOverlay.insertBefore(ballsHud, enemyOverlay.firstChild);
+  }
+
+  const playerOverlay = document.querySelector('.player-hp-overlay');
+  if (playerOverlay && !document.getElementById('player-balls-hud')) {
+    const pBallsHud = document.createElement('div');
+    pBallsHud.id = 'player-balls-hud';
+    pBallsHud.className = 'trainer-balls-hud hidden';
+    playerOverlay.insertBefore(pBallsHud, playerOverlay.firstChild);
+  }
+
+  const mainEl = document.getElementById('game-screen') || document.body;
+  if (!document.getElementById('trainer-defeat-screen')) {
+    const defeatModal = document.createElement('div');
+    defeatModal.id = 'trainer-defeat-screen';
+    defeatModal.className = 'modal-overlay hidden';
+    defeatModal.style.background = 'rgba(3, 7, 18, 0.92)';
+    defeatModal.innerHTML = `
+      <div class="modal-card" style="text-align: center; border-color: #ff3b5c; position: relative;">
+        <h2 style="color: #ffcb05; margin-top: 0;">SIEG GEGEN TRAINER!</h2>
+        <p style="color: #aaa; font-size: 13px; margin-bottom: 10px;">Der Herausforderer wurde geschlagen!</p>
+        <div class="trainer-big-card-container">
+          <div class="trainer-card-frame">
+            <div class="trainer-card-avatar"></div>
+            <div id="big-trainer-name" class="trainer-card-title">Trainer</div>
+          </div>
+          <div id="red-cross-overlay" class="red-cross-overlay hidden">
+            <div class="cross-line-1"></div>
+            <div class="cross-line-2"></div>
+          </div>
+        </div>
+        <button type="button" id="trainer-defeat-next-btn" onclick="closeTrainerDefeatOverlay()" class="btn-primary hidden" style="margin-top: 20px;">BEUTE ABHOLEN</button>
+      </div>
+    `;
+    mainEl.appendChild(defeatModal);
+  }
+}
+
+/* KAMPFSYSTEM LOGIK (3v3 TRAINER-MODUS & WILD-MODUS) */
 function startBattleFromScan(rawPokemonData) {
+  ensureTrainerUIElements();
   const team = currentSaveData.pokemonTeam || [];
   
   const playerMaxStage = team.length > 0 
@@ -1605,13 +1604,14 @@ function startBattleFromScan(rawPokemonData) {
   const dodgeBtn = document.getElementById('btn-dodge-action');
   if (dodgeBtn) dodgeBtn.classList.add('hidden');
 
-  // Trainer-Elemente bei wildem Kampf garantiert verstecken
   const badge = document.getElementById('battle-trainer-badge');
-  if (badge) badge.classList.add('hidden');
+  if (badge) { badge.classList.add('hidden'); badge.style.display = 'none'; }
   const banner = document.getElementById('trainer-challenge-banner');
-  if (banner) banner.classList.add('hidden');
+  if (banner) { banner.classList.add('hidden'); banner.style.display = 'none'; }
   const trainerHud = document.getElementById('trainer-balls-hud');
-  if (trainerHud) trainerHud.classList.add('hidden');
+  if (trainerHud) { trainerHud.classList.add('hidden'); trainerHud.style.display = 'none'; }
+  const playerBallsHud = document.getElementById('player-balls-hud');
+  if (playerBallsHud) { playerBallsHud.classList.add('hidden'); playerBallsHud.style.display = 'none'; }
 
   const catchBtn = document.getElementById('battle-ready-ball');
   if (catchBtn) catchBtn.classList.remove('hidden');
@@ -1633,7 +1633,12 @@ function startBattleFromScan(rawPokemonData) {
 }
 
 function startTrainerBattle() {
+  ensureTrainerUIElements();
+
   const team = currentSaveData.pokemonTeam || [];
+  // Alle eigenen Team-Pokémon vor Beginn des 3v3-Trainerkampfes voll heilen
+  team.forEach(p => { p.hp = p.maxHp; });
+
   const playerMaxStage = team.length > 0 
     ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
     : 0;
@@ -1653,7 +1658,6 @@ function startTrainerBattle() {
   const trainer = trainerPool[Math.floor(Math.random() * trainerPool.length)];
   const fullTrainerName = `${trainer.title} ${trainer.name}`;
 
-  // Geprüfte, gültige DiceBear 9.x Adventurer-Parameter (Comic/Anime-Look)
   const randomSeed = `${trainer.name}_${Math.floor(Math.random() * 1000)}`;
   const hairList = trainer.gender === "m"
     ? "short01,short02,short03,short04,short05,short06,short07,short08,short12,short15"
@@ -1661,7 +1665,8 @@ function startTrainerBattle() {
 
   const avatarUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(randomSeed)}&hair=${hairList}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
-  const teamCount = Math.floor(Math.random() * 3) + 1;
+  // IMMER exakt 3 Pokémon beim gegnerischen Trainer
+  const teamCount = 3;
   const nonLegendaryPool = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage));
   const trainerTeam = [];
 
@@ -1699,28 +1704,34 @@ function startTrainerBattle() {
 
   resetRadarUI();
   showScreen('screen-battle');
-  updateBattleUI();
 
-  // Leuchtendes Herausforderungs-Banner für 2,5 Sekunden einblenden
   const banner = document.getElementById('trainer-challenge-banner');
-  const bannerName = document.getElementById('trainer-name-banner');
-  if (banner && bannerName) {
-    bannerName.innerText = fullTrainerName;
+  if (banner) {
+    banner.innerHTML = `
+      <div style="font-size:12px; color:#ffcb05; letter-spacing:2px; margin-bottom:6px;">⚔️ 3 GEGEN 3 TRAINER-DUELL ⚔️</div>
+      <img src="${avatarUrl}" alt="${trainer.name}" style="width:85px; height:85px; border-radius:50%; border:3px solid #ffcb05; background:#1e293b; margin:6px auto; display:block; box-shadow:0 6px 15px rgba(0,0,0,0.6);">
+      <div style="font-size:15px; font-weight:900; color:#fff; margin-top:6px;">Herausforderung von<br><span style="color:#ffcb05; font-size:18px;">${fullTrainerName}</span>!</div>
+      <div style="font-size:12px; color:#cbd5e1; margin-top:6px;">Beide Seiten treten mit bis zu 3 Pokémon an 🔴🔴🔴</div>
+    `;
     banner.classList.remove('hidden');
-    setTimeout(() => banner.classList.add('hidden'), 2500);
+    banner.style.cssText = "position:absolute; top:38%; left:50%; transform:translate(-50%,-50%); width:85%; max-width:300px; background:rgba(15,23,42,0.97); border:3px solid #ffcb05; border-radius:22px; padding:18px; text-align:center; z-index:10005; box-shadow:0 0 40px rgba(255,203,5,0.7), 0 15px 30px rgba(0,0,0,0.9); display:block;";
+    setTimeout(() => {
+      banner.classList.add('hidden');
+      banner.style.display = 'none';
+    }, 3000);
   }
 
-  // Kleine Trainer-Karte links oben mit Avatar-Bild einblenden
   const badge = document.getElementById('battle-trainer-badge');
-  const badgeName = document.getElementById('trainer-badge-name');
-  const badgeAvatar = document.querySelector('.trainer-badge-avatar');
-  if (badge && badgeName) {
-    badgeName.innerText = trainer.name;
-    if (badgeAvatar) {
-      badgeAvatar.innerHTML = `<img src="${avatarUrl}" alt="${trainer.name}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-    }
+  if (badge) {
+    badge.innerHTML = `
+      <img src="${avatarUrl}" alt="${trainer.name}" style="width:46px; height:46px; border-radius:50%; border:2px solid #ffcb05; background:#1e293b; object-fit:cover;">
+      <div style="font-size:10px; font-weight:900; color:#ffcb05; text-transform:uppercase; margin-top:3px; text-align:center;">${trainer.name}</div>
+    `;
     badge.classList.remove('hidden');
+    badge.style.cssText = "position:absolute; top:115px; left:14px; background:rgba(15,23,42,0.92); border:2px solid #ffcb05; border-radius:14px; padding:8px; display:flex; flex-direction:column; align-items:center; z-index:80; box-shadow:0 6px 16px rgba(0,0,0,0.7);";
   }
+
+  updateBattleUI();
 
   const warnBox = document.getElementById('battle-warning-box');
   if (warnBox) {
@@ -1728,24 +1739,52 @@ function startTrainerBattle() {
   }
 }
 
-
-
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
+  ensureTrainerUIElements();
+
   const trainerHud = document.getElementById('trainer-balls-hud');
+  const playerBallsHud = document.getElementById('player-balls-hud');
+  const badge = document.getElementById('battle-trainer-badge');
+
   if (isTrainerBattle && currentTrainer) {
     document.getElementById('enemy-title').innerText = `${currentTrainer.name.toUpperCase()}: ${currentEnemy.name.toUpperCase()}`;
     if (trainerHud) {
       trainerHud.classList.remove('hidden');
-      trainerHud.innerText = currentTrainer.team
+      trainerHud.style.cssText = "display:flex; justify-content:center; align-items:center; gap:6px; font-size:12px; margin-bottom:4px; background:rgba(0,0,0,0.35); padding:2px 8px; border-radius:10px;";
+      const ballsStr = currentTrainer.team
         .map((_, idx) => (idx < currentTrainer.currentIndex ? "⚫" : "🔴"))
         .join(" ");
+      trainerHud.innerHTML = `<span>${ballsStr}</span>`;
+    }
+    if (playerBallsHud) {
+      playerBallsHud.classList.remove('hidden');
+      playerBallsHud.style.cssText = "display:flex; justify-content:center; align-items:center; gap:6px; font-size:11px; margin-bottom:3px;";
+      const pBallsStr = (currentSaveData.pokemonTeam || [])
+        .map(p => (p.hp > 0 ? "🔴" : "⚫"))
+        .join(" ");
+      playerBallsHud.innerHTML = `<span>Dein Team: ${pBallsStr}</span>`;
+    }
+    if (badge) {
+      badge.classList.remove('hidden');
+      badge.style.display = 'flex';
     }
   } else {
     const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
     document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
-    if (trainerHud) trainerHud.classList.add('hidden');
+    if (trainerHud) {
+      trainerHud.classList.add('hidden');
+      trainerHud.style.display = 'none';
+    }
+    if (playerBallsHud) {
+      playerBallsHud.classList.add('hidden');
+      playerBallsHud.style.display = 'none';
+    }
+    if (badge) {
+      badge.classList.add('hidden');
+      badge.style.display = 'none';
+    }
   }
 
   document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
@@ -1810,7 +1849,6 @@ function useBattlePotion() {
 
   document.getElementById('battle-warning-box').innerText = `🧪 Heiltrank genutzt! ${playerBattlePokemon.name} ist wieder bei 100% KP!`;
 }
-
 
 function playPunchSound() {
   const ctx = getAudioContext();
@@ -2162,22 +2200,49 @@ function switchBattlePokemon(newTeamIndex) {
 
 function handlePokemonKnockout() {
   if(typeof CatchEngine !== 'undefined') CatchEngine.stopCatchSession();
-  const badge = document.getElementById('battle-trainer-badge');
-  if (badge) badge.classList.add('hidden');
 
   const mon = playerBattlePokemon;
+  mon.hp = 0;
+
+  // Im 3v3-Trainerkampf prüfen, ob der Spieler noch ein weiteres kampffähiges Pokémon im Team hat!
+  if (isTrainerBattle && currentSaveData.pokemonTeam) {
+    const nextAliveIndex = currentSaveData.pokemonTeam.findIndex(p => p.hp > 0);
+    if (nextAliveIndex !== -1) {
+      const nextMon = currentSaveData.pokemonTeam.splice(nextAliveIndex, 1)[0];
+      currentSaveData.pokemonTeam.unshift(nextMon);
+      playerBattlePokemon = currentSaveData.pokemonTeam[0];
+      playerEnergy = 0;
+
+      const warnBox = document.getElementById('battle-warning-box');
+      if (warnBox) warnBox.innerText = `💀 ${mon.name} ist K.O.! Los, ${playerBattlePokemon.name}!`;
+      try { playBeep(300, 0.2); setTimeout(() => playBeep(600, 0.2), 200); } catch(e){}
+
+      setTimeout(() => {
+        isEnemyAttacking = false;
+        isPlayerTurn = true;
+        updateBattleUI();
+      }, 900);
+      return;
+    }
+  }
+
+  // Wenn kein kampffähiges Pokémon mehr übrig ist -> Komplette Niederlage & Team wieder heilen
+  const badge = document.getElementById('battle-trainer-badge');
+  if (badge) { badge.classList.add('hidden'); badge.style.display = 'none'; }
+
   const oldExp = mon.exp || 0;
-  
   const lostExp = Math.floor(oldExp / 2);
   mon.exp = oldExp - lostExp;
-  mon.hp = mon.maxHp;
+
+  // Gesamtes Team nach dem Kampf wieder auf 100% KP heilen
+  (currentSaveData.pokemonTeam || []).forEach(p => { p.hp = p.maxHp; });
 
   let lossMsg = `-${lostExp} EXP verloren!`;
 
   if (isTrainerBattle) {
     const lostBalls = Math.floor((currentSaveData.pokeballs || 0) / 2);
     currentSaveData.pokeballs = Math.max(0, (currentSaveData.pokeballs || 0) - lostBalls);
-    lossMsg = `-${lostExp} EXP & -${lostBalls} Pokébälle verloren!`;
+    lossMsg = `Alle Team-Pokémon besiegt! -${lostExp} EXP & -${lostBalls} Pokébälle verloren!`;
     isTrainerBattle = false;
     currentTrainer = null;
   }
@@ -2210,17 +2275,15 @@ function attemptEscape() {
 
     const lostBalls = Math.floor((currentSaveData.pokeballs || 0) / 2);
     currentSaveData.pokeballs = Math.max(0, (currentSaveData.pokeballs || 0) - lostBalls);
-    if (playerBattlePokemon) playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+    (currentSaveData.pokemonTeam || []).forEach(p => { p.hp = p.maxHp; });
     isTrainerBattle = false;
     currentTrainer = null;
     saveCurrentData();
   }
   const badge = document.getElementById('battle-trainer-badge');
-  if (badge) badge.classList.add('hidden');
+  if (badge) { badge.classList.add('hidden'); badge.style.display = 'none'; }
   runFromBattle();
 }
-
-
 
 function runFromBattle() {
   clearTimeout(dodgeTimer);
@@ -2230,9 +2293,7 @@ function runFromBattle() {
   showScreen('screen-radar-hud');
 }
 
-/* FANG-ENGINE LOGIK */
-/* IN TEIL 3 VON APP.JS ERSETZEN */
-
+/* FANG-ENGINE LOGIK (INKL. KORREKTEM BALL-ABZUG BEI FEHLWÜRFEN) */
 const CatchEngine = {
   active: false,
   animId: null,
@@ -2354,6 +2415,16 @@ const CatchEngine = {
           const vy = (last.y - first.y) / dt * 0.55;
 
           if (vy < -120) {
+            if ((currentSaveData.pokeballs || 0) <= 0) {
+              this.stopCatchSession();
+              alert("Keine Pokébälle mehr im Beutel!");
+              return;
+            }
+            // Jeder echte Wurf verbraucht sofort 1 Pokéball!
+            currentSaveData.pokeballs--;
+            saveCurrentData();
+            updateBattleUI();
+
             this.ball.isThrown = true;
             this.ball.vx = vx;
             this.ball.vy = vy;
@@ -2467,8 +2538,15 @@ const CatchEngine = {
 
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
-        this.showFeedback("VORBEI AM KREIS!");
-        setTimeout(() => this.resetBall(), 600);
+        this.showFeedback("VORBEI! (-1 BALL)");
+        setTimeout(() => {
+          if ((currentSaveData.pokeballs || 0) <= 0) {
+            this.stopCatchSession();
+            alert("Dein letzter Pokéball ging daneben! Keine Bälle mehr übrig.");
+          } else {
+            this.resetBall();
+          }
+        }, 600);
       }
     } else if (b.isSpinning) {
       b.spinAngle += b.spinSpeed;
@@ -2506,17 +2584,17 @@ const CatchEngine = {
   },
 
   evaluateHit(ballX, ballY, enemyRect) {
-    let throwBonus = 0; // Wurf-Bonus in Prozent
+    let throwBonus = 0;
     let feedbackText = "TREFFER!";
 
     if (this.ringScale < 0.4) {
-      throwBonus = 20; // Roter Kreis (Perfekt)
+      throwBonus = 20;
       feedbackText = "FABELHAFT!";
     } else if (this.ringScale < 0.7) {
-      throwBonus = 10; // Gelber Kreis (Gut)
+      throwBonus = 10;
       feedbackText = "GROSSARTIG!";
     } else {
-      throwBonus = 0;  // Grüner Kreis (Normal)
+      throwBonus = 0;
       feedbackText = "TREFFER!";
     }
 
@@ -2567,13 +2645,9 @@ const CatchEngine = {
     setTimeout(() => {
       if (ballEl) ballEl.classList.add('wobble');
 
-      // Additive Berechnung nach neuer Fangmechanik
       let chance = 50;
-
-      // 1. Wurfqualität (+20%, +10%, +0%)
       chance += throwBonus;
 
-      // 2. Rest-KP des Pokémon
       const hpRatio = currentEnemy.hp / currentEnemy.maxHp;
       if (hpRatio > 0.50) {
         chance -= 30;
@@ -2583,7 +2657,6 @@ const CatchEngine = {
         chance += 10;
       }
 
-      // 3. Maximal-KP des Pokémon
       const maxHp = currentEnemy.maxHp;
       if (maxHp > 120) {
         chance -= 30;
@@ -2593,7 +2666,6 @@ const CatchEngine = {
         chance -= 10;
       }
 
-      // 4. Legendärer Malus (-20%)
       if (currentEnemy.isLegendary) {
         chance -= 20;
       }
@@ -2653,17 +2725,17 @@ const CatchEngine = {
                 specialAttack: Math.round(currentEnemy.maxHp * 0.30)
               };
 
-                      registerPokemonInPokedex(currentEnemy.name);
+              registerPokemonInPokedex(currentEnemy.name);
 
-              if (currentSaveData.pokemonTeam.length < 6) {
+              // Team-Maximum ist jetzt 3 Pokémon!
+              if (currentSaveData.pokemonTeam.length < 3) {
                 currentSaveData.pokemonTeam.push(newMon);
                 alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
               } else {
                 if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
                 currentSaveData.pokemonBox.push(newMon);
-                alert(`📦 Dein Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
+                alert(`📦 Dein 3er-Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
               }
-
 
               if (currentSaveData.pokemonTeam.length > 0) {
                 currentSaveData.pokemonTeam[0].hp = currentSaveData.pokemonTeam[0].maxHp;
@@ -2683,8 +2755,16 @@ const CatchEngine = {
 
             setTimeout(() => {
               if (enemyImg) enemyImg.classList.remove('anim-puff-out');
-              this.resetBall();
-              alert(`${currentEnemy.name} ist ausgebrochen!`);
+              const ringEl = document.getElementById('target-ring-outer');
+              if (ringEl) ringEl.classList.remove('hidden');
+
+              if ((currentSaveData.pokeballs || 0) <= 0) {
+                this.stopCatchSession();
+                alert(`${currentEnemy.name} ist ausgebrochen! Du hast keine Pokébälle mehr übrig.`);
+              } else {
+                this.resetBall();
+                alert(`${currentEnemy.name} ist ausgebrochen!`);
+              }
             }, 700);
           }
         }
@@ -2693,14 +2773,10 @@ const CatchEngine = {
   }
 };
 
-
-
-
 function attemptCatch() {
-  if (isTrainingMode) return;
-  if (currentSaveData.pokeballs <= 0) return alert("Keine Pokébälle mehr im Beutel!");
-  currentSaveData.pokeballs--;
-  updateBattleUI();
+  if (isTrainingMode || isTrainerBattle) return;
+  if ((currentSaveData.pokeballs || 0) <= 0) return alert("Keine Pokébälle mehr im Beutel!");
+  // Hinweis: Der Ball wird jetzt direkt in CatchEngine.bindEvents -> onEnd abgezogen, sobald man wirklich wirft!
   CatchEngine.startCatchSession();
 }
 
@@ -2716,7 +2792,7 @@ function winBattle() {
   isDodgeWindowActive = false;
   CatchEngine.stopCatchSession();
 
-  // Falls Trainerkampf: +50% EXP (75% der Gegner-Max-KP) sammeln & nächstes Trainer-Pokémon rufen
+  // Falls 3v3-Trainerkampf: +50% EXP (75% der Gegner-Max-KP) sammeln & nächstes Trainer-Pokémon rufen
   if (isTrainerBattle && currentTrainer) {
     const monExp = Math.round(currentEnemy.maxHp * 0.75);
     currentTrainer.totalExp += monExp;
@@ -2724,7 +2800,7 @@ function winBattle() {
     if (currentTrainer.currentIndex + 1 < currentTrainer.team.length) {
       currentTrainer.currentIndex++;
       const nextMon = currentTrainer.team[currentTrainer.currentIndex];
-      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name}!`;
+      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name} (${currentTrainer.currentIndex + 1}/3)!`;
       try { playBeep(523.25, 0.15); } catch (e) {}
 
       setTimeout(() => {
@@ -2746,13 +2822,17 @@ function winBattle() {
 
   setTimeout(() => {
     const badge = document.getElementById('battle-trainer-badge');
-    if (badge) badge.classList.add('hidden');
+    if (badge) { badge.classList.add('hidden'); badge.style.display = 'none'; }
+    const trainerHud = document.getElementById('trainer-balls-hud');
+    if (trainerHud) { trainerHud.classList.add('hidden'); trainerHud.style.display = 'none'; }
+    const playerBallsHud = document.getElementById('player-balls-hud');
+    if (playerBallsHud) { playerBallsHud.classList.add('hidden'); playerBallsHud.style.display = 'none'; }
 
     if (isTrainingMode) {
       const earnedExp = Math.round(currentEnemy.maxHp * 0.5);
       const leveledUp = addPokemonExp(playerBattlePokemon, earnedExp);
       if (trainingPartnerMon) addPokemonExp(trainingPartnerMon, earnedExp);
-      playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+      (currentSaveData.pokemonTeam || []).forEach(p => { p.hp = p.maxHp; });
       saveCurrentData();
 
       document.getElementById('victory-exp-text').innerText = `+${earnedExp} EXP (Training)`;
@@ -2769,6 +2849,7 @@ function winBattle() {
 
       addTrainerExp(earnedExp);
 
+      // Zufalls-Belohnung: 50% 10 Pokébälle, 35% 1 Heiltrank, 15% 1 Sonderbonbon
       const roll = Math.random();
       let rewardText = "";
       if (roll < 0.50) {
@@ -2784,7 +2865,9 @@ function winBattle() {
 
       const activeMon = playerBattlePokemon;
       const leveledUp = addPokemonExp(activeMon, earnedExp);
-      activeMon.hp = activeMon.maxHp;
+      
+      // Gesamtes 3er-Team nach dem Trainer-Duell wieder auf 100% KP heilen
+      (currentSaveData.pokemonTeam || []).forEach(p => { p.hp = p.maxHp; });
 
       isTrainerBattle = false;
       currentTrainer = null;
@@ -2803,29 +2886,39 @@ function winBattle() {
         triggeredEvo: triggeredEvo
       };
 
+      ensureTrainerUIElements();
+
       // Große Trainer-Karte mit Avatar füllen und einblenden
-      document.getElementById('big-trainer-name').innerText = trainerName;
+      const bigNameEl = document.getElementById('big-trainer-name');
+      if (bigNameEl) bigNameEl.innerText = trainerName;
+
       const bigCardAvatar = document.querySelector('.trainer-card-avatar');
       if (bigCardAvatar && trainerAvatar) {
         bigCardAvatar.innerHTML = `<img src="${trainerAvatar}" alt="${trainerName}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
       }
 
-      document.getElementById('trainer-defeat-screen').classList.remove('hidden');
-      document.getElementById('red-cross-overlay').classList.add('hidden');
-      document.getElementById('trainer-defeat-next-btn').classList.add('hidden');
+      const defeatScreen = document.getElementById('trainer-defeat-screen');
+      const crossOverlay = document.getElementById('red-cross-overlay');
+      const nextBtn = document.getElementById('trainer-defeat-next-btn');
+
+      if (defeatScreen) defeatScreen.classList.remove('hidden');
+      if (crossOverlay) crossOverlay.classList.add('hidden');
+      if (nextBtn) nextBtn.classList.add('hidden');
 
       try {
         playBeep(440, 0.2);
         setTimeout(() => playBeep(880, 0.4), 200);
       } catch (e) {}
 
+      // Rotes X nach 0,5s einzeichnen
       setTimeout(() => {
-        document.getElementById('red-cross-overlay').classList.remove('hidden');
+        if (crossOverlay) crossOverlay.classList.remove('hidden');
         try { playBeep(220, 0.3); } catch (e) {}
       }, 500);
 
+      // Weiter-Button nach 1,3s freigeben
       setTimeout(() => {
-        document.getElementById('trainer-defeat-next-btn').classList.remove('hidden');
+        if (nextBtn) nextBtn.classList.remove('hidden');
       }, 1300);
 
     } else {
@@ -2835,7 +2928,7 @@ function winBattle() {
 
       const activeMon = playerBattlePokemon;
       const leveledUp = addPokemonExp(activeMon, earnedExp);
-      activeMon.hp = activeMon.maxHp;
+      (currentSaveData.pokemonTeam || []).forEach(p => { p.hp = p.maxHp; });
       saveCurrentData();
 
       let triggeredEvo = false;
@@ -2858,7 +2951,8 @@ function winBattle() {
 }
 
 function closeTrainerDefeatOverlay() {
-  document.getElementById('trainer-defeat-screen').classList.add('hidden');
+  const defeatScreen = document.getElementById('trainer-defeat-screen');
+  if (defeatScreen) defeatScreen.classList.add('hidden');
   if (!pendingTrainerRewardData) return;
 
   const data = pendingTrainerRewardData;
@@ -2871,7 +2965,6 @@ function closeTrainerDefeatOverlay() {
   window._launchEvolutionAfterVictory = data.triggeredEvo;
   document.getElementById('victory-screen').classList.remove('hidden');
 }
-
 
 /* POKÉMON EXP & LEVEL-UP STAT-ZUWACHS
    - Single-Stage (ohne Evo): +4 Max-KP pro Level
@@ -2895,7 +2988,6 @@ function addPokemonExp(pokemon, amount) {
     
     pokemon.maxExp = 50 + (pokemon.level * pokemon.level * 25);
 
-    // Stat-Zuwachs
     const hpGain = pokemon.isSingleStage ? 4 : 3;
     pokemon.maxHp += hpGain;
     pokemon.hp = pokemon.maxHp;
@@ -2988,14 +3080,12 @@ function triggerBackgroundEvolution(pokemon) {
     try { playBeep(880, 0.4); } catch(e){}
   }, 200);
 
-    setTimeout(() => {
+  setTimeout(() => {
     evoImg.src = evoData.cardUrl;
     pokemon.name = evoData.next;
     pokemon.cardUrl = evoData.cardUrl;
     registerPokemonInPokedex(pokemon.name);
 
-    
-    // Stufen-Upgrade in Datenstruktur hinterlegen
     if (evoData.isTwoStage) {
       pokemon.stage = 2;
       pokemon.specialAttack = (pokemon.specialAttack || 0) + 20;
