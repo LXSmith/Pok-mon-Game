@@ -1394,13 +1394,19 @@ function updateBlipPosition() {
 }
 
 function triggerRadarEncounter() {
-  // Sofortige Entfernungsprüfung oder direkter Start des Kampfes
-  if (Math.random() < 0.25) {
-    startTrainerBattle();
-  } else {
+  try {
+    // 25% Chance auf Trainerkampf, 75% auf wildes Pokémon
+    if (Math.random() < 0.25) {
+      startTrainerBattle();
+    } else {
+      startBattleFromScan();
+    }
+  } catch (err) {
+    console.error("Fehler beim Starten des Kampfes, erzwinge wilden Kampf:", err);
     startBattleFromScan();
   }
 }
+
 
 function cancelScan() {
   clearTimeout(scanTimer);
