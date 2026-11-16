@@ -1,18 +1,20 @@
 {
-  "short_name": "PokeMove",
-  "name": "Pokémon Real-Life RPG - MOVE",
+  "name": "Pokémon MOVE",
+  "short_name": "PKMN MOVE",
   "icons": [
     {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg",
-      "type": "image/svg+xml",
-      "sizes": "192x192 512x512",
-      "purpose": "any"
+      "src": "pokeball.PNG",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pokeball.PNG",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#030406",
-  "theme_color": "#38bdf8",
   "display": "standalone",
-  "orientation": "portrait"
+  "background_color": "#38bdf8",
+  "theme_color": "#38bdf8"
 }
-
