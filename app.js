@@ -1823,8 +1823,6 @@ function startTrainerBattle() {
   }
 }
 
-}
-
 function updateBattleUI() {
   if (!currentEnemy || !playerBattlePokemon) return;
 
