@@ -2599,24 +2599,13 @@ const CatchEngine = {
         return;
       }
 
-      // Wenn der Ball daneben geht: KEINE Rückerstattung mehr, der Ball ist weg!
+            // Wenn der Ball daneben geht: Fang-Modus beenden und Gegner greift an!
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
         this.showFeedback("VORBEI!");
         setTimeout(() => {
-          if ((currentSaveData.pokeballs || 0) <= 0) {
-            this.stopCatchSession();
-            alert("Der Pokéball ging daneben und du hast keine Bälle mehr übrig!");
-          } else {
-            this.resetBall();
-          }
-        }, 600);
-      }
-    } else if (b.isSpinning) {
-      b.spinAngle += b.spinSpeed;
-      this.updateBallElement();
-    }
-  },
+          this.stopCatchSession();
+
 
 
   updateRing() {
