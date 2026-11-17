@@ -1721,6 +1721,11 @@ function startTrainerBattle() {
     ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
     : 0;
 
+  // Stärkstes Level im Spieler-Team ermitteln
+  const maxPlayerLevel = team.length > 0 
+    ? Math.max(...team.map(p => p.level || 1))
+    : 1;
+
   const trainerPool = [
     { name: "Viktor", gender: "m", title: "Pokémon Trainer" },
     { name: "Benny",  gender: "m", title: "Pokémon Trainer" },
@@ -1743,15 +1748,16 @@ function startTrainerBattle() {
 
   const avatarUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(randomSeed)}&hair=${hairList}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
-  // IMMER exakt 3 Pokémon beim gegnerischen Trainer
-  const teamCount = 3;
+  // IMMER exakt 3 Pokémon mit Staffelung: 1. (-4 Lv), 2. (-2 Lv), 3. (+2 Lv)
+  const levelOffsets = [-4, -2, +2];
   const nonLegendaryPool = POKEMON_DATABASE.filter(p => !p.isLegendary && (p.stage === 0 || p.isSingleStage));
   const trainerTeam = [];
 
-  for (let i = 0; i < teamCount; i++) {
+  for (let i = 0; i < 3; i++) {
     const tpl = nonLegendaryPool[Math.floor(Math.random() * nonLegendaryPool.length)];
     const inst = createPokemonInstance(tpl);
-    trainerTeam.push(prepareSpawnPokemon(inst, playerMaxStage));
+    const enemyLevel = Math.max(1, maxPlayerLevel + levelOffsets[i]);
+    trainerTeam.push(prepareSpawnPokemon(inst, playerMaxStage, enemyLevel));
   }
 
   isTrainerBattle = true;
@@ -1815,6 +1821,8 @@ function startTrainerBattle() {
   if (warnBox) {
     warnBox.innerText = `⚔️ Herausforderung von ${fullTrainerName}!`;
   }
+}
+
 }
 
 function updateBattleUI() {
