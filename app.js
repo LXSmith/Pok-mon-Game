@@ -1306,7 +1306,11 @@ function startScanProcess(type) {
   ringContainer.className = "radar-rings state-scanning";
   statusText.innerText = "Scanne Umgebung...";
 
-  let durationMs = (type === 'quick') ? (Math.random() * 5 + 1) * 60 * 1000 : (Math.random() * 7 + 5) * 60 * 1000;
+    // Quick Scan: 30 bis 180 Sekunden | Power Scan: 5 bis 12 Minuten
+  let durationMs = (type === 'quick') 
+    ? (Math.random() * 150 + 30) * 1000 
+    : (Math.random() * 7 + 5) * 60 * 1000;
+
 
   clearTimeout(scanTimer);
   scanTimer = setTimeout(() => {
