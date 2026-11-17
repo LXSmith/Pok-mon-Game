@@ -1897,7 +1897,10 @@ function useBattlePotion() {
   }
 
   currentSaveData.potions--;
-  playerBattlePokemon.hp = playerBattlePokemon.maxHp;
+  const oldHp = playerBattlePokemon.hp;
+  playerBattlePokemon.hp = Math.min(playerBattlePokemon.maxHp, playerBattlePokemon.hp + 20);
+  const healedAmount = playerBattlePokemon.hp - oldHp;
+
   saveCurrentData();
   updateBattleUI();
 
@@ -1906,8 +1909,9 @@ function useBattlePotion() {
     setTimeout(() => playBeep(880, 0.2), 120);
   } catch (e) {}
 
-  document.getElementById('battle-warning-box').innerText = `🧪 Heiltrank genutzt! ${playerBattlePokemon.name} ist wieder bei 100% KP!`;
+  document.getElementById('battle-warning-box').innerText = `🧪 Heiltrank genutzt! +${healedAmount} KP für ${playerBattlePokemon.name}!`;
 }
+
 
 function playPunchSound() {
   const ctx = getAudioContext();
