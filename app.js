@@ -1430,7 +1430,8 @@ function updateBlipPosition() {
 
 function triggerRadarEncounter() {
   try {
-    if (Math.random() < 0.25) {
+    // 15% Chance auf Trainerkampf, 85% auf wildes Pokémon
+    if (Math.random() < 0.15) {
       startTrainerBattle();
     } else {
       startBattleFromScan();
@@ -1440,6 +1441,7 @@ function triggerRadarEncounter() {
     startBattleFromScan();
   }
 }
+
 
 function cancelScan() {
   clearTimeout(scanTimer);
