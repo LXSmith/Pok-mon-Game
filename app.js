@@ -1807,7 +1807,7 @@ function updateBattleUI() {
   const badge = document.getElementById('battle-trainer-badge');
 
   if (isTrainerBattle && currentTrainer) {
-    document.getElementById('enemy-title').innerText = `${currentTrainer.name.toUpperCase()}: ${currentEnemy.name.toUpperCase()}`;
+    document.getElementById('enemy-title').innerText = `${currentTrainer.name.toUpperCase()}: ${currentEnemy.name.toUpperCase()} (LV. ${currentEnemy.level || 1})`;
     if (trainerHud) {
       trainerHud.classList.remove('hidden');
       trainerHud.style.cssText = "display:flex; justify-content:center; align-items:center; gap:6px; font-size:12px; margin-bottom:4px; background:rgba(0,0,0,0.35); padding:2px 8px; border-radius:10px;";
@@ -1830,7 +1830,7 @@ function updateBattleUI() {
     }
   } else {
     const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
-    document.getElementById('enemy-title').innerText = prefix + currentEnemy.name.toUpperCase();
+    document.getElementById('enemy-title').innerText = `${prefix}${currentEnemy.name.toUpperCase()} (LV. ${currentEnemy.level || 1})`;
     if (trainerHud) {
       trainerHud.classList.add('hidden');
       trainerHud.style.display = 'none';
@@ -1849,7 +1849,7 @@ function updateBattleUI() {
   document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
   document.getElementById('enemy-hp-bar').style.width = Math.max(0, (currentEnemy.hp / currentEnemy.maxHp) * 100) + "%";
 
-  document.getElementById('player-title').innerText = playerBattlePokemon.name.toUpperCase();
+  document.getElementById('player-title').innerText = `${playerBattlePokemon.name.toUpperCase()} (LV. ${playerBattlePokemon.level || 1})`;
   document.getElementById('player-hp-text').innerText = `${playerBattlePokemon.hp}/${playerBattlePokemon.maxHp}`;
   document.getElementById('player-hp-bar').style.width = Math.max(0, (playerBattlePokemon.hp / playerBattlePokemon.maxHp) * 100) + "%";
 
@@ -1883,6 +1883,7 @@ function updateBattleUI() {
     if (dodgeBtn) dodgeBtn.classList.add('hidden');
   }
 }
+
 
 function useBattlePotion() {
   if (!isPlayerTurn || isEnemyAttacking) return;
