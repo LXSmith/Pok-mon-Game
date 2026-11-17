@@ -2888,7 +2888,7 @@ function winBattle() {
   isDodgeWindowActive = false;
   CatchEngine.stopCatchSession();
 
-  // Falls 3v3-Trainerkampf: +50% EXP (75% der Gegner-Max-KP) sammeln & nächstes Trainer-Pokémon rufen
+  // Falls 3v3-Trainerkampf: +50% EXP (75% der Gegner-Max-KP) sammeln & nächstes Trainer-Pokémon greift sofort an!
   if (isTrainerBattle && currentTrainer) {
     const monExp = Math.round(currentEnemy.maxHp * 0.75);
     currentTrainer.totalExp += monExp;
@@ -2896,18 +2896,24 @@ function winBattle() {
     if (currentTrainer.currentIndex + 1 < currentTrainer.team.length) {
       currentTrainer.currentIndex++;
       const nextMon = currentTrainer.team[currentTrainer.currentIndex];
-      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name} (${currentTrainer.currentIndex + 1}/3)!`;
+      document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt! ${currentTrainer.name} schickt ${nextMon.name} (Lv. ${nextMon.level || 1})!`;
       try { playBeep(523.25, 0.15); } catch (e) {}
 
       setTimeout(() => {
         currentEnemy = nextMon;
-        isEnemyAttacking = false;
-        isPlayerTurn = true;
+        isPlayerTurn = false;
+        isEnemyAttacking = true;
         updateBattleUI();
+
+        // Das neu eingewechselte Trainer-Pokémon startet sofort mit einem Angriff!
+        setTimeout(() => {
+          scheduleEnemyAttack();
+        }, 600);
       }, 1100);
       return;
     }
   }
+
   
   document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} besiegt!`;
   try {
