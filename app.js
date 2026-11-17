@@ -2384,7 +2384,7 @@ function runFromBattle() {
   showScreen('screen-radar-hud');
 }
 
-/* FANG-ENGINE LOGIK (INKL. KORREKTEM BALL-ABZUG BEI FEHLWÜRFEN) */
+/* FANG-ENGINE LOGIK (INKL. GEGENANGRIFF BEI FEHLWURF & AUSBRUCH) */
 const CatchEngine = {
   active: false,
   animId: null,
@@ -2594,7 +2594,7 @@ const CatchEngine = {
     this.animId = requestAnimationFrame(loop);
   },
 
-    updatePhysics() {
+  updatePhysics() {
     const b = this.ball;
 
     if (b.isThrown) {
@@ -2627,14 +2627,26 @@ const CatchEngine = {
         return;
       }
 
-            // Wenn der Ball daneben geht: Fang-Modus beenden und Gegner greift an!
+      // Wenn der Ball daneben geht: Fang-Modus beenden und Gegner greift an!
       if (b.z < 0.35 || b.y > window.innerHeight + 80 || b.x < -120 || b.x > window.innerWidth + 120) {
         b.isThrown = false;
         this.showFeedback("VORBEI!");
         setTimeout(() => {
           this.stopCatchSession();
-
-
+          document.getElementById('battle-warning-box').innerText = `💨 Vorbei! ${currentEnemy.name} nutzt die Chance zum Angriff!`;
+          isPlayerTurn = false;
+          isEnemyAttacking = true;
+          updateBattleUI();
+          setTimeout(() => {
+            scheduleEnemyAttack();
+          }, 500);
+        }, 600);
+      }
+    } else if (b.isSpinning) {
+      b.spinAngle += b.spinSpeed;
+      this.updateBallElement();
+    }
+  },
 
   updateRing() {
     if (this.ball.isThrown) return;
@@ -2790,33 +2802,34 @@ const CatchEngine = {
                 alert(`🌟 LEGENDÄRER FANG! ${currentEnemy.name} wurde registriert und wird nie wieder wild erscheinen!`);
               }
 
+              const caughtLevel = currentEnemy.level || 1;
               const newMon = {
                 name: currentEnemy.name,
                 type: currentEnemy.type,
                 stage: currentEnemy.stage,
                 isRare: currentEnemy.isRare,
                 isSingleStage: currentEnemy.isSingleStage,
-                level: 1,
+                level: caughtLevel,
                 hp: currentEnemy.maxHp,
                 maxHp: currentEnemy.maxHp,
                 cardUrl: currentEnemy.cardUrl,
                 weakness: currentEnemy.weakness,
                 exp: 0,
-                maxExp: 75,
-                attack: Math.round(currentEnemy.maxHp * 0.20),
-                specialAttack: Math.round(currentEnemy.maxHp * 0.30)
+                maxExp: 50 + (caughtLevel * caughtLevel * 25),
+                attack: currentEnemy.attack || Math.round(currentEnemy.maxHp * 0.20),
+                specialAttack: currentEnemy.specialAttack || Math.round(currentEnemy.maxHp * 0.30)
               };
 
               registerPokemonInPokedex(currentEnemy.name);
 
-              // Team-Maximum ist jetzt 3 Pokémon!
+              // Team-Maximum ist 3 Pokémon
               if (currentSaveData.pokemonTeam.length < 3) {
                 currentSaveData.pokemonTeam.push(newMon);
-                alert(`🎉 Super! Du hast ${currentEnemy.name} gefangen und ins Team aufgenommen!`);
+                alert(`🎉 Super! Du hast ${currentEnemy.name} (Lv. ${caughtLevel}) gefangen und ins Team aufgenommen!`);
               } else {
                 if (!currentSaveData.pokemonBox) currentSaveData.pokemonBox = [];
                 currentSaveData.pokemonBox.push(newMon);
-                alert(`📦 Dein 3er-Team ist voll! ${currentEnemy.name} wurde in deine Lagerbox geschickt.`);
+                alert(`📦 Dein 3er-Team ist voll! ${currentEnemy.name} (Lv. ${caughtLevel}) wurde in deine Lagerbox geschickt.`);
               }
 
               if (currentSaveData.pokemonTeam.length > 0) {
@@ -2837,16 +2850,17 @@ const CatchEngine = {
 
             setTimeout(() => {
               if (enemyImg) enemyImg.classList.remove('anim-puff-out');
-              const ringEl = document.getElementById('target-ring-outer');
-              if (ringEl) ringEl.classList.remove('hidden');
+              
+              // Nach Ausbruch: Fang-Modus beenden und Gegner greift sofort an!
+              this.stopCatchSession();
+              document.getElementById('battle-warning-box').innerText = `💥 ${currentEnemy.name} ist ausgebrochen und greift sofort an!`;
+              isPlayerTurn = false;
+              isEnemyAttacking = true;
+              updateBattleUI();
 
-              if ((currentSaveData.pokeballs || 0) <= 0) {
-                this.stopCatchSession();
-                alert(`${currentEnemy.name} ist ausgebrochen! Du hast keine Pokébälle mehr übrig.`);
-              } else {
-                this.resetBall();
-                alert(`${currentEnemy.name} ist ausgebrochen!`);
-              }
+              setTimeout(() => {
+                scheduleEnemyAttack();
+              }, 600);
             }, 700);
           }
         }
