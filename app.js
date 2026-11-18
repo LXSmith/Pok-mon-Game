@@ -516,6 +516,7 @@ function saveHomeLocationFromMap() {
   if (tempHomeCoords) {
     currentSaveData.homePos = { ...tempHomeCoords };
     saveCurrentData();
+    if (typeof updateHomeZoneUI === 'function') updateHomeZoneUI();
     alert("🏠 Zuhause-Standort erfolgreich gespeichert!");
     document.getElementById('modal-home-map').classList.add('hidden');
 
@@ -525,6 +526,7 @@ function saveHomeLocationFromMap() {
     }
   }
 }
+
 
 function closeHomeMapModal() {
   isSettingHomeForNewGame = false;
@@ -890,9 +892,11 @@ function loadDashboard() {
   const candyList = document.getElementById('candy-target-list');
   if (candyList) candyList.classList.add('hidden');
 
-  renderPokemonTeam();
+    renderPokemonTeam();
   renderPokedexAlbum();
+  if (typeof updateHomeZoneUI === 'function') updateHomeZoneUI();
 }
+
 
 function openCandySelection() {
   if ((currentSaveData.rareCandies || 0) <= 0) {
