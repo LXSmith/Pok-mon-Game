@@ -1378,7 +1378,29 @@ function scarePokemon() {
   updateBlipPosition();
 }
 
+// Blendet das Haus-Symbol im Radar ein/aus, je nachdem ob man im 25m-Heimbereich ist
+function updateHomeZoneUI() {
+  const radarScreen = document.getElementById('screen-radar-hud');
+  if (!radarScreen) return;
+
+  let badge = document.getElementById('home-zone-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'home-zone-badge';
+    badge.style.cssText = "position:absolute; top:72px; right:16px; background:rgba(16, 185, 129, 0.2); border:2px solid #10b981; color:#ecfdf5; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; display:none; align-items:center; gap:6px; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,0.4); backdrop-filter:blur(4px); pointer-events:none;";
+    badge.innerHTML = `<span style="font-size:16px;">🏠</span><span>Zuhause</span>`;
+    radarScreen.appendChild(badge);
+  }
+
+  if (typeof isWithinHomeZone === 'function' && isWithinHomeZone()) {
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 function onGPSPositionUpdated() {
+  updateHomeZoneUI();
   if (targetPokemonCoords && currentPosition) {
     updateBlipPosition();
   }
@@ -1389,9 +1411,6 @@ function updateBlipPosition() {
   if (!targetPokemonCoords || !currentPosition || !blip) return;
 
   blip.classList.remove('hidden');
-  blip.onclick = null;
-  blip.ontouchstart = null;
-  blip.style.pointerEvents = 'none';
 
   const distMeters = calculateDistance(
     currentPosition.lat, currentPosition.lon,
@@ -1403,7 +1422,38 @@ function updateBlipPosition() {
     targetPokemonCoords.lat, targetPokemonCoords.lon
   );
 
-  document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
+  const inHomeZone = (typeof isWithinHomeZone === 'function' && isWithinHomeZone());
+
+  if (inHomeZone) {
+    document.getElementById('radar-status-text').innerText = `🏠 Zuhause (~${Math.round(distMeters)}m) – Tippe auf den Punkt!`;
+    blip.style.pointerEvents = 'auto';
+    blip.style.cursor = 'pointer';
+
+    const startHomeEncounter = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!targetPokemonCoords) return;
+
+      triggerVibration([200, 100, 200]);
+      blip.classList.add('hidden');
+      const scareBtn = document.getElementById('btn-scare-overlay');
+      if (scareBtn) scareBtn.classList.add('hidden');
+      targetPokemonCoords = null;
+
+      triggerRadarEncounter();
+    };
+
+    blip.onclick = startHomeEncounter;
+    blip.ontouchstart = startHomeEncounter;
+  } else {
+    document.getElementById('radar-status-text').innerText = `Entfernung: ~${Math.round(distMeters)}m`;
+    blip.onclick = null;
+    blip.ontouchstart = null;
+    blip.style.pointerEvents = 'none';
+    blip.style.cursor = 'default';
+  }
 
   // Bei <= 3m (innerster Ring) startet der Kampf automatisch
   if (distMeters <= 3) {
@@ -1427,6 +1477,7 @@ function updateBlipPosition() {
   blip.style.left = x + "px";
   blip.style.top = y + "px";
 }
+
 
 function triggerRadarEncounter() {
   try {
