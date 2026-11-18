@@ -1310,17 +1310,17 @@ function startScanProcess(type) {
   ringContainer.className = "radar-rings state-scanning";
   statusText.innerText = "Scanne Umgebung...";
 
-    // Quick Scan: 30 bis 180 Sekunden | Power Scan: 5 bis 12 Minuten
+  // Im Heim-Bereich: Quick Scan dauert nur 15 bis 60 Sekunden!
   let durationMs = (type === 'quick') 
-    ? (Math.random() * 150 + 30) * 1000 
+    ? (isWithinHomeZone() ? (Math.random() * 45 + 15) * 1000 : (Math.random() * 150 + 30) * 1000)
     : (Math.random() * 7 + 5) * 60 * 1000;
-
 
   clearTimeout(scanTimer);
   scanTimer = setTimeout(() => {
     triggerSignalDetected();
   }, durationMs);
 }
+
 
 function forceDevSpawn() {
   isScanning = false;
