@@ -1310,9 +1310,9 @@ function startScanProcess(type) {
   ringContainer.className = "radar-rings state-scanning";
   statusText.innerText = "Scanne Umgebung...";
 
-    // Im Heim-Bereich: Quick Scan dauert nur 10 bis 30 Sekunden | Unterwegs: 30 bis 180 Sekunden
+  // Im Heim-Bereich: Quick Scan dauert nur 15 bis 60 Sekunden!
   let durationMs = (type === 'quick') 
-    ? (isWithinHomeZone() ? (Math.random() * 20 + 10) * 1000 : (Math.random() * 150 + 30) * 1000)
+    ? (isWithinHomeZone() ? (Math.random() * 45 + 15) * 1000 : (Math.random() * 150 + 30) * 1000)
     : (Math.random() * 7 + 5) * 60 * 1000;
 
   clearTimeout(scanTimer);
@@ -1320,6 +1320,7 @@ function startScanProcess(type) {
     triggerSignalDetected();
   }, durationMs);
 }
+
 
 
 function forceDevSpawn() {
