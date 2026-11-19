@@ -1731,8 +1731,12 @@ function startBattleFromScan(rawPokemonData) {
   if (banner) { banner.classList.add('hidden'); banner.style.display = 'none'; }
   const trainerHud = document.getElementById('trainer-balls-hud');
   if (trainerHud) { trainerHud.classList.add('hidden'); trainerHud.style.display = 'none'; }
-  const playerBallsHud = document.getElementById('player-balls-hud');
-  if (playerBallsHud) { playerBallsHud.classList.add('hidden'); playerBallsHud.style.display = 'none'; }
+    const playerBallsHud = document.getElementById('player-balls-hud');
+  if (playerBallsHud) {
+    playerBallsHud.classList.remove('hidden');
+    playerBallsHud.style.display = 'flex';
+  }
+
 
   const inHomeZone = isWithinHomeZone();
   const catchBtn = document.getElementById('battle-ready-ball');
@@ -1910,7 +1914,7 @@ function updateBattleUI() {
       badge.classList.remove('hidden');
       badge.style.display = 'flex';
     }
-  } else {
+    } else {
     const prefix = isTrainingMode ? "PARTNER " : "WILDES ";
     document.getElementById('enemy-title').innerText = `${prefix}${currentEnemy.name.toUpperCase()} (LV. ${currentEnemy.level || 1})`;
     if (trainerHud) {
@@ -1918,14 +1922,19 @@ function updateBattleUI() {
       trainerHud.style.display = 'none';
     }
     if (playerBallsHud) {
-      playerBallsHud.classList.add('hidden');
-      playerBallsHud.style.display = 'none';
+      playerBallsHud.classList.remove('hidden');
+      playerBallsHud.style.cssText = "display:flex; justify-content:center; align-items:center; gap:6px; font-size:11px; margin-bottom:3px;";
+      const pBallsStr = (currentSaveData.pokemonTeam || [])
+        .map(p => (p.hp > 0 ? "🔴" : "⚫"))
+        .join(" ");
+      playerBallsHud.innerHTML = `<span>Dein Team: ${pBallsStr}</span>`;
     }
     if (badge) {
       badge.classList.add('hidden');
       badge.style.display = 'none';
     }
   }
+
 
   document.getElementById('enemy-card-img').src = currentEnemy.cardUrl;
   document.getElementById('enemy-hp-text').innerText = `${currentEnemy.hp} / ${currentEnemy.maxHp} KP`;
