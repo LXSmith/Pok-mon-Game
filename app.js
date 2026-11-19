@@ -2348,8 +2348,8 @@ function handlePokemonKnockout() {
   const mon = playerBattlePokemon;
   mon.hp = 0;
 
-  // Im 3v3-Trainerkampf prüfen, ob der Spieler noch ein weiteres kampffähiges Pokémon im Team hat!
-  if (isTrainerBattle && currentSaveData.pokemonTeam) {
+  // Prüfen, ob der Spieler noch ein weiteres kampffähiges Pokémon im 3er-Team hat (egal ob Wild- oder Trainerkampf)
+  if (!isTrainingMode && currentSaveData.pokemonTeam) {
     const nextAliveIndex = currentSaveData.pokemonTeam.findIndex(p => p.hp > 0);
     if (nextAliveIndex !== -1) {
       const nextMon = currentSaveData.pokemonTeam.splice(nextAliveIndex, 1)[0];
@@ -2369,6 +2369,7 @@ function handlePokemonKnockout() {
       return;
     }
   }
+
 
   // Wenn kein kampffähiges Pokémon mehr übrig ist -> Komplette Niederlage & Team wieder heilen
   const badge = document.getElementById('battle-trainer-badge');
