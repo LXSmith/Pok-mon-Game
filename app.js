@@ -1701,7 +1701,8 @@ function isWithinHomeZone() {
 function startBattleFromScan(rawPokemonData) {
   ensureTrainerUIElements();
   const team = currentSaveData.pokemonTeam || [];
-  
+  team.forEach(p => { p.hp = p.maxHp; }); // Stellt sicher, dass alle 3 Team-Pokémon zu Kampfbeginn volle KP haben
+
   const playerMaxStage = team.length > 0 
     ? Math.max(...team.map(p => p.stage !== undefined ? p.stage : 0))
     : 0;
